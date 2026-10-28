@@ -4,11 +4,12 @@
  * database, and every page keeps working.
  */
 
+import { additionalCommunityAvatars, communityAvatars } from "@/content/visual-assets";
 import { events as eventRecords, league } from "@/data/events";
 import { KILL_TABLE_SIZE, kills as killRecords } from "@/data/kills";
 import { stories as storyRecords } from "@/data/news";
 import { entries, people, teams as teamRecords } from "@/data/teams";
-import type { EventRecord, PersonRecord, StoryRecord, TableRecord, TeamRecord } from "@/data/types";
+import type { EventRecord, KillRecord, PersonRecord, StoryRecord, TableRecord, TeamRecord } from "@/data/types";
 
 export { league };
 export type { StoryRecord as Story, TeamRecord as Team };
@@ -51,7 +52,9 @@ export const events: LeagueEvent[] = eventRecords
   .sort((a, b) => (a.e.startDate && b.e.startDate ? b.e.startDate.localeCompare(a.e.startDate) : a.i - b.i))
   .map(({ e }) => {
     const tables = e.tables.map(rank);
-    return { ...e, tables, squads: tables.reduce((n, t) => n + t.rows.length, 0), champion: tables[0].rows[0] };
+    // Registered squads: some events only published their top squads' points.
+    const registered = entries.filter((r) => r.event === e.slug).length;
+    return { ...e, tables, squads: Math.max(registered, tables.reduce((n, t) => n + t.rows.length, 0)), champion: tables[0].rows[0] };
   });
 
 export function eventBySlug(slug: string) {
@@ -89,21 +92,27 @@ export type Fragger = {
 export type KillTable = { name: string; short: string; rows: Fragger[] };
 
 /**
- * An event's kill tables, one per standings table (so one per tier), each its top 20 by kills.
- * A player counts in the tier their squad registered in. Empty until the event has a kill sheet.
+ * An event's kill tables, each its top players by kills (20 unless the event sets its own): one per
+ * group where the kill sheet has them (the Mixed Event's men and women), otherwise one per
+ * standings table, a player counting in the tier their squad registered in. Empty until the event
+ * has a kill sheet.
  */
 export function killTablesOf(event: LeagueEvent): KillTable[] {
   const all = killRecords.filter((k) => k.event === event.slug);
   const tierOf = new Map(entries.filter((r) => r.event === event.slug).map((r) => [r.team, r.tier]));
-  return event.tables
-    .map((table) => {
+  const groups = [...new Set(all.flatMap((k) => k.group ?? []))];
+  const splits = groups.length
+    ? groups.map((g) => ({ name: g, short: g, keep: (k: KillRecord) => k.group === g }))
+    : event.tables.map((t) => ({ name: t.name, short: t.short, keep: (k: KillRecord) => t.tier === undefined || tierOf.get(k.team) === t.tier }));
+  return splits
+    .map((split) => {
       const rows = all
-        .filter((k) => table.tier === undefined || tierOf.get(k.team) === table.tier)
+        .filter(split.keep)
         .sort((a, b) => b.kills - a.kills)
-        .slice(0, KILL_TABLE_SIZE);
+        .slice(0, event.killTableSize ?? KILL_TABLE_SIZE);
       return {
-        name: table.name,
-        short: table.short,
+        name: split.name,
+        short: split.short,
         rows: rows.map((k): Fragger => {
           const person = personBySlug(k.player);
           const team = teamMap.get(k.team);
@@ -132,7 +141,11 @@ export function teamBySlug(slug: string) {
   return teamMap.get(slug);
 }
 
-const personMap = new Map(people.map((p) => [p.slug, p]));
+/** Players without a photo get one of the character avatars, picked from their slug so it never changes. */
+const AVATARS = [...communityAvatars, ...additionalCommunityAvatars].map((a) => a.src);
+const avatarOf = (slug: string) => AVATARS[[...slug].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % AVATARS.length];
+
+const personMap = new Map(people.map((p): [string, PersonRecord] => [p.slug, { ...p, photo: p.photo ?? avatarOf(p.slug) }]));
 export function personBySlug(slug: string) {
   return personMap.get(slug);
 }
@@ -147,7 +160,7 @@ export function entryOf(team: string, event: string) {
   return {
     ...entry,
     manager: entry.manager ? personBySlug(entry.manager) : undefined,
-    roster: entry.lineup.map((l) => ({ ...l, person: personBySlug(l.player) ?? ({ slug: l.player, name: l.player } satisfies PersonRecord) })),
+    roster: entry.lineup.map((l) => ({ ...l, person: personBySlug(l.player) ?? ({ slug: l.player, name: l.player, photo: avatarOf(l.player) } as PersonRecord) })),
   };
 }
 

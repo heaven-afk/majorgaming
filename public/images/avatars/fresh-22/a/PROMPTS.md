@@ -1,0 +1,51 @@
+# CODM fresh avatar set — Group A
+
+Created 2026-10-28 with built-in image generation. Every downloaded reference was visually inspected before generation. Outputs were visually checked against their specific skins.
+
+## Siren — Siren Song
+
+Source: https://zilliongamer.com/call-of-duty-mobile/c/guide/call-of-duty-mobile-characters-list
+
+Reference image: https://zilliongamer.com/uploads/codm/skins/character/siren-siren-song-character-cod-mobile.jpg
+
+Create ONE square avatar portrait of the ACTUAL Call of Duty Mobile operator and named skin specified below, using attached game screenshot as the definitive IDENTITY AND COSTUME reference. This is faithful portrait reframing, not redesign. Preserve specific in-game face, proportions, hair, headgear, armor silhouette, exact skin costume colors/materials. Render as polished recognizable CODM 3D promotional/game character, NOT live-action human cosplay, not photoreal stock soldier, not anime. Single head and upper chest, character fills frame with entire headwear and shoulders visible, modest margin for circular cropping. Face forward or subtle three-quarter angle faithful to reference. Dark muted charcoal neutral studio background; cinematic soft frontal key so face/visor readable, restrained rim light, sharp crafted game materials. Keep skin's intrinsic colored accents. Remove source background, text, menus, logos, watermark, weapons, UI, other people, borders. No new headgear or camouflage. Siren — Siren Song. The precise base Siren Song appearance in the reference: young pale female face, short swept ice-blue hair, translucent cyan curved eye visor, pearl/lilac iridescent fin-shaped shoulder armor, fitted black/dark-blue biomechanical chest with cyan core. Preserve these shapes. No long white hair or invented crown.
+
+## Tempest — Swordbreaker
+
+Source: https://zilliongamer.com/call-of-duty-mobile/c/guide/call-of-duty-mobile-characters-list
+
+Reference image: https://zilliongamer.com/uploads/codm/skins/character/tempest-swordbreaker-character-cod-mobile.jpg
+
+Create ONE square avatar portrait of the ACTUAL Call of Duty Mobile operator and named skin specified below, using attached game screenshot as the definitive IDENTITY AND COSTUME reference. This is faithful portrait reframing, not redesign. Preserve specific in-game face, proportions, hair, headgear, armor silhouette, exact skin costume colors/materials. Render as polished recognizable CODM 3D promotional/game character, NOT live-action human cosplay, not photoreal stock soldier, not anime. Single head and upper chest, character fills frame with entire headwear and shoulders visible, modest margin for circular cropping. Face forward or subtle three-quarter angle faithful to reference. Dark muted charcoal neutral studio background; cinematic soft frontal key so face/visor readable, restrained rim light, sharp crafted game materials. Keep skin's intrinsic colored accents. Remove source background, text, menus, logos, watermark, weapons, UI, other people, borders. No new headgear or camouflage. Tempest — Swordbreaker. Exact Swordbreaker appearance in reference: fair female face, medium brown layered side-swept hair falling past the jaw on one side, fitted chestnut brown leather jacket with silver zippers and two horizontal buckle straps, pale shearling collar over black turtleneck, dark harness. Her hair is BROWN in this specific skin; do not use default blue hair. No generic military plate carrier.
+
+## Florence — Night Terror
+
+Source: https://zilliongamer.com/call-of-duty-mobile/c/guide/call-of-duty-mobile-characters-list
+
+Reference image: https://zilliongamer.com/uploads/codm/skins/character/florence-night-terror-character-cod-mobile.jpg
+
+Create ONE square avatar portrait of the ACTUAL Call of Duty Mobile operator and named skin specified below, using attached game screenshot as the definitive IDENTITY AND COSTUME reference. This is faithful portrait reframing, not redesign. Preserve specific in-game face, proportions, hair, headgear, armor silhouette, exact skin costume colors/materials. Render as polished recognizable CODM 3D promotional/game character, NOT live-action human cosplay, not photoreal stock soldier, not anime. Single head and upper chest, character fills frame with entire headwear and shoulders visible, modest margin for circular cropping. Face forward or subtle three-quarter angle faithful to reference. Dark muted charcoal neutral studio background; cinematic soft frontal key so face/visor readable, restrained rim light, sharp crafted game materials. Keep skin's intrinsic colored accents. Remove source background, text, menus, logos, watermark, weapons, UI, other people, borders. No new headgear or camouflage. Florence — Night Terror. Preserve the reference's distinctive fully enclosed smooth graphite helmet with broad black faceted face visor and silver seam above the brow, narrow feminine shoulder silhouette, sleek black/grey fitted technical chest suit with fine magenta-pink piping tracing the clavicle, shoulders and torso, small faceted magenta pendant at sternum. No visible human face, hair, gas mask, goggles or army vest.
+
+## Cipher — Absolute Resolution
+
+Source: https://zilliongamer.com/call-of-duty-mobile/c/guide/call-of-duty-mobile-characters-list
+
+Reference image: https://zilliongamer.com/uploads/codm/skins/character/cipher-absolute-resolution-character-cod-mobile.jpg
+
+Create ONE square avatar portrait of the ACTUAL Call of Duty Mobile operator and named skin specified below, using attached game screenshot as the definitive IDENTITY AND COSTUME reference. This is faithful portrait reframing, not redesign. Preserve specific in-game face, proportions, hair, headgear, armor silhouette, exact skin costume colors/materials. Render as polished recognizable CODM 3D promotional/game character, NOT live-action human cosplay, not photoreal stock soldier, not anime. Single head and upper chest, character fills frame with entire headwear and shoulders visible, modest margin for circular cropping. Face forward or subtle three-quarter angle faithful to reference. Dark muted charcoal neutral studio background; cinematic soft frontal key so face/visor readable, restrained rim light, sharp crafted game materials. Keep skin's intrinsic colored accents. Remove source background, text, menus, logos, watermark, weapons, UI, other people, borders. No new headgear or camouflage. Cipher — Absolute Resolution. Exact reference identity: black segmented angular high-tech helmet with two tall corner prongs, cyan translucent angular lower front face section and dark upper visor, digitally fragmented black cuboid shoulder plates with a few floating small pixel blocks, cyan X/V-shaped pixel graphics across layered black chest armor. Keep his unusual helmet contour and cyan digital geometry; no exposed generic male face.
+
+## Foxtrot — Deadly Fragments
+
+Source: https://zilliongamer.com/call-of-duty-mobile/c/guide/call-of-duty-mobile-characters-list
+
+Reference image: https://zilliongamer.com/uploads/codm/skins/character/foxtrot-deadly-fragments-character-cod-mobile.jpg
+
+Create ONE square avatar portrait of the ACTUAL Call of Duty Mobile operator and named skin specified below, using attached game screenshot as the definitive IDENTITY AND COSTUME reference. This is faithful portrait reframing, not redesign. Preserve specific in-game face, proportions, hair, headgear, armor silhouette, exact skin costume colors/materials. Render as polished recognizable CODM 3D promotional/game character, NOT live-action human cosplay, not photoreal stock soldier, not anime. Single head and upper chest, character fills frame with entire headwear and shoulders visible, modest margin for circular cropping. Face forward or subtle three-quarter angle faithful to reference. Dark muted charcoal neutral studio background; cinematic soft frontal key so face/visor readable, restrained rim light, sharp crafted game materials. Keep skin's intrinsic colored accents. Remove source background, text, menus, logos, watermark, weapons, UI, other people, borders. No new headgear or camouflage. Foxtrot — Deadly Fragments. Precise female face in reference, asymmetrical dark cobalt-blue side-swept bob with tied-back portion, black metallic thick high collar with rectangular gold buckle, bare shoulder cutouts, sculptural mirrored silver-and-charcoal fractured-glass chest and pointed crystal shard shoulder pieces, white/silver panels. Preserve distinctive glass shard armor and hairstyle, not generic combat kit.
+
+## Nyx — Starstruck
+
+Source: https://www.youtube.com/watch?v=oF2oo9s89Fk
+
+Reference image: https://i.ytimg.com/vi/oF2oo9s89Fk/maxresdefault.jpg
+
+Create ONE square avatar portrait of the ACTUAL Call of Duty Mobile operator and named skin specified below, using attached game screenshot as the definitive IDENTITY AND COSTUME reference. This is faithful portrait reframing, not redesign. Preserve specific in-game face, proportions, hair, headgear, armor silhouette, exact skin costume colors/materials. Render as polished recognizable CODM 3D promotional/game character, NOT live-action human cosplay, not photoreal stock soldier, not anime. Single head and upper chest, character fills frame with entire headwear and shoulders visible, modest margin for circular cropping. Face forward or subtle three-quarter angle faithful to reference. Dark muted charcoal neutral studio background; cinematic soft frontal key so face/visor readable, restrained rim light, sharp crafted game materials. Keep skin's intrinsic colored accents. Remove source background, text, menus, logos, watermark, weapons, UI, other people, borders. No new headgear or camouflage. Nyx — Starstruck. Use ONLY the central woman Nyx in supplied game screenshot, not the gun arm on the right. Exact face and signature blue-black swept-up side-part hair with curled sections framing one cheek, tiny microphone headset by mouth and star-shaped ear detail; reflective gold angular spike shoulder pieces and fitted asymmetrical gold-and-white lapel/corset stage armor. Preserve glamorous black eyeliner/red lips and gold choker. No military vest or helmets.

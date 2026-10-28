@@ -160,6 +160,22 @@ Every public spot that mentions registration reads this one place, through `src/
 
 Copy for each state stays in the content files, so wording changes never touch components.
 
+## 5b. Owner decisions, 2026-10-28
+
+Everything runs from the website and its admin. No Heaven Index dependency, and no public accounts or forms for managers or captains: squads keep registering on Discord and staff bring them in.
+
+- **Teams and rosters are one always-current list.** Staff edit a team's roster at any time. A team that stops playing is **archived**, not deleted: it leaves the Teams page and pickers, its past results stay. Delete only for mistakes that never played; otherwise archive or merge.
+- **Each event keeps its own copy** of a team's name and roster when the team is added to it, so later changes never rewrite past tables.
+- **New season check-in:** when an MGL Season is created, every active team shows "Not registered yet"; staff tick squads in as they register. A team that misses a season stays active for one more season, then can be archived in bulk.
+- **Two kinds of event:** *MGL Season* (ranked; drives the active team list, tiers and the Teams page) and *Other event* (Carry1st, Mixed Events…; shows in Events and team history only). Format is **tiers** (any number) or **one table**. An event can be created with just name, kind and dates; format and teams are added later. Status upcoming → live → final.
+- **Teams page** shows the teams in the current MGL Season.
+- **Tiers stay manual for now.** Staff set and change any team's tier in the admin. Later: a promotion/relegation setting per ranked season (e.g. top 3 of each tier up, bottom 3 down) that suggests or applies the moves when results are marked final, always overridable by hand.
+- **After the import**, teams keep their Season 10 tiers until the next season.
+- **Promotion and relegation are part of the admin build** (not later): a setting per ranked season (e.g. top 3 of each tier up, bottom 3 down) applied when results are marked final, every move editable by hand.
+- **No points rules or penalty reasons.** Results arrive as the collation sheet uploaded each day; the site stores and shows the sheet's placement, kill and bonus points and totals as they are.
+- **Media library** in the admin: every uploaded image (team logos, player and staff photos, news covers) goes to Cloudinary and into one library, so any image can be picked again instead of re-uploaded. The character avatars are in the library too; players without a photo get one of them by default.
+- **New events, step by step:** create (settings filled in from the last season), flip the registration switch (the site only shows open / soon / closed and links to Discord), tick returning squads or paste new Discord registration posts (parsed from the fixed format), enter results per match or upload the sheets (the site computes points from the event's points rules; penalties per squad with a reason), mark final.
+
 ## 6. Results: typed in, or from Heaven Index?
 
 Heaven Index (the partner's stats engine) already records placements and kills. Two options:

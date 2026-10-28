@@ -60,3 +60,7 @@ __pycache__/
 # supabase cli
 supabase/.temp/
 supabase/.branches/
+
+# reference images used while drawing avatars, not site assets
+public/images/**/references/
+public/images/**/references-review.png

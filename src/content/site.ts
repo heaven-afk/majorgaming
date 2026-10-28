@@ -350,8 +350,8 @@ export const footer = {
  */
 export const eventsPage = {
   label: "Events",
-  title: { before: "Every event,", accent: "every table." },
-  lede: `MGL runs ranked CODM Battle Royale seasons in ${TIERS} tiers of ${SQUADS_PER_TIER} squads, plus mixed and partner events. Follow the standings live while an event runs, and every final table on record.`,
+  title: { before: "Seasons and", accent: "special events." },
+  lede: `MGL runs ranked Battle Royale in ${TIERS} tiers of ${SQUADS_PER_TIER} squads, plus special events.`,
   facts: [
     { value: String(TIERS), label: "Tiers" },
     { value: String(SQUADS_PER_TIER), label: "Squads a tier" },
@@ -403,7 +403,7 @@ export const eventsPage = {
     kills: {
       label: "Kill table",
       title: { before: "The top", accent: "fraggers." },
-      meta: (n: number, event: string, perTier: boolean) => `Top ${n}${perTier ? " per tier" : ""} · ${event}`,
+      meta: (n: number, event: string, split?: "tier" | "group") => `Top ${n}${split === "tier" ? " per tier" : split === "group" ? " each" : ""} · ${event}`,
       tablesLabel: "Choose a tier",
       unit: "kills",
       podium: ["Most kills", "Second", "Third"],

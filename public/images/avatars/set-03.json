@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Gaz",
+    "src": "/images/avatars/gaz.webp",
+    "original": "/images/avatars/gaz.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 14440,
+    "alt": "Gaz character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-8ddeadca-fa79-4b8e-9ece-259a8315768d.png"
+  },
+  {
+    "name": "Artery",
+    "src": "/images/avatars/artery.webp",
+    "original": "/images/avatars/artery.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 12614,
+    "alt": "Artery character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-cf8124bc-bb7a-4db6-8df7-c7f1ade44873.png"
+  },
+  {
+    "name": "Outrider",
+    "src": "/images/avatars/outrider.webp",
+    "original": "/images/avatars/outrider.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 17708,
+    "alt": "Outrider character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-e03f8d16-6667-4a68-a3a6-140ee320949a.png"
+  },
+  {
+    "name": "Battery",
+    "src": "/images/avatars/battery.webp",
+    "original": "/images/avatars/battery.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 15388,
+    "alt": "Battery character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-db42f3f9-c115-44fc-b006-be675f4ec920.png"
+  },
+  {
+    "name": "Seraph",
+    "src": "/images/avatars/seraph.webp",
+    "original": "/images/avatars/seraph.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 13490,
+    "alt": "Seraph character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-1d02e923-9940-413f-a619-ecf8ea19ee5f.png"
+  },
+  {
+    "name": "Spectre",
+    "src": "/images/avatars/spectre.webp",
+    "original": "/images/avatars/spectre.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 16624,
+    "alt": "Spectre character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-e9e71156-9353-4383-8d4c-c6e6ed246f01.png"
+  },
+  {
+    "name": "Reaper",
+    "src": "/images/avatars/reaper.webp",
+    "original": "/images/avatars/reaper.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 18584,
+    "alt": "Reaper character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-c9ed126d-2b8b-4c12-a029-6d6397fa9aba.png"
+  },
+  {
+    "name": "Templar",
+    "src": "/images/avatars/templar.webp",
+    "original": "/images/avatars/templar.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 17286,
+    "alt": "Templar character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-fdfee77c-460e-4e07-9085-514c1766947b.png"
+  },
+  {
+    "name": "Prophet",
+    "src": "/images/avatars/prophet.webp",
+    "original": "/images/avatars/prophet.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 16000,
+    "alt": "Prophet character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-e52cc695-a3ae-491e-82e3-90bfb6db505d.png"
+  },
+  {
+    "name": "Hidora Kai",
+    "src": "/images/avatars/hidora-kai.webp",
+    "original": "/images/avatars/hidora-kai.png",
+    "width": 256,
+    "height": 256,
+    "originalWidth": 1254,
+    "originalHeight": 1254,
+    "webBytes": 18974,
+    "alt": "Hidora Kai character avatar",
+    "restoredFrom": "C:/Users/HP/.codex/generated_images/01a17dfb-a733-7713-9363-91111ce5929a/exec-d660610b-fb5f-4a73-b6b1-81a6e70c15cb.png"
+  }
+]

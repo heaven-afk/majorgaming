@@ -138,7 +138,7 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
           </div>
           <div>
             <dt>{copy.facts.players}</dt>
-            <dd>{size}</dd>
+            <dd>{size || "–"}</dd>
           </div>
           <div>
             <dt>{copy.facts.events}</dt>
@@ -151,7 +151,7 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
         </dl>
       </Scene>
 
-      {entry && (
+      {entry && size > 0 && (
         <Scene className="tile tm-roster" aria-labelledby="roster-title">
           <header className="tm-section__head" data-rise>
             <div>

@@ -29,6 +29,16 @@ export type EventRecord = {
   matches?: { played: number; total: number };
   /** One table per tier (or a single table for events without tiers). */
   tables: TableRecord[];
+  /** How many players each kill table shows (default 20). */
+  killTableSize?: number;
+};
+
+/** An event's results as the import produces them: tables, registrations and kill rows. */
+export type EventResults = {
+  matches?: number;
+  tables: TableRecord[];
+  entries: Omit<EntryRecord, "event">[];
+  kills: Omit<KillRecord, "event">[];
 };
 
 export type TableRecord = {
@@ -69,6 +79,8 @@ export type KillRecord = {
   kills: number;
   /** Matches the player played in the event, when the kill sheet has them. */
   matches?: number;
+  /** Events with separate kill tables, like the Mixed Event's "Men" and "Women"; otherwise by tier. */
+  group?: string;
 };
 
 export type TeamRecord = {

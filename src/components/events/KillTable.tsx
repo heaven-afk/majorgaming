@@ -90,7 +90,7 @@ function Board({ rows }: { rows: Fragger[] }) {
 }
 
 /**
- * An event's kill tables, one per tier behind the same quiet switch as the standings: the top
+ * An event's kill tables, one per tier (or group) behind the same quiet switch as the standings: the top
  * three as cards with medal-tinted ranks, then places 4 to 20 in a list (two columns on wide
  * screens). Players are shown with the team they played for in that event.
  */
@@ -121,7 +121,7 @@ export default function KillTable({ event, tables }: { event: string; tables: Ki
             {copy.title.before} <em>{copy.title.accent}</em>
           </h2>
         </div>
-        <span className="tm-section__meta">{copy.meta(longest, event, many)}</span>
+        <span className="tm-section__meta">{copy.meta(longest, event, !many ? undefined : tables[0].name.startsWith("Tier") ? "tier" : "group")}</span>
       </header>
 
       <div className="tier-tables" data-rise="1">
