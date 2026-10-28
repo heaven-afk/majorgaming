@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { removeEvent, saveEvent } from "@/app/admin/actions";
 import AdminShell, { AdminLoading } from "@/components/admin/AdminShell";
 import DeleteEvent from "@/components/admin/DeleteEvent";
 import EventForm from "@/components/admin/EventForm";
+import EventTabs from "@/components/admin/EventTabs";
 import { league } from "@/content/site";
 import { getEvent } from "@/lib/admin/events";
 import { requireAdmin } from "@/lib/admin/session";
@@ -19,20 +19,11 @@ async function Editor({ params, searchParams }: PageProps<"/admin/events/[slug]"
 
   return (
     <>
-      <header className="ad-head">
-        <div>
-          <Link href="/admin" className="ad-back">
-            ← Events
-          </Link>
-          <h1>{event.name}</h1>
-          <p>
-            {tables.length} {tables.length === 1 ? "table" : "tables"} · {results} result rows
-          </p>
-        </div>
+      <EventTabs slug={event.slug} name={event.name} active="Details" note={`${tables.length} ${tables.length === 1 ? "table" : "tables"} · ${entries[0]?.count ?? 0} squads · ${results} result rows`}>
         <a href={`/events/${event.slug}`} target="_blank" rel="noreferrer" className="ad-btn ad-btn--quiet">
           Open event page
         </a>
-      </header>
+      </EventTabs>
       <EventForm action={saveEvent.bind(null, event.id)} event={row} tiers={tierTables || league.tiers} saved={Boolean(query.saved)} />
       <DeleteEvent action={removeEvent.bind(null, event.id)} name={event.name} squads={entries[0]?.count ?? 0} />
     </>

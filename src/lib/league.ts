@@ -6,6 +6,7 @@
  */
 
 import { cache } from "react";
+import { registration as registrationCopy, site } from "@/content/site";
 import { additionalCommunityAvatars, communityAvatars, communityAvatarsSetThree, referenceBasedCommunityAvatars } from "@/content/visual-assets";
 import type { EventRecord, KillRecord, PersonRecord, StoryRecord, TableRecord, TeamRecord } from "@/data/types";
 import { readContent, readLeague, type League as Records } from "./db";
@@ -81,7 +82,8 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
       .map((r): Row => {
         const team = teamMap.get(r.team);
         const bonus = r.bonus ?? 0;
-        return { slug: r.team, name: team?.name ?? r.team, tag: team?.tag, placement: r.placement, kills: r.kills, bonus, total: r.placement + r.kills + bonus, move: r.move };
+        // Each event shows the name the team had then; only the pro names of players are shared.
+        return { slug: r.team, name: r.teamName ?? team?.name ?? r.team, tag: (r.teamName ? r.teamTag : team?.tag) ?? undefined, placement: r.placement, kills: r.kills, bonus, total: r.placement + r.kills + bonus, move: r.move };
       })
       // Stable: squads level on points keep the order the results sheet ranked them in.
       .sort((a, b) => b.total - a.total);
@@ -108,6 +110,17 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
 
   /** Events announced but not started, soonest first. */
   const upcomingEvents = events.filter((e) => e.status === "upcoming").reverse();
+
+  /**
+   * The event taking registrations, which every register button and status pill on the site
+   * follows: an upcoming event whose registration is open (its dates already applied), a ranked
+   * season first. Between events the buttons fall back to the Discord.
+   */
+  const openNow = upcomingEvents.filter((e) => e.registration === "open");
+  const registering = openNow.find((e) => e.ranked) ?? openNow[0];
+  const registration = registering
+    ? { open: true, event: registering, label: registrationCopy.label, href: registering.registrationUrl ?? site.discord, note: registering.registrationNote }
+    : { open: false, event: undefined, label: registrationCopy.label, href: site.discord, note: undefined };
 
   /** The newest finished MGL Season: names the honours and the next season to register for. */
   const latestSeason = events.find((e) => e.series === "MGL Season" && e.status === "final") ?? featuredEvent;
@@ -141,10 +154,11 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
               rank: rows.findIndex((r) => r.kills === k.kills) + 1,
               slug: k.player,
               name: person?.name ?? k.player,
-              ign: person?.ign,
+              // The in-game name from this event's own sheet, not today's.
+              ign: (k.ign !== undefined ? k.ign : person?.ign) ?? undefined,
               photo: person?.photo,
               country: person?.country,
-              team: { slug: k.team, name: team?.name ?? k.team, tag: team?.tag },
+              team: { slug: k.team, name: k.teamName ?? team?.name ?? k.team, tag: (k.teamName ? k.teamTag : team?.tag) ?? undefined },
               kills: k.kills,
               matches: k.matches,
             };
@@ -167,8 +181,9 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
     return personMap.get(slug);
   }
 
-  /** The newest event with registrations: its squads are the ones on the Teams page. */
-  const activeEvent = events.find((e) => entries.some((r) => r.event === e.slug)) ?? events[0];
+  /** The newest ranked season with registrations (else the newest event with any): its squads are the ones on the Teams page. */
+  const registered = (e: { slug: string }) => entries.some((r) => r.event === e.slug);
+  const activeEvent = events.find((e) => e.ranked && registered(e)) ?? events.find(registered) ?? events[0];
 
   /** A team's registration for one event, with its people resolved. */
   function entryOf(team: string, event: string) {
@@ -176,7 +191,7 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
     if (!entry) return undefined;
     return {
       ...entry,
-      manager: entry.manager ? personBySlug(entry.manager) : undefined,
+      manager: entry.manager ? { name: entry.manager } : undefined,
       roster: entry.lineup.map((l) => ({ ...l, person: personBySlug(l.player) ?? ({ slug: l.player, name: l.player, photo: avatarOf(l.player) } as PersonRecord) })),
     };
   }
@@ -204,6 +219,7 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
         const person = personBySlug(l.player);
         return { name: person?.name ?? l.player, photo: person?.photo };
       });
+      // The directory shows teams as they are now.
       return { slug: r.team, name: team?.name ?? r.team, tag: team?.tag, tier: r.tier, players: r.lineup.length, faces };
     })
     .sort((a, b) => (a.tier ?? 99) - (b.tier ?? 99) || a.name.localeCompare(b.name));
@@ -217,6 +233,7 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
     eventBySlug,
     featuredEvent,
     upcomingEvents,
+    registration,
     latestSeason,
     killTablesOf,
     teams,

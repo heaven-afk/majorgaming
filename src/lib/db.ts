@@ -12,9 +12,9 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache";
-
 import type { StaffRecord } from "@/data/staff";
 import type { EntryRecord, EventRecord, KillRecord, PersonRecord, StoryRecord, TeamRecord } from "@/data/types";
+import { registrationOf, today } from "./registration";
 
 export type League = { events: EventRecord[]; teams: TeamRecord[]; people: PersonRecord[]; entries: EntryRecord[]; kills: KillRecord[] };
 
@@ -54,8 +54,9 @@ export async function loadLeague(): Promise<League> {
   const data = await rpc<Snapshot>("league_snapshot");
   return {
     ...data,
-    events: data.events.map(({ matchesPlayed, matchesTotal, kind: _kind, description, details, ...e }) => ({
+    events: data.events.map(({ matchesPlayed, matchesTotal, kind, description, details, ...e }) => ({
       ...e,
+      ...(kind === "season" ? { ranked: true } : {}),
       ...(description?.length ? { description } : {}),
       ...(details?.length ? { details } : {}),
       ...(matchesTotal !== undefined ? { matches: { played: matchesPlayed ?? 0, total: matchesTotal } } : {}),
@@ -73,8 +74,11 @@ export const TAGS = { league: "league", content: "content" } as const;
 export async function readLeague() {
   "use cache";
   cacheTag(TAGS.league);
-  cacheLife("max");
-  return loadLeague();
+  // Hourly, so registration opens and closes on its dates without anyone saving.
+  cacheLife("hours");
+  const data = await loadLeague();
+  const day = today();
+  return { ...data, events: data.events.map((e) => ({ ...e, registration: registrationOf(e, day) })) };
 }
 
 export async function readContent() {

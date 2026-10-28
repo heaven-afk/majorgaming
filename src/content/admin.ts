@@ -23,14 +23,23 @@ export const kindOptions = [
   { value: "other", label: "Other event", hint: "Cups, mixed and partner events" },
 ] as const;
 
+/** Squads that move up and down between tiers each season, unless a season sets its own. */
+export const PROMOTION = { promote: 3, relegate: 3 } as const;
+
+/** The categories and groups the database allows (check constraints in the migrations). */
+export const STORY_CATEGORIES = ["Announcement", "Season recap", "Feature", "Update"] as const;
+export const STAFF_GROUPS = ["Leadership", "Operations", "Media", "Community"] as const;
+
 export const adminCopy = {
   brand: "MGL Admin",
   nav: [
-    { href: "/admin", label: "Events" },
-    { href: "#", label: "Results", soon: true },
-    { href: "#", label: "Teams", soon: true },
-    { href: "#", label: "News", soon: true },
-    { href: "#", label: "Staff", soon: true },
+    { href: "/admin", label: "Dashboard", icon: "home" },
+    { href: "/admin/events", label: "Events", icon: "calendar" },
+    { href: "/admin/teams", label: "Teams", icon: "squad" },
+    { href: "/admin/people", label: "Players", icon: "crosshair" },
+    { href: "/admin/news", label: "News", icon: "news" },
+    { href: "/admin/staff", label: "Staff", icon: "people" },
+    { href: "/admin/media", label: "Media", icon: "image" },
   ],
   viewSite: "View site",
   signOut: "Sign out",

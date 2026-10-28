@@ -13,7 +13,8 @@ const [mantaRay, urbanTracker, nikto, krueger] = additionalCommunityAvatars;
  */
 
 /** How MGL runs today. Used in copy; the admin's league settings will replace it. */
-export const league = { tiers: 5, squadsPerTier: 25 };
+/** `timeZone` decides the day registration dates open and close on. */
+export const league = { tiers: 5, squadsPerTier: 25, timeZone: "Africa/Lagos" };
 const { tiers: TIERS, squadsPerTier: SQUADS_PER_TIER } = league;
 
 export const site = {
@@ -41,8 +42,11 @@ export const socials = [
 
 export const cta = { label: "Join the Discord", href: site.discord };
 
-/** Registration happens on Discord. While open, the hero button asks squads to register. */
-export const registration = { open: false, label: "Register your squad", href: site.discord };
+/**
+ * The register buttons' words. Whether they show, and where they link, follows the event taking
+ * registrations (set in the admin, opened and closed by its dates): `registration` in `getLeague()`.
+ */
+export const registration = { label: "Register your squad" };
 
 export const hero = {
   community: {

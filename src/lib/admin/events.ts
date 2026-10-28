@@ -36,13 +36,15 @@ export type EventRow = {
   matches_played: number | null;
   matches_total: number | null;
   kill_table_size: number | null;
+  promote: number | null;
+  relegate: number | null;
   updated_at: string;
 };
 
 export type TableRow = { id: string; name: string; tier: number | null; sort: number; standings: { count: number }[] };
 
 /** What the events list shows for each event. */
-export type EventSummary = Pick<EventRow, "id" | "slug" | "name" | "series" | "status" | "registration_state" | "start_date" | "end_date" | "poster_url" | "updated_at"> & {
+export type EventSummary = Pick<EventRow, "id" | "slug" | "name" | "series" | "sort_order" | "status" | "registration_state" | "start_date" | "end_date" | "poster_url" | "updated_at"> & {
   event_tables: { count: number }[];
   entries: { count: number }[];
 };
@@ -50,7 +52,7 @@ export type EventSummary = Pick<EventRow, "id" | "slug" | "name" | "series" | "s
 export function listEvents(token: string) {
   return db<EventSummary[]>(
     token,
-    "events?select=id,slug,name,series,status,registration_state,start_date,end_date,poster_url,updated_at,event_tables(count),entries(count)&order=sort_order.asc",
+    "events?select=id,slug,name,series,sort_order,status,registration_state,start_date,end_date,poster_url,updated_at,event_tables(count),entries(count)&order=sort_order.asc",
   );
 }
 
@@ -62,26 +64,59 @@ export async function getEvent(token: string, slug: string) {
   return event;
 }
 
+/**
+ * The ranked season the admin works on (Teams, Results, the dashboard): the newest season with
+ * squads registered, else the newest season. A new season takes over once squads are brought in.
+ */
+export async function currentSeason(token: string) {
+  const rows = await db<(EventRow & { event_tables: TableRow[]; entries: { count: number }[] })[]>(token, "events?kind=eq.season&select=*,event_tables(id,name,tier,sort,standings(count)),entries(count)&order=sort_order.asc");
+  const season = rows.find((e) => (e.entries[0]?.count ?? 0) > 0) ?? rows[0];
+  season?.event_tables.sort((a, b) => a.sort - b.sort);
+  return season;
+}
+
 export async function slugTaken(token: string, slug: string, exceptId?: string) {
   const rows = await db<{ id: string }[]>(token, `events?slug=eq.${encodeURIComponent(slug)}&select=id`);
   return rows.some((r) => r.id !== exceptId);
 }
 
-/** New events go to the top of the list. */
-export async function nextSortOrder(token: string) {
-  const rows = await db<{ sort_order: number }[]>(token, "events?select=sort_order&order=sort_order.asc&limit=1");
-  return (rows[0]?.sort_order ?? 10) - 10;
+type Placed = { id: string; kind: string; number: number | null; start_date: string | null; sort_order: number };
+
+/**
+ * Where an event belongs in the newest-first list, so adding a past event (say Season 8) never
+ * makes it the latest: seasons go by their number, other events by start date, and an event
+ * with neither goes to the top as the newest.
+ */
+export async function placeFor(token: string, event: { id?: string; kind: string; number: number | null; start_date: string | null }): Promise<number> {
+  const all = (await db<Placed[]>(token, "events?select=id,kind,number,start_date,sort_order&order=sort_order.asc")).filter((e) => e.id !== event.id);
+  const olderThan = (e: Placed) =>
+    event.kind === "season" && e.kind === "season" && event.number !== null && e.number !== null
+      ? e.number < event.number
+      : event.start_date && e.start_date
+        ? e.start_date < event.start_date
+        : undefined;
+  const between = (a?: Placed, b?: Placed) => (!a ? (b ? b.sort_order - 10 : 0) : !b ? a.sort_order + 10 : b.sort_order - a.sort_order >= 2 ? Math.floor((a.sort_order + b.sort_order) / 2) : undefined);
+
+  const comparable = all.map((e, i) => ({ i, older: olderThan(e) })).filter((x) => x.older !== undefined);
+  if (!comparable.length) return between(undefined, all[0])!;
+  const firstOlder = comparable.find((x) => x.older);
+  const at = firstOlder ? firstOlder.i : comparable[comparable.length - 1].i + 1;
+  const sort = between(all[at - 1], all[at]);
+  if (sort !== undefined) return sort;
+  // No room between the two: space every event out again, then place it.
+  for (const [i, e] of all.entries()) await db(token, `events?id=eq.${e.id}`, { method: "PATCH", body: { sort_order: i * 10 } });
+  return placeFor(token, event);
 }
 
 export type EventInput = Omit<EventRow, "id" | "sort_order" | "updated_at">;
 
 export async function createEvent(token: string, input: EventInput) {
-  const sort_order = await nextSortOrder(token);
+  const sort_order = await placeFor(token, input);
   const [row] = await db<EventRow[]>(token, "events", { method: "POST", body: { ...input, sort_order }, prefer: "return=representation" });
   return row;
 }
 
-export async function updateEvent(token: string, id: string, input: Partial<EventInput>) {
+export async function updateEvent(token: string, id: string, input: Partial<EventInput> & { sort_order?: number }) {
   const [row] = await db<EventRow[]>(token, `events?id=eq.${id}`, { method: "PATCH", body: input, prefer: "return=representation" });
   return row;
 }

@@ -488,7 +488,7 @@ a.ad-bar__link:hover {
   font-size: 12.5px;
   color: var(--ad-error) !important;
 }
-.ad input:not([type="radio"], [type="file"]),
+.ad input:not([type="radio"], [type="file"], [type="checkbox"]),
 .ad textarea {
   width: 100%;
   min-height: 44px;
@@ -527,7 +527,7 @@ a.ad-bar__link:hover {
   box-shadow: inset 0 0 0 1px var(--ad-error) !important;
 }
 @media (min-width: 900px) {
-  .ad input:not([type="radio"], [type="file"]),
+  .ad input:not([type="radio"], [type="file"], [type="checkbox"]),
   .ad textarea {
     font-size: 15px;
   }

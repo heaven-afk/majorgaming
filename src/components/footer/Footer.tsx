@@ -1,4 +1,5 @@
-import { footer, registration, site, socials } from "@/content/site";
+import { footer, site, socials } from "@/content/site";
+import { getLeague } from "@/lib/league";
 import { Mark } from "../brand/Mark";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
@@ -11,8 +12,9 @@ const WORDMARK = site.name.split(" ");
  * The bookend to the hero: a final circle opens over the squad at daybreak with a last call to
  * register, then the links, and the full name rising out of the bottom edge.
  */
-export default function Footer() {
+export default async function Footer() {
   const { scene } = footer;
+  const { registration } = await getLeague();
   const primary = registration.open ? registration : { label: "Join the Discord", href: site.discord };
 
   return (

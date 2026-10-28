@@ -11,7 +11,7 @@ export default function NewEventPage() {
       <AdminShell active="Events">
         <header className="ad-head">
           <div>
-            <Link href="/admin" className="ad-back">
+            <Link href="/admin/events" className="ad-back">
               ← Events
             </Link>
             <h1>New event</h1>

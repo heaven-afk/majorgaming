@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import type { FormState } from "@/app/admin/actions";
 import { Icon } from "@/components/Icons";
-import { formatOptions, kindOptions, registrationOptions, statusOptions } from "@/content/admin";
+import { formatOptions, kindOptions, PROMOTION, registrationOptions, statusOptions } from "@/content/admin";
 import type { EventRow } from "@/lib/admin/events";
 
 type Action = (state: FormState, form: FormData) => Promise<FormState>;
@@ -188,7 +188,7 @@ export default function EventForm({ action, event, tiers: initialTiers, saved: s
         </div>
       </Section>
 
-      <Section title="Registration" lede="Drives the register buttons on Home, the Events page and the footer.">
+      <Section title="Registration" lede="Drives every register button on the site (Home, Events, the footer) while this event is Upcoming. With dates set, it opens and closes on them by itself: Opening soon before, Open between, Closed after. Choose Full to stop it early. Without dates, the state you pick here is what shows.">
         <Choice name="registration_state" label="State" options={registrationOptions} value={registration} onChange={setRegistration} />
         <div className="ad-grid">
           <Field name="registration_opens" label="Opens" error={f.registration_opens}>
@@ -283,7 +283,20 @@ export default function EventForm({ action, event, tiers: initialTiers, saved: s
         </fieldset>
       </Section>
 
-      <Section title="Numbers" lede="Optional. Shown on cards and the event page when set.">
+      {kind === "season" && format === "tiers" && (
+        <Section title="Promotion and relegation" lede={`How many squads in each tier move up or down when this season's squads are brought into the next one. ${PROMOTION.promote} and ${PROMOTION.relegate} unless you change it; 0 for none.`}>
+          <div className="ad-grid">
+            <Field name="promote" label="Promoted per tier" hint="The top squads of each tier move up one tier" error={f.promote}>
+              <input id="f-promote" name="promote" inputMode="numeric" defaultValue={event?.promote ?? PROMOTION.promote} {...err("promote")} />
+            </Field>
+            <Field name="relegate" label="Relegated per tier" hint="The bottom squads of each tier move down one tier" error={f.relegate}>
+              <input id="f-relegate" name="relegate" inputMode="numeric" defaultValue={event?.relegate ?? PROMOTION.relegate} {...err("relegate")} />
+            </Field>
+          </div>
+        </Section>
+      )}
+
+      <Section title="Numbers" lede="Optional. Matches show on cards and the event page.">
         <div className="ad-grid ad-grid--3">
           <Field name="matches_played" label="Matches played" error={f.matches_played}>
             <input id="f-matches_played" name="matches_played" inputMode="numeric" defaultValue={event?.matches_played ?? ""} {...err("matches_played")} />

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./admin.css";
+import "./admin-areas.css";
+import "./admin-dashboard.css";
 
 export const metadata: Metadata = {
   title: "Admin · MGL",

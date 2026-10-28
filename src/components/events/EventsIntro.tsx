@@ -1,26 +1,23 @@
-import { eventsPage, registration, site } from "@/content/site";
+import { eventsPage, site } from "@/content/site";
 import { getLeague, type LeagueData } from "@/lib/league";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 
 /** What the "Now" card shows: a live event, open registration, or the break between seasons. */
-function now({ featuredEvent, latestSeason, upcomingEvents }: LeagueData) {
+function now({ featuredEvent, latestSeason, upcomingEvents, registration }: LeagueData) {
   const copy = eventsPage.now;
   if (featuredEvent.status === "live") {
     const progress = featuredEvent.matches ? `Match ${featuredEvent.matches.played} of ${featuredEvent.matches.total} played. ` : "";
     return { state: "live", ...copy.live, title: featuredEvent.name, body: progress + copy.live.body, href: "#standings", external: false };
   }
-  // An announced event leads the card and links to its details.
-  const soon = upcomingEvents[0];
+  // An announced event leads the card and links to its details: the one taking registrations first.
+  const soon = registration.event ?? upcomingEvents[0];
   if (soon) {
     const status = eventsPage.event.registration[soon.registration ?? "closed"];
     return { state: soon.registration === "open" ? "registration" : "offseason", status, title: soon.name, body: soon.summary ?? copy.upcoming.body, cta: copy.upcoming.cta, href: `/events/${soon.slug}`, external: false };
   }
   const next = (latestSeason.number ?? 0) + 1;
-  if (registration.open) {
-    return { state: "registration", ...copy.registration, title: copy.registration.title(next), href: registration.href, external: true };
-  }
   return { state: "offseason", ...copy.offseason, title: copy.offseason.title(next), href: site.discord, external: true };
 }
 

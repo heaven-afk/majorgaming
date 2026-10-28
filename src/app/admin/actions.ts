@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { uploadImage } from "@/lib/admin/cloudinary";
-import { createEvent, deleteEvent, getEvent, recordMedia, slugTaken, syncTables, updateEvent, type EventInput } from "@/lib/admin/events";
+import { createEvent, deleteEvent, getEvent, placeFor, recordMedia, slugTaken, syncTables, updateEvent, type EventInput } from "@/lib/admin/events";
 import { adminOf, clearSession, requireAdmin, storeSession } from "@/lib/admin/session";
 import { COOKIES, DbError, signInWithPassword, signOutSession } from "@/lib/admin/supabase";
 import { cookies } from "next/headers";
@@ -130,6 +130,8 @@ function readEvent(form: FormData) {
     matches_played,
     matches_total,
     kill_table_size: count(form, "kill_table_size", fields, "Kill table size", 1),
+    promote: count(form, "promote", fields, "Promoted"),
+    relegate: count(form, "relegate", fields, "Relegated"),
   };
   return { input, tiers: tiers ?? 1, fields };
 }
@@ -167,6 +169,10 @@ export async function saveEvent(id: string | null, _: FormState, form: FormData)
 
     const row = id ? await updateEvent(admin.token, id, { ...rest, ...posterFields }) : await createEvent(admin.token, { ...rest, ...posterFields });
     if (!row) return { error: "The event wasn't found. It may have been deleted." };
+    // A changed season number or start date can move it in the list.
+    if (current && (current.kind !== row.kind || current.number !== row.number || current.start_date !== row.start_date)) {
+      await updateEvent(admin.token, row.id, { sort_order: await placeFor(admin.token, row) });
+    }
     const synced = await syncTables(admin.token, row.id, input.format, tiers);
     updateTag(TAGS.league);
     if (synced.error) return { error: `Saved, but: ${synced.error}`, fields: { tiers: synced.error } };
@@ -187,5 +193,5 @@ export async function removeEvent(id: string, _: FormState, form: FormData): Pro
     return fail(err);
   }
   updateTag(TAGS.league);
-  redirect("/admin?deleted=1");
+  redirect("/admin/events?deleted=1");
 }

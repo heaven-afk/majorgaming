@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { Fragment } from "react";
 import { getHome } from "@/content/home";
-import { howItWorks, registration, site } from "@/content/site";
+import { howItWorks, site } from "@/content/site";
+import { getLeague } from "@/lib/league";
 import { Mark } from "../brand/Mark";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
@@ -47,6 +48,7 @@ const visuals = [<StepRegister key="r" />, <StepPlacement key="p" />, <StepClimb
 export default async function About() {
   const { about } = await getHome();
   const { image, stats } = about;
+  const { registration } = await getLeague();
   const join = registration.open ? registration : { label: "Join the Discord", href: site.discord };
 
   return (

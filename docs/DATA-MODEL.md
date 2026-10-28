@@ -119,12 +119,12 @@ Done. `src/lib/league.ts` reads the league from Supabase through `src/lib/db.ts`
 
 Owner and editors sign in (Supabase Auth); the public site never writes. The public reads are cached and tagged (`league`, `content` in `src/lib/db.ts`); every save calls `updateTag` on its tag, so changes show within seconds without a redeploy.
 
-**Built so far (2026-10-28):** sign-in and the Events area at `/admin`.
-- Sign-in: email and password against Supabase Auth over plain HTTP (`src/lib/admin/supabase.ts`, no client library). The session is two httpOnly cookies; `src/proxy.ts` refreshes the access token before it expires and sends signed-out visitors on `/admin/*` to `/admin/login`. Only users in `admins` get in (`src/lib/admin/session.ts`); every write goes out with the admin's own token, so row level security decides, not the code.
-- Events: list (status, registration, tables, squads), create, edit, delete (type the name to confirm). The editor covers name, web address, series, number, kind, status, tiers or one table, dates, registration (state, opens, closes, link, note), poster (uploaded to Cloudinary, folder `mgl/events`, and recorded in `media`), summary, description paragraphs, details lines, matches and kill table size. Saving makes the tables match the format (Tier 1 to N, or Overall) and never removes a table that has results.
-- Files: `src/app/admin/` (pages, `actions.ts`, `admin.css`), `src/components/admin/`, `src/lib/admin/`, copy in `src/content/admin.ts`.
-- Adding an admin: the person is created in Supabase (Authentication, Add user), then `insert into admins (user_id, role) select id, 'owner' from auth.users where email = '...';` in the SQL editor.
-- Still to build: registrations and rosters, results and kill uploads, promotion/relegation, teams, people, news, staff, media library. The hero, How MGL works and footer register buttons still read `registration` in `src/content/site.ts`; they move to the event's registration state with the next area.
+**Built (2026-10-28):** every area below except league settings and import, at `/admin`. Details and files in AGENTS.md Status ("Admin"). How it works:
+- Sign-in: Supabase Auth over plain HTTP (`src/lib/admin/supabase.ts`), session in two httpOnly cookies refreshed by `src/proxy.ts`; only users in `admins` get in. Every write uses the admin's own token, so row level security decides.
+- Saving results: standings rows are upserted on (table, entry) and leftovers removed after, kill rows upserted on (event, person) and leftovers in scope (whole event or one tier) removed, so a failure part-way never empties a table. Points are stored exactly as the sheet gives them.
+- Renaming or merging a team or player adds its old name to `aliases`, which sheet matching uses.
+- Squads carried into a new season take their tier from the earlier event's final table and its `promote` / `relegate` numbers; the admin can change any tier before saving.
+- Adding an admin: create the person in Supabase (Authentication, Add user), then `insert into admins (user_id, role) select id, 'owner' from auth.users where email = '...';`.
 
 | Area | What it does |
 |---|---|
