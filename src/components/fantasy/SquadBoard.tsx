@@ -1,0 +1,136 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
+import { fantasy } from "@/content/site";
+import { Crest } from "../about/Crest";
+import { Icon } from "../Icons";
+import { Ticker } from "../motion/Ticker";
+import { useStages } from "../motion/useStages";
+
+const b = fantasy.board;
+/** One stage per points event, a hold on the finished matchday, then a quiet reset. */
+const HOLDS = [1200, ...b.events.map(() => 1500), 2800, 600];
+const DONE = b.events.length;
+const RESET = b.events.length + 1;
+
+/**
+ * A live fantasy squad on a loop: points land on players as their kills and placements come
+ * in, the captain's count double, and the total and rank tick along. Tapping a player makes
+ * them captain, so visitors feel the core decision of the game.
+ */
+export default function SquadBoard() {
+  const { ref, stage } = useStages<HTMLDivElement>(HOLDS, DONE);
+  const [captain, setCaptain] = useState(0);
+
+  const reset = stage === RESET;
+  const applied = reset ? 0 : Math.min(stage, DONE);
+  const base = b.players.map((_, i) => b.events.slice(0, applied).reduce((n, e) => n + (e.player === i ? e.pts : 0), 0));
+  const scored = base.map((pts, i) => pts * (i === captain ? 2 : 1));
+  const total = scored.reduce((a, c) => a + c, 0);
+  const rank = b.startRank - total * 9;
+  const last = applied > 0 && stage <= DONE ? b.events[applied - 1] : null;
+
+  const spent = b.players.reduce((n, p) => n + p.price, 0) + b.sub.price;
+
+  return (
+    <div className="squad" ref={ref} data-reset={reset ? "" : undefined}>
+      <header className="squad__head">
+        <div>
+          <span className="squad__md">
+            <i />
+            {b.matchday} · Live
+          </span>
+          <strong>{b.squadName}</strong>
+        </div>
+        <div className="squad__score">
+          <Ticker value={total} instant={reset} />
+          <small>pts</small>
+        </div>
+      </header>
+
+      <div className="squad__rank">
+        <span>Manager rank</span>
+        <b>
+          #<Ticker value={rank} instant={reset} />
+        </b>
+        {total > 0 && (
+          <span className="squad__up">
+            <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden>
+              <path d="M4 1l3.5 5h-7z" fill="currentColor" />
+            </svg>
+            {(b.startRank - rank).toLocaleString("en-US")}
+          </span>
+        )}
+      </div>
+
+      <ul className="squad__grid">
+        {b.players.map((p, i) => {
+          const isCaptain = i === captain;
+          return (
+            <li key={p.ign}>
+              <button
+                type="button"
+                className="pick"
+                data-captain={isCaptain ? "" : undefined}
+                aria-pressed={isCaptain}
+                aria-label={`${p.ign}, ${p.role}, ${p.team}. ${isCaptain ? "Captain" : "Make captain"}`}
+                onClick={() => setCaptain(i)}
+              >
+                <span className="pick__top">
+                  <span className="pick__photo">
+                    <Image src={p.image} alt="" width={96} height={96} />
+                  </span>
+                  <span className="pick__role">{p.role}</span>
+                  {isCaptain && (
+                    <span className="pick__c" key={`c${i}`}>
+                      C
+                    </span>
+                  )}
+                </span>
+                <strong className="pick__name">{p.ign}</strong>
+                <span className="pick__team">
+                  <Crest name={p.team} size={16} />
+                  <span>{p.team}</span>
+                </span>
+                <span className="pick__foot">
+                  <span className="pick__price">{p.price.toFixed(1)} cr</span>
+                  <span className="pick__pts">
+                    <Ticker value={scored[i]} instant={reset} />
+                    {isCaptain && <em>×2</em>}
+                  </span>
+                </span>
+                {last && last.player === i && (
+                  <span className="pick__pop" key={stage}>
+                    +{last.pts * (isCaptain ? 2 : 1)} · {last.label}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="squad__sub">
+        <span className="squad__sub-tag">Sub</span>
+        <span className="squad__sub-name">
+          {b.sub.ign} · {b.sub.role}
+        </span>
+        <span className="squad__sub-price">{b.sub.price.toFixed(1)} cr</span>
+      </div>
+
+      <div className="squad__budget">
+        <span>Budget</span>
+        <span className="squad__bar">
+          <i style={{ width: `${(spent / b.budget) * 100}%` }} />
+        </span>
+        <span>{(b.budget - spent).toFixed(1)} left</span>
+      </div>
+
+      <p className="squad__hint">
+        <Icon name="crown" size={14} />
+        {b.hint}
+      </p>
+    </div>
+  );
+}

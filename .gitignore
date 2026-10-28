@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files: real keys live only in .env.local; .env.example lists the names
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tools and editors
+.claude/settings.local.json
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.log
+
+# python (scripts/)
+__pycache__/
+*.pyc
+
+# raw data sheets from the owner: imported through scripts/, never committed
+*.xlsx
+*.xls
+
+# supabase cli
+supabase/.temp/
+supabase/.branches/

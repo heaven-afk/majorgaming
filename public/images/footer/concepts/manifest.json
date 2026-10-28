@@ -1,0 +1,48 @@
+[
+  {
+    "title": "We Made It",
+    "characters": [
+      "Scylla",
+      "Alex Mason"
+    ],
+    "desktop": {
+      "slug": "bright-01-made-it-landscape",
+      "title": "We Made It — landscape",
+      "width": 1672,
+      "height": 941,
+      "src": "/images/footer/concepts/bright-01-made-it-landscape.webp",
+      "original": "/images/footer/concepts/bright-01-made-it-landscape.png"
+    },
+    "mobile": {
+      "slug": "bright-01-made-it-portrait",
+      "title": "We Made It — portrait",
+      "width": 1086,
+      "height": 1448,
+      "src": "/images/footer/concepts/bright-01-made-it-portrait.webp",
+      "original": "/images/footer/concepts/bright-01-made-it-portrait.png"
+    }
+  },
+  {
+    "title": "The Next Stage",
+    "characters": [
+      "Scylla",
+      "Alex Mason"
+    ],
+    "desktop": {
+      "slug": "bright-02-next-stage-landscape",
+      "title": "The Next Stage — landscape",
+      "width": 1672,
+      "height": 941,
+      "src": "/images/footer/concepts/bright-02-next-stage-landscape.webp",
+      "original": "/images/footer/concepts/bright-02-next-stage-landscape.png"
+    },
+    "mobile": {
+      "slug": "bright-02-next-stage-portrait",
+      "title": "The Next Stage — portrait",
+      "width": 1086,
+      "height": 1448,
+      "src": "/images/footer/concepts/bright-02-next-stage-portrait.webp",
+      "original": "/images/footer/concepts/bright-02-next-stage-portrait.png"
+    }
+  }
+]
