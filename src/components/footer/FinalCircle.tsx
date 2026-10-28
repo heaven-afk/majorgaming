@@ -109,7 +109,13 @@ export default function FinalCircle({ image, circle, arrived, children }: Props)
       <div className="zone__storm" aria-hidden>
         {art("zone__art", "")}
       </div>
-      <div className="zone__scene">{art("zone__art zone__img", image.alt)}</div>
+      <div className="zone__scene">
+        {/* Phones: a soft, blurred copy of the scene carries it down to the bottom of the panel. */}
+        <span className="zone__glow" aria-hidden>
+          {art("zone__art", "")}
+        </span>
+        {art("zone__art zone__img", image.alt)}
+      </div>
       <span className="zone__scrim" aria-hidden />
       <span className="zone__ring" aria-hidden />
       <span className="zone__chip" aria-hidden>

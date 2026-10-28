@@ -1,17 +1,17 @@
 /**
- * The one place pages read MGL's records from. Today the records are files in `src/data/`;
- * once the one-time import and the admin exist, only this module changes to query the
- * database, and every page keeps working.
+ * The one place pages read MGL's records from. League records (events, tables, teams, people,
+ * registrations, kills) and news come from Supabase through `db.ts`, read once per build.
+ * Server only: browser components import types from here, never values.
  */
 
-import { additionalCommunityAvatars, communityAvatars } from "@/content/visual-assets";
-import { events as eventRecords, league } from "@/data/events";
-import { KILL_TABLE_SIZE, kills as killRecords } from "@/data/kills";
-import { stories as storyRecords } from "@/data/news";
-import { entries, people, teams as teamRecords } from "@/data/teams";
+import { additionalCommunityAvatars, communityAvatars, communityAvatarsSetThree, referenceBasedCommunityAvatars } from "@/content/visual-assets";
 import type { EventRecord, KillRecord, PersonRecord, StoryRecord, TableRecord, TeamRecord } from "@/data/types";
+import { loadContent, loadLeague } from "./db";
 
-export { league };
+const [{ events: eventRecords, teams: teamRecords, people, entries, kills: killRecords }, { stories: storyRecords }] = await Promise.all([loadLeague(), loadContent()]);
+
+/** How many players a kill table shows, unless the event sets its own. */
+const KILL_TABLE_SIZE = 20;
 export type { StoryRecord as Story, TeamRecord as Team };
 
 /** A standings row with its team resolved and its total added. */
@@ -30,7 +30,8 @@ export type Row = {
 /** A table sorted by total points. */
 export type Table = { name: string; short: string; tier?: number; rows: Row[] };
 
-export type LeagueEvent = Omit<EventRecord, "tables"> & { tables: Table[]; squads: number; champion: Row };
+/** `champion` is the top of the first table; events still to come have no tables, so no champion. */
+export type LeagueEvent = Omit<EventRecord, "tables"> & { tables: Table[]; squads: number; champion?: Row };
 
 const teamMap = new Map(teamRecords.map((t) => [t.slug, t]));
 
@@ -54,7 +55,7 @@ export const events: LeagueEvent[] = eventRecords
     const tables = e.tables.map(rank);
     // Registered squads: some events only published their top squads' points.
     const registered = entries.filter((r) => r.event === e.slug).length;
-    return { ...e, tables, squads: Math.max(registered, tables.reduce((n, t) => n + t.rows.length, 0)), champion: tables[0].rows[0] };
+    return { ...e, tables, squads: Math.max(registered, tables.reduce((n, t) => n + t.rows.length, 0)), champion: tables[0]?.rows[0] };
   });
 
 export function eventBySlug(slug: string) {
@@ -63,6 +64,9 @@ export function eventBySlug(slug: string) {
 
 /** The event Home and the Events page lead with: the live one, otherwise the newest finished. */
 export const featuredEvent = events.find((e) => e.status === "live") ?? events.find((e) => e.status === "final") ?? events[0];
+
+/** Events announced but not started, soonest first. */
+export const upcomingEvents = events.filter((e) => e.status === "upcoming").reverse();
 
 /** The newest finished MGL Season: names the honours and the next season to register for. */
 export const latestSeason = events.find((e) => e.series === "MGL Season" && e.status === "final") ?? featuredEvent;
@@ -141,8 +145,8 @@ export function teamBySlug(slug: string) {
   return teamMap.get(slug);
 }
 
-/** Players without a photo get one of the character avatars, picked from their slug so it never changes. */
-const AVATARS = [...communityAvatars, ...additionalCommunityAvatars].map((a) => a.src);
+/** Players without a photo get one of the 40 character avatars, picked from their slug so it never changes. */
+const AVATARS = [...communityAvatars, ...additionalCommunityAvatars, ...communityAvatarsSetThree, ...referenceBasedCommunityAvatars].map((a) => a.src);
 const avatarOf = (slug: string) => AVATARS[[...slug].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % AVATARS.length];
 
 const personMap = new Map(people.map((p): [string, PersonRecord] => [p.slug, { ...p, photo: p.photo ?? avatarOf(p.slug) }]));

@@ -1,5 +1,5 @@
 import type { Row } from "@/lib/league";
-import { standings } from "@/content/site";
+import { ladder } from "@/content/site";
 import { Crest } from "../about/Crest";
 import { Odometer } from "../about/Odometer";
 
@@ -33,7 +33,7 @@ type Props = {
  */
 export function Ladder({ rows, live = false, limit, label, motion = "scroll" }: Props) {
   const shown = limit ? rows.slice(0, limit) : rows;
-  const { columns } = standings;
+  const { columns } = ladder;
 
   const row = (r: (typeof rows)[number], i: number) => (
     <div
@@ -54,7 +54,7 @@ export function Ladder({ rows, live = false, limit, label, motion = "scroll" }: 
             <a className="ladder__link" href={`/teams/${r.slug}`}>
               {r.name}
             </a>
-            {i === 0 && <span className="ladder__tag">{live ? standings.leader.live : standings.leader.final}</span>}
+            {i === 0 && <span className="ladder__tag">{live ? ladder.leader.live : ladder.leader.final}</span>}
           </span>
           <small>
             {r.placement} place · {r.kills} kill

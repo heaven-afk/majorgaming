@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { honours } from "@/content/site";
+import { honours } from "@/content/home";
 import { Crest } from "../about/Crest";
 import { Odometer } from "../about/Odometer";
 import { Mark } from "../brand/Mark";

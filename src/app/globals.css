@@ -2871,24 +2871,45 @@ body {
   position: absolute;
   inset: 0;
 }
-/* Phones: the tall artwork fills the top of the panel and melts into the dark under the copy */
+/* The artwork covers the panel, cropped (never stretched) */
 .zone__art {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: var(--art);
+  height: 100%;
   object-fit: cover;
+  object-position: 43% 40%;
+}
+/* Phones: the sharp artwork fills the top and melts into a soft glow of itself under the copy */
+.zone__img {
+  height: var(--art);
   object-position: 40% 100%;
-  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent);
-  mask-image: linear-gradient(180deg, #000 70%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, #000 68%, transparent);
+  mask-image: linear-gradient(180deg, #000 68%, transparent);
+}
+.zone__glow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.zone__glow .zone__art {
+  object-position: 40% 100%;
+  filter: blur(26px) saturate(1.15) brightness(0.85);
+  transform: scale(1.25);
 }
 @media (min-width: 900px) {
   .zone__art {
+    object-position: 25% 50%;
+  }
+  .zone__img {
     height: 100%;
     object-position: 25% 50%;
     -webkit-mask-image: none;
     mask-image: none;
+  }
+  .zone__glow {
+    display: none;
   }
 }
 .zone__storm {

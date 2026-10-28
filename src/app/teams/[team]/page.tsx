@@ -10,6 +10,7 @@ import { Icon } from "@/components/Icons";
 import Scene from "@/components/motion/Scene";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import Nav from "@/components/Nav";
+import "../teams.css";
 import { TeamCard } from "@/components/teams/TeamCard";
 import { teamsPage } from "@/content/teams";
 import { activeTeams, eventsOf, latestEntryOf, teamBySlug, teams } from "@/lib/league";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: PageProps<"/teams/[team]">): 
 }
 
 /**
- * One squad: who they are, their roster and manager, the events they
+ * One squad: who they are (tier, players, events played, and the manager once there is one), their roster, the events they
  * have played, and other squads in their tier. A profile, not a results page: placings stay on
  * the Events page. The team streams in behind a placeholder prebuilt teams never show.
  */
@@ -103,7 +104,6 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
   const copy = teamsPage.team;
   const played = eventsOf(team.slug);
   const entry = latestEntryOf(team.slug);
-  const captain = entry?.roster.find((m) => m.captain);
   const size = entry?.roster.length ?? 0;
   const tier = entry?.tier;
   const others = activeTeams.filter((t) => t.slug !== team.slug && t.tier === tier).slice(0, 6);
@@ -131,7 +131,7 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
             </p>
           </div>
         </div>
-        <dl className="ev-facts" data-rise="2">
+        <dl className="tm-facts" data-rise="2" style={{ "--n": entry?.manager ? 4 : 3 } as React.CSSProperties}>
           <div>
             <dt>{copy.facts.tier}</dt>
             <dd>{teamsPage.tier(tier)}</dd>
@@ -144,10 +144,15 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
             <dt>{copy.facts.events}</dt>
             <dd>{played.length}</dd>
           </div>
-          <div>
-            <dt>{copy.facts.since}</dt>
-            <dd className="tm-hero__since">{played.at(-1)?.event.name ?? "–"}</dd>
-          </div>
+          {entry?.manager && (
+            <div className="tm-facts__manager">
+              <dt>{copy.facts.manager}</dt>
+              <dd>
+                <Crest name={entry.manager.name} size={28} tone={4} />
+                <span>{entry.manager.name}</span>
+              </dd>
+            </div>
+          )}
         </dl>
       </Scene>
 
@@ -174,37 +179,6 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
             ))}
           </ul>
 
-          {(entry.manager || captain || team.clan || team.tag) && (
-          <dl className="tm-staff" data-rise="1">
-            {entry.manager && (
-              <div>
-                <dt>{copy.staff.manager}</dt>
-                <dd>
-                  <Crest name={entry.manager.name} size={26} tone={4} />
-                  {entry.manager.name}
-                </dd>
-              </div>
-            )}
-            {captain && (
-              <div>
-                <dt>{copy.staff.captain}</dt>
-                <dd>{captain.person.name}</dd>
-              </div>
-            )}
-            {team.clan && (
-              <div>
-                <dt>{copy.staff.clan}</dt>
-                <dd>{team.clan}</dd>
-              </div>
-            )}
-            {team.tag && (
-              <div>
-                <dt>{copy.staff.tag}</dt>
-                <dd>{team.tag}</dd>
-              </div>
-            )}
-          </dl>
-          )}
         </Scene>
       )}
 

@@ -14,7 +14,10 @@ import type { EventRecord, EventResults, LeagueRecord } from "./types";
 
 export const league: LeagueRecord = { tiers: 5, squadsPerTier: 25 };
 
-type Event = Omit<EventRecord, "tables" | "matches"> & { results: EventResults };
+/** Events still to come have no results yet. */
+type Event = Omit<EventRecord, "tables" | "matches"> & { results?: EventResults };
+
+const none: EventResults = { tables: [], entries: [], kills: [] };
 
 const records: Event[] = [
   { slug: "season-10", name: "Season 10", series: "MGL Season", number: 10, status: "final", results: season10 },
@@ -24,11 +27,11 @@ const records: Event[] = [
   { slug: "season-9", name: "Season 9", series: "MGL Season", number: 9, status: "final", results: season9 },
 ];
 
-export const events: EventRecord[] = records.map(({ results, ...e }) => ({
+export const events: EventRecord[] = records.map(({ results = none, ...e }) => ({
   ...e,
   tables: results.tables,
   ...(results.matches ? { matches: { played: results.matches, total: results.matches } } : {}),
 }));
 
 /** Every event's results, by event slug, for the registrations and kill rows. */
-export const results = records.map((e) => ({ event: e.slug, ...e.results }));
+export const results = records.map((e) => ({ event: e.slug, ...(e.results ?? none) }));

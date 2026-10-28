@@ -23,8 +23,20 @@ export type EventRecord = {
   /** Its number within the series, when it has one. */
   number?: number;
   status: EventStatus;
-  /** ISO date the event started, when known. Events sort newest first. */
+  /** ISO dates (YYYY-MM-DD), each shown only once it is set. Events sort newest first by start date. */
+  registrationOpens?: string;
+  registrationCloses?: string;
   startDate?: string;
+  endDate?: string;
+  /** Where registration stands, for events still to come. */
+  registration?: "soon" | "open" | "closed" | "full";
+  /** Featured poster, portrait or landscape; uploaded in the admin. */
+  poster?: { src: string; alt: string; width: number; height: number };
+  /** A short line for cards, then the event's write-up as paragraphs. */
+  summary?: string;
+  description?: string[];
+  /** Any other facts the admins add, in order, e.g. { label: "Prize pool", value: "$1,000" }. */
+  details?: { label: string; value: string }[];
   /** Matches played and scheduled, when known. */
   matches?: { played: number; total: number };
   /** One table per tier (or a single table for events without tiers). */

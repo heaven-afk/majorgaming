@@ -1,0 +1,220 @@
+/* Events: event details and cards for events still to come. Imported by the Events pages. */
+
+/* Event details: poster, write-up, key dates and other facts, each shown once set */
+.ev-season__dates dd {
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+@media (min-width: 700px) {
+  .ev-season__dates dd {
+    font-size: 20px;
+  }
+}
+.ev-about {
+  display: grid;
+  gap: 28px;
+  padding: 18px;
+}
+@media (min-width: 900px) {
+  .ev-about {
+    padding: 30px 34px;
+  }
+  .ev-about[data-poster] {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 44px;
+    padding: 18px 34px 18px 18px;
+  }
+  .ev-about[data-poster] .ev-about__body {
+    padding: 12px 0;
+  }
+}
+.ev-about__poster {
+  margin: 0;
+  overflow: hidden;
+  border-radius: calc(var(--radius) - 6px);
+  background: #121212;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+.ev-about__poster img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ev-about__body {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+.ev-about__body header .sec-title {
+  margin-top: 14px;
+}
+.ev-about__text {
+  display: grid;
+  gap: 14px;
+  max-width: 62ch;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: rgb(244 242 238 / 0.68);
+}
+.ev-about__summary {
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: #f4f2ee;
+}
+.ev-about__dates h3 {
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgb(244 242 238 / 0.45);
+}
+.ev-about__dates ol {
+  display: grid;
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+}
+.ev-about__dates li {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0 14px 22px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  font-size: 14.5px;
+  color: rgb(244 242 238 / 0.7);
+}
+/* A small amber dot on a quiet line joining the dates */
+.ev-about__dates li::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-amber);
+  transform: translateY(-50%);
+}
+.ev-about__dates li + li::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: 5px;
+  width: 1px;
+  height: 100%;
+  background: rgb(249 180 80 / 0.25);
+}
+.ev-about__dates time {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #f4f2ee;
+  white-space: nowrap;
+}
+@media (min-width: 700px) {
+  .ev-about__dates ol {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    grid-auto-flow: column;
+    border-top: 0;
+  }
+  .ev-about__dates li {
+    flex-direction: column-reverse;
+    gap: 4px;
+    padding: 22px 12px 0 0;
+    border-bottom: 0;
+    border-top: 1px solid rgb(249 180 80 / 0.25);
+  }
+  .ev-about__dates li::before {
+    top: -4px;
+    left: 0;
+    transform: none;
+  }
+  .ev-about__dates li + li::after {
+    display: none;
+  }
+  .ev-about__dates time {
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+}
+.ev-about__details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 700px) {
+  .ev-about__details {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.ev-about__details > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.035);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+.ev-about__details dt {
+  font-size: 12px;
+  color: rgb(244 242 238 / 0.45);
+}
+.ev-about__details dd {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.ev-about__cta {
+  align-self: flex-start;
+}
+/* An announced event with nothing posted yet */
+.ev-empty {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: 28px 18px;
+}
+@media (min-width: 900px) {
+  .ev-empty {
+    padding: 40px 34px;
+  }
+}
+.ev-empty p {
+  max-width: 52ch;
+  color: rgb(244 242 238 / 0.6);
+}
+.ev-empty .btn-ghost {
+  margin-top: 8px;
+}
+/* Cards for events still to come: poster on top, a line about the event */
+.ev-card__poster {
+  display: block;
+  margin: -8px -8px 0;
+  overflow: hidden;
+  border-radius: calc(var(--radius) - 8px);
+  aspect-ratio: 16 / 9;
+  background: #121212;
+}
+.ev-card__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s var(--ease-out);
+}
+.ev-card:hover .ev-card__poster img {
+  transform: scale(1.03);
+}
+.ev-card__summary {
+  max-width: 48ch;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgb(244 242 238 / 0.6);
+}
+.ev-card[data-upcoming] .ev-card__meta {
+  margin-top: auto;
+}
+.ev-upcoming .ev-archive__head {
+  padding-top: 40px;
+}

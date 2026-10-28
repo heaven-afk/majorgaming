@@ -1,9 +1,12 @@
 /**
- * The one reader of staff records. Pages and components ask here, never `src/data/staff.ts`,
- * so moving staff into the database (and the admin) only changes this file.
+ * The one reader of staff records, from Supabase (`site_content()`, through `db.ts`), read once
+ * per build. Server only.
  */
 
-import { staff as records, type StaffGroup, type StaffRecord } from "@/data/staff";
+import type { StaffGroup, StaffRecord } from "@/data/staff";
+import { loadContent } from "./db";
+
+const { staff: records } = await loadContent();
 
 export type { StaffGroup };
 export type StaffMember = StaffRecord;

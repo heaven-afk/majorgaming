@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import EventArchive from "@/components/events/EventArchive";
+import EventArchive, { UpcomingEvents } from "@/components/events/EventArchive";
 import EventStandings from "@/components/events/EventStandings";
 import EventsIntro from "@/components/events/EventsIntro";
 import Footer from "@/components/footer/Footer";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import Nav from "@/components/Nav";
+import "./events.css";
 import { featuredEvent } from "@/lib/league";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function EventsPage() {
       <Nav />
       <main>
         <EventsIntro />
+        <UpcomingEvents />
         <EventStandings event={featuredEvent} link />
         <EventArchive />
       </main>

@@ -1,5 +1,5 @@
 import { featuredEvent } from "@/lib/league";
-import { standings } from "@/content/site";
+import { standings } from "@/content/home";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 import { Ladder } from "./Ladder";

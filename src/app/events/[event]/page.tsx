@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Crest } from "@/components/about/Crest";
+import EventAbout, { hasAbout } from "@/components/events/EventAbout";
 import { EventCard } from "@/components/events/EventArchive";
 import EventStandings from "@/components/events/EventStandings";
 import KillTable from "@/components/events/KillTable";
@@ -11,7 +12,9 @@ import { Icon } from "@/components/Icons";
 import Scene from "@/components/motion/Scene";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import Nav from "@/components/Nav";
-import { eventsPage } from "@/content/site";
+import "../events.css";
+import { eventsPage, site } from "@/content/site";
+import { dateRange } from "@/lib/dates";
 import { eventBySlug, events, killTablesOf } from "@/lib/league";
 
 export function generateStaticParams() {
@@ -23,12 +26,12 @@ export async function generateMetadata({ params }: PageProps<"/events/[event]">)
   if (!event) return {};
   return {
     title: `${event.name} · Events · MGL`,
-    description: `${event.name} standings: ${event.tables.map((t) => t.name).join(", ")}.`,
+    description: event.summary ?? (event.tables.length ? `${event.name} standings: ${event.tables.map((t) => t.name).join(", ")}.` : `${event.name}: dates, format and registration.`),
   };
 }
 
 /**
- * One event: its headline facts, every table in full, its top fraggers, and the events either side. The nav and
+ * One event: its headline facts, what to know (poster, write-up, dates) once set, every table in full, its top fraggers, and the events either side. The nav and
  * footer render at once; the event streams in behind a quiet placeholder, which prebuilt
  * events never need to show.
  */
@@ -63,11 +66,14 @@ async function EventContent({ params }: { params: PageProps<"/events/[event]">["
 
   const copy = eventsPage.event;
   const live = event.status === "live";
+  const upcoming = event.status === "upcoming";
   const many = event.tables.length > 1;
   const tiered = event.tables.every((t) => t.tier);
+  const dates = dateRange(event.startDate, event.endDate);
   const at = events.indexOf(event);
   const newer = events[at - 1];
   const older = events[at + 1];
+  const title = upcoming ? copy.upcoming[event.registration ?? "closed"] : live ? copy.title.live : many ? copy.title.final.many : copy.title.final.one;
 
   return (
     <>
@@ -78,25 +84,42 @@ async function EventContent({ params }: { params: PageProps<"/events/[event]">["
             {copy.back}
           </Link>
           <h1 className="ev-intro__title" id="event-title">
-            {event.name}, <em>{live ? copy.title.live : many ? copy.title.final.many : copy.title.final.one}</em>
+            {event.name}, <em>{title}</em>
           </h1>
         </div>
         <dl className="ev-facts ev-season__facts" data-rise="1">
-          <div className="ev-season__champ">
-            <dt>{live ? copy.facts.leader : copy.facts.champions}</dt>
-            <dd>
-              <Crest name={event.champion.name} size={30} tone={0} />
-              <a href={`/teams/${event.champion.slug}`}>{event.champion.name}</a>
-            </dd>
-          </div>
-          <div>
-            <dt>{copy.facts.squads}</dt>
-            <dd>{event.squads}</dd>
-          </div>
-          <div>
-            <dt>{tiered ? copy.facts.tiers : copy.facts.tables}</dt>
-            <dd>{event.tables.length}</dd>
-          </div>
+          {event.champion ? (
+            <div className="ev-season__champ">
+              <dt>{live ? copy.facts.leader : copy.facts.champions}</dt>
+              <dd>
+                <Crest name={event.champion.name} size={30} tone={0} />
+                <Link href={`/teams/${event.champion.slug}`}>{event.champion.name}</Link>
+              </dd>
+            </div>
+          ) : (
+            <div className="ev-season__champ">
+              <dt>{copy.facts.registration}</dt>
+              <dd>{copy.registration[event.registration ?? "closed"]}</dd>
+            </div>
+          )}
+          {dates && (
+            <div className="ev-season__dates">
+              <dt>{copy.facts.dates}</dt>
+              <dd>{dates}</dd>
+            </div>
+          )}
+          {event.squads > 0 && (
+            <div>
+              <dt>{copy.facts.squads}</dt>
+              <dd>{event.squads}</dd>
+            </div>
+          )}
+          {event.tables.length > 0 && (
+            <div>
+              <dt>{tiered ? copy.facts.tiers : copy.facts.tables}</dt>
+              <dd>{event.tables.length}</dd>
+            </div>
+          )}
           {event.matches && (
             <div>
               <dt>{copy.facts.matches}</dt>
@@ -106,9 +129,29 @@ async function EventContent({ params }: { params: PageProps<"/events/[event]">["
         </dl>
       </Scene>
 
-      <EventStandings event={event} expanded heading={many ? copy.tables.many : copy.tables.one} />
+      {hasAbout(event) ? (
+        <EventAbout event={event} />
+      ) : (
+        upcoming && (
+          <Scene className="tile ev-empty" aria-labelledby="empty-title">
+            <h2 className="sec-title" id="empty-title" data-rise>
+              {copy.empty.title}
+            </h2>
+            <p data-rise="1">{copy.empty.body}</p>
+            <a className="btn-ghost" href={site.discord} target="_blank" rel="noreferrer" data-rise="2">
+              {copy.about.discord}
+              <Icon name="arrow" size={16} />
+            </a>
+          </Scene>
+        )
+      )}
 
-      <KillTable event={event.name} tables={killTablesOf(event)} />
+      {event.tables.length > 0 && (
+        <>
+          <EventStandings event={event} expanded heading={many ? copy.tables.many : copy.tables.one} />
+          <KillTable event={event.name} tables={killTablesOf(event)} />
+        </>
+      )}
 
       {(newer || older) && (
         <Scene className="ev-pager" aria-labelledby="more-events">

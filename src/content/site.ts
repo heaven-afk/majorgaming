@@ -1,6 +1,3 @@
-import { events, featuredEvent, killTablesOf, latestSeason, league } from "@/lib/league";
-
-const { tiers: TIERS, squadsPerTier: SQUADS_PER_TIER } = league;
 import { additionalCommunityAvatars, communityAvatars, heroImages } from "./visual-assets";
 
 // Each section shows its own characters, so the same four faces don't repeat down the page.
@@ -9,7 +6,15 @@ const [mantaRay, urbanTracker, nikto, krueger] = additionalCommunityAvatars;
 
 /**
  * All copy, links and images for the site. SAMPLE content: replace with real MGL details.
+ *
+ * This file holds no league data, so components in the browser can read it without pulling in
+ * the database. Copy built from the data (Home's standings, honours and season count) is in
+ * `home.ts`.
  */
+
+/** How MGL runs today. Used in copy; the admin's league settings will replace it. */
+export const league = { tiers: 5, squadsPerTier: 25 };
+const { tiers: TIERS, squadsPerTier: SQUADS_PER_TIER } = league;
 
 export const site = {
   name: "Major Gaming League",
@@ -37,7 +42,7 @@ export const socials = [
 export const cta = { label: "Join the Discord", href: site.discord };
 
 /** Registration happens on Discord. While open, the hero button asks squads to register. */
-export const registration = { open: true, label: "Register your squad", href: site.discord };
+export const registration = { open: false, label: "Register your squad", href: site.discord };
 
 export const hero = {
   community: {
@@ -69,32 +74,6 @@ export const hero = {
 };
 
 /** About MGL. Statement tokens: plain text, an inline image chip, or the italic accent. */
-export const about = {
-  label: "About MGL",
-  meta: "Ranked CODM BR · AF region",
-  statement: [
-    { text: "MGL is where Africa’s best" },
-    { chip: "avatars", avatars: [mantaRay, nikto, krueger] },
-    { text: "Call of Duty: Mobile squads get ranked. Structured tiers, verified results and seasons where every match" },
-    { chip: "image", src: "/images/about/island-chip.webp" },
-    { text: "counts. Reach the top here, and everyone knows you" },
-    { accent: "earned it." },
-  ],
-  image: {
-    src: "/images/about/squad.webp",
-    alt: "A four-person squad standing ready on the airfield at sunset",
-    caption: "Ranked by MGL",
-    sub: "Every match counts",
-  },
-  /** SAMPLE numbers: replace with real figures. */
-  stats: [
-    { value: latestSeason.number ?? events.length, suffix: "", label: "Ranked seasons", icon: "trophy" },
-    { value: 480, suffix: "+", label: "Squads ranked", icon: "squad" },
-    { value: 1200, suffix: "+", label: "Matches played", icon: "crosshair" },
-    { value: 2000, suffix: "+", label: "Players in the community", icon: "discord" },
-  ],
-} as const;
-
 export const howItWorks = {
   label: "How MGL works",
   title: { before: "Three steps to the", accent: "top." },
@@ -169,56 +148,11 @@ export const howItWorks = {
   },
 } as const;
 
-/**
- * Tier 1 standings on Home: the live season while one is running, otherwise the latest final
- * table. Rows come from `src/data/events.ts`, read through `src/lib/league.ts`.
- */
-export const standings = {
-  live: featuredEvent.status === "live",
-  label: `${featuredEvent.tables[0].name} standings`,
-  season: featuredEvent.name,
-  title: {
-    final: { before: `${featuredEvent.name}’s`, accent: "top ten." },
-    live: { before: `${featuredEvent.name},`, accent: "live." },
-  },
-  stage: featuredEvent.matches
-    ? featuredEvent.status === "live"
-      ? `Match ${featuredEvent.matches.played} of ${featuredEvent.matches.total}`
-      : `Final standings · ${featuredEvent.matches.total} matches`
-    : featuredEvent.status === "live"
-      ? "Live standings"
-      : "Final standings",
+/** Copy for every standings table (Home and Events). */
+export const ladder = {
   columns: { placement: "Placement pts", kills: "Kill pts", total: "Total" },
   /** Tag beside the first-placed team. */
   leader: { final: "Champions", live: "Leading" },
-  more: { label: "Full standings", href: "/events#standings" },
-};
-
-/**
- * Last season's three top fraggers in Tier 1, from its kill sheet. Portraits are decorative
- * in-game operators until players have photos; flags show once players have countries.
- */
-const OPERATORS = ["/images/players/ghost.webp", "/images/players/captain-price.webp", "/images/players/soap.webp"];
-const HONOURS = ["Top fragger", "Runner-up", "Third place"];
-const fraggers = killTablesOf(latestSeason)[0]?.rows.slice(0, 3) ?? [];
-
-export const honours = {
-  label: `${latestSeason.name} honours`,
-  title: { before: `${latestSeason.name}’s`, accent: "finest." },
-  lede: `The three deadliest players in ${latestSeason.tables[0].name}, by kills across the season.`,
-  players: fraggers.map((p, i) => ({
-    rank: i + 1,
-    name: p.name,
-    team: p.team.name,
-    country: p.country,
-    honour: HONOURS[i],
-    image: OPERATORS[i],
-    stats: [
-      { label: "Kills", value: p.kills },
-      { label: "Matches", value: p.matches ?? 0 },
-      { label: "Kills / match", value: p.matches ? Math.round((p.kills / p.matches) * 10) / 10 : 0 },
-    ],
-  })),
 };
 
 /**
@@ -351,13 +285,7 @@ export const footer = {
 export const eventsPage = {
   label: "Events",
   title: { before: "Seasons and", accent: "special events." },
-  lede: `MGL runs ranked Battle Royale in ${TIERS} tiers of ${SQUADS_PER_TIER} squads, plus special events.`,
-  facts: [
-    { value: String(TIERS), label: "Tiers" },
-    { value: String(SQUADS_PER_TIER), label: "Squads a tier" },
-    { value: String(events.filter((e) => e.status === "final").length), label: "Events on record" },
-    { value: String(events.reduce((n, e) => n + e.tables.length, 0)), label: "Final tables" },
-  ],
+  lede: `MGL runs ranked Battle Royale seasons in ${TIERS} tiers of ${SQUADS_PER_TIER} squads, plus special events like the Mixed Event and partner events with Carry1st. Every event's final tables and top fraggers are kept here, event by event.`,
   /** The "Now" card. Which state shows follows the data: a live event, open registration, or the break. */
   now: {
     label: "Now",
@@ -368,6 +296,7 @@ export const eventsPage = {
       body: `Registration is open on the MGL Discord. Squads are placed into ${TIERS} tiers of ${SQUADS_PER_TIER} before the first match day.`,
       cta: "Register your squad",
     },
+    upcoming: { body: "Dates, format and how to register are on the event page.", cta: "Event details" },
     offseason: {
       status: "Between seasons",
       title: (n: number) => `Season ${n}`,
@@ -389,13 +318,33 @@ export const eventsPage = {
     latest: "Latest",
     champions: (table: string) => `${table} champions`,
     open: "View tables",
+    details: "View details",
+  },
+  upcoming: {
+    label: "Coming up",
+    title: { before: "Coming", accent: "up." },
+    lede: "Announced events. Open one for its dates, format and how to register.",
   },
   event: {
     back: "All events",
     /** Heading over the tables on an event page, where the event is already named above. */
     tables: { many: { before: "Table by", accent: "table." }, one: { before: "The final", accent: "table." } },
     title: { final: { many: "final tables.", one: "final table." }, live: "live standings." },
-    facts: { champions: "Champions", leader: "Leading", squads: "Squads", tables: "Tables", tiers: "Tiers", matches: "Matches" },
+    facts: { champions: "Champions", leader: "Leading", squads: "Squads", tables: "Tables", tiers: "Tiers", matches: "Matches", registration: "Registration", dates: "Dates" },
+    /** Titles for events still to come, by where registration stands. */
+    upcoming: { soon: "registration soon.", open: "registration open.", closed: "coming soon.", full: "coming soon." },
+    registration: { soon: "Registration soon", open: "Registration open", closed: "Registration closed", full: "Tiers full" },
+    /** The event's poster, write-up, key dates and other details; each part shows only once it is set. */
+    about: {
+      label: "The event",
+      title: { before: "What to", accent: "know." },
+      dates: "Key dates",
+      steps: { registrationOpens: "Registration opens", registrationCloses: "Registration closes", startDate: "Event begins", endDate: "Event ends" },
+      register: "Register your squad",
+      discord: "Join the Discord",
+    },
+    /** Shown on an announced event before any details are in. */
+    empty: { title: "Details coming soon.", body: "Dates, format and registration will be posted here and on the MGL Discord." },
     more: "More events",
     newer: "Newer",
     older: "Older",

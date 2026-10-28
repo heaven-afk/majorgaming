@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Fragment } from "react";
-import { about, howItWorks, registration, site } from "@/content/site";
+import { about } from "@/content/home";
+import { howItWorks, registration, site } from "@/content/site";
 import { Mark } from "../brand/Mark";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";

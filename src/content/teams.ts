@@ -24,7 +24,7 @@ export const teamsPage = {
   },
   team: {
     back: "All teams",
-    facts: { tier: "Tier", players: "Players", events: "Events played", since: "First event on record" },
+    facts: { tier: "Tier", players: "Players", events: "Events played", manager: "Manager" },
     roster: {
       label: "Roster",
       title: { before: "The", accent: "roster." },
@@ -34,7 +34,6 @@ export const teamsPage = {
       ign: (ign: string) => `IGN ${ign}`,
       for: (event: string) => `Registered for ${event}`,
     },
-    staff: { manager: "Manager", captain: "Captain", clan: "Clan", tag: "Team tag" },
     history: {
       label: "Events",
       title: { before: "Where they’ve", accent: "played." },

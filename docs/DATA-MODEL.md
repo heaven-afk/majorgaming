@@ -2,7 +2,7 @@
 
 How MGL's league data fits together, how it moves from the hardcoded files into a database once, and how the admin dashboard manages it after that.
 
-Status: proposal, written 2026-10-28, still under discussion. The owner has created a Supabase project (keys in the git-ignored `.env.local`), but no schema or migration is applied until this model and the admin dashboard are agreed. Nothing here changes the Fantasy rules in AGENTS.md section 5: fantasy data stays with the partner.
+Status: **applied, 2026-10-28.** The schema is `supabase/migrations/20261028120000_league.sql`, run in the Supabase SQL editor on project `wrcfcsrhaesvtmsqjnfw`. All four events, 215 teams, 860 people, 286 registrations, 866 roster places, 270 standings rows, 966 kill rows, 6 news stories and 13 staff were imported with `scripts/import-league.mjs` and checked against the files they came from. The site reads the league from the database (`src/lib/db.ts`). Nothing here changes the Fantasy rules in AGENTS.md section 5: fantasy data stays with the partner.
 
 ---
 
@@ -12,29 +12,31 @@ Everything connects through **registrations**. A team registers for an event wit
 
 ---
 
-## 2. Entities
+## 2. Tables (as built)
 
 | Table | One row is | Key fields |
 |---|---|---|
-| `league_settings` | how MGL runs today (single row) | tiers, squads_per_tier, discord_url |
-| `teams` | a squad, kept once forever | slug, name, tag, clan, country, logo, archived_at |
-| `people` | a player or manager, kept once forever | slug, ign, country, photo, archived_at |
-| `events` | a season, mixed event, partner event… | slug, name, series, number, status (upcoming / live / final), start_date, matches_played, matches_total, registration (see section 5a) |
+| `teams` | a squad, kept once forever | slug, name, tag, clan, logo_url, archived_at |
+| `people` | a player or manager, kept once forever | slug, name (professional), ign, country, photo_url, archived_at |
+| `aliases` | another spelling of a team or player | kind (team / person), target_id, alias (unique, any case) |
+| `events` | a season, mixed event, partner event… | slug, name, series, kind (season / other), number, status (upcoming / live / final), format (tiers / single), sort_order, start_date, end_date, registration (section 5a), poster, summary, description, details, matches_played, matches_total, kill_table_size, promote, relegate |
 | `event_tables` | one standings table in an event | event_id, name ("Tier 1", "Overall"), tier, sort |
-| `entries` | a team's registration for one event | event_id, team_id, tier, manager_id, team_name_at_event |
-| `entry_players` | one player on that registration's roster | entry_id, person_id, role, captain, ign_at_event, joined_at, left_at |
-| `standings` | one row of a table | table_id, entry_id, placement_pts, kill_pts, move |
-| `kill_rows` | one player's kills in one event | event_id, entry_player_id (player + the team they played for), kills |
-| `stories` | a news article | slug, title, category, date, author, excerpt, cover, body (JSON blocks), published_at |
-| `aliases` | another spelling of a team or player | kind (team / person), target_id, alias |
-| `external_ids` | the partner's ID for our team or player | kind, target_id, system ("heaven-index"), external_id |
-| `admins` | who can use the dashboard | user_id, role (owner / editor) |
+| `entries` | a team's registration for one event | event_id, team_id, tier, manager_id, team_name and team_tag at the time |
+| `entry_players` | one player on that registration's roster | entry_id, event_id, person_id, sort, role, captain, ign_at_event |
+| `standings` | one row of a table, as the collation sheet gives it | table_id, entry_id, placement, kills, bonus, wins, matches, move, sort |
+| `kill_rows` | one player's kills in one event | event_id, entry_id (the squad they played for), person_id, kills, matches, grp ("Men" / "Women") |
+| `stories` | a news article | slug, title, category, published_on, status (draft / published), author, excerpt, cover, body (JSON blocks) |
+| `staff` | one of MGL's own people | slug, name, role, grp, country, photo_url, socials, sort, spotlight (founder's quote, bio, since) |
+| `media` | an uploaded image (Cloudinary) | url, public_id, kind, alt, width, height, created_by |
+| `admins` | who can use the dashboard | user_id (Supabase Auth), role (owner / editor) |
 
-All tables also get `id` (uuid), `created_at`, `updated_at`. Slugs are for URLs; IDs are what rows point at, so renaming a team never breaks a link.
+Every table has a uuid `id`; slugs are for URLs, IDs are what rows point at, so renaming a team never breaks a link. `updated_at` is set by a trigger.
 
-The code today already has these shapes: each file in `src/data/` is one future table (`types.ts` describes them). The one deliberate change in the database: a standings row points at an **entry**, not straight at a team. That guarantees every team on a results table was registered for that event, and lets the table show the name the team used at the time.
+**Access.** Row level security is on for every table. Everyone can read the league tables, staff and media; stories only once published; `aliases` and `admins` are admin-only. Inserts, updates and deletes need a signed-in user listed in `admins` (`is_admin()`), so the admin dashboard needs no new policies. The public site reads with the publishable key through one function, `league_snapshot()`, which returns the league in the record shapes of `src/data/types.ts`.
 
----
+**Not built (owner, 2026-10-28):** an audit log, league settings (tiers and squads per tier stay in `src/content/site.ts` until the admin edits them) and partner IDs (no Heaven Index dependency).
+
+**News and staff** are in the database too (imported 2026-10-28, owner: "we can always delete them or rework them later"). They are still the SAMPLE stories and PLACEHOLDER staff, now edited, replaced or deleted in the admin. The site reads them through `site_content()` (published stories only, archived staff hidden), from migration `20261028140000_content.sql`.
 
 ## 3. How the pieces connect
 
@@ -109,7 +111,7 @@ After this, everything is managed in the admin. The import is not run again for 
 
 ### Step 4. Switch the site over
 
-Only `src/lib/league.ts` changes: its functions read from Supabase instead of `src/data/*`, returning the same shapes. No page or component changes. Then `src/data/sample.ts` (the placeholder generator) and the hardcoded records are deleted.
+Done. `src/lib/league.ts` reads the league from Supabase through `src/lib/db.ts` (one `league_snapshot()` call per build), returning the same shapes, so no page changed. The files in `src/data/` (`events.ts`, `teams.ts`, `kills.ts`, `generated/`) are now only the import's source; the site no longer reads them. Delete them once the admin can make every change, or keep them to re-run the import.
 
 ---
 
@@ -129,8 +131,6 @@ Owner and editors sign in (Supabase Auth); the public site never writes. Every s
 | **Registration** | See 5a. |
 | **League settings** | Tiers, squads per tier, Discord link. |
 | **Import** | Upload the same templates later for bulk work (a new season's registrations, a results sheet). Same validation and dry run as the script. |
-
-Every change is logged (who, what, when) so mistakes can be traced and undone.
 
 ---
 
@@ -189,12 +189,12 @@ Plan: build A first (needed for the past events anyway); add B when the stats AP
 
 ## 7. Order of work
 
-1. Agree this model (in progress).
-2. Owner sends the Excel results; I map them and report team names to confirm.
-3. Owner fills the roster sheet (and managers).
-4. Design and build the admin dashboard (events, registration controls, registrations and rosters, results, teams, people, news) on the hardcoded data first, so its screens are agreed before anything touches the database.
-5. Apply the schema to Supabase, run the import (dry run until clean), switch `src/lib/league.ts` over, delete the placeholder data.
-6. Heaven Index link for results (with Stats).
+1. ~~Agree this model.~~ Done.
+2. ~~Map the owner's sheets for all four events.~~ Done (`scripts/league-data.py`).
+3. ~~Apply the schema, import, switch `src/lib/league.ts` to the database.~~ Done 2026-10-28.
+4. Go live (Vercel), with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set.
+5. The admin dashboard on the live database. Its saves will need pages to refresh without a redeploy, so `league.ts` then moves from one read per build to cached reads tagged per event and team.
+6. Heaven Index link for results (with Stats), if ever wanted.
 
 ## 8. Questions for the owner
 

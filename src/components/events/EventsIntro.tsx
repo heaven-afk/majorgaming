@@ -1,5 +1,5 @@
 import { eventsPage, registration, site } from "@/content/site";
-import { featuredEvent, latestSeason } from "@/lib/league";
+import { featuredEvent, latestSeason, upcomingEvents } from "@/lib/league";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
@@ -10,6 +10,12 @@ function now() {
   if (featuredEvent.status === "live") {
     const progress = featuredEvent.matches ? `Match ${featuredEvent.matches.played} of ${featuredEvent.matches.total} played. ` : "";
     return { state: "live", ...copy.live, title: featuredEvent.name, body: progress + copy.live.body, href: "#standings", external: false };
+  }
+  // An announced event leads the card and links to its details.
+  const soon = upcomingEvents[0];
+  if (soon) {
+    const status = eventsPage.event.registration[soon.registration ?? "closed"];
+    return { state: soon.registration === "open" ? "registration" : "offseason", status, title: soon.name, body: soon.summary ?? copy.upcoming.body, cta: copy.upcoming.cta, href: `/events/${soon.slug}`, external: false };
   }
   const next = (latestSeason.number ?? 0) + 1;
   if (registration.open) {
@@ -37,14 +43,6 @@ export default function EventsIntro() {
           </h1>
           <p className="ev-intro__lede">{eventsPage.lede}</p>
         </div>
-        <dl className="ev-facts" data-rise="2">
-          {eventsPage.facts.map((f) => (
-            <div key={f.label}>
-              <dt>{f.label}</dt>
-              <dd>{f.value}</dd>
-            </div>
-          ))}
-        </dl>
       </div>
 
       <div className="mesh-panel ev-now" data-rise="1" data-state={card.state}>
