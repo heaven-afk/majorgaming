@@ -13,13 +13,15 @@ import Nav from "@/components/Nav";
 import "../teams.css";
 import { TeamCard } from "@/components/teams/TeamCard";
 import { teamsPage } from "@/content/teams";
-import { activeTeams, eventsOf, latestEntryOf, teamBySlug, teams } from "@/lib/league";
+import { getLeague, type LeagueData } from "@/lib/league";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const { teams } = await getLeague();
   return teams.map((t) => ({ team: t.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/teams/[team]">): Promise<Metadata> {
+  const { teamBySlug } = await getLeague();
   const team = teamBySlug((await params).team);
   if (!team) return {};
   return { title: `${team.name} · Teams · MGL`, description: `${team.name}'s lineup, manager and the MGL events they have played.` };
@@ -57,7 +59,7 @@ function Placeholder() {
 
 const regions = new Intl.DisplayNames(["en"], { type: "region" });
 
-type Member = NonNullable<ReturnType<typeof latestEntryOf>>["roster"][number];
+type Member = NonNullable<ReturnType<LeagueData["latestEntryOf"]>>["roster"][number];
 
 function PlayerCard({ member, index }: { member: Member; index: number }) {
   const copy = teamsPage.team.roster;
@@ -98,6 +100,7 @@ function PlayerCard({ member, index }: { member: Member; index: number }) {
 }
 
 async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["params"] }) {
+  const { activeTeams, eventsOf, latestEntryOf, teamBySlug } = await getLeague();
   const team = teamBySlug((await params).team);
   if (!team) notFound();
 

@@ -117,7 +117,14 @@ Done. `src/lib/league.ts` reads the league from Supabase through `src/lib/db.ts`
 
 ## 5. The admin dashboard
 
-Owner and editors sign in (Supabase Auth); the public site never writes. Every save revalidates only the pages it affects (cache tags such as `event:season-10`, `team:kyzon-esport`), so changes show within seconds without a redeploy.
+Owner and editors sign in (Supabase Auth); the public site never writes. The public reads are cached and tagged (`league`, `content` in `src/lib/db.ts`); every save calls `updateTag` on its tag, so changes show within seconds without a redeploy.
+
+**Built so far (2026-10-28):** sign-in and the Events area at `/admin`.
+- Sign-in: email and password against Supabase Auth over plain HTTP (`src/lib/admin/supabase.ts`, no client library). The session is two httpOnly cookies; `src/proxy.ts` refreshes the access token before it expires and sends signed-out visitors on `/admin/*` to `/admin/login`. Only users in `admins` get in (`src/lib/admin/session.ts`); every write goes out with the admin's own token, so row level security decides, not the code.
+- Events: list (status, registration, tables, squads), create, edit, delete (type the name to confirm). The editor covers name, web address, series, number, kind, status, tiers or one table, dates, registration (state, opens, closes, link, note), poster (uploaded to Cloudinary, folder `mgl/events`, and recorded in `media`), summary, description paragraphs, details lines, matches and kill table size. Saving makes the tables match the format (Tier 1 to N, or Overall) and never removes a table that has results.
+- Files: `src/app/admin/` (pages, `actions.ts`, `admin.css`), `src/components/admin/`, `src/lib/admin/`, copy in `src/content/admin.ts`.
+- Adding an admin: the person is created in Supabase (Authentication, Add user), then `insert into admins (user_id, role) select id, 'owner' from auth.users where email = '...';` in the SQL editor.
+- Still to build: registrations and rosters, results and kill uploads, promotion/relegation, teams, people, news, staff, media library. The hero, How MGL works and footer register buttons still read `registration` in `src/content/site.ts`; they move to the event's registration state with the next area.
 
 | Area | What it does |
 |---|---|
@@ -193,7 +200,7 @@ Plan: build A first (needed for the past events anyway); add B when the stats AP
 2. ~~Map the owner's sheets for all four events.~~ Done (`scripts/league-data.py`).
 3. ~~Apply the schema, import, switch `src/lib/league.ts` to the database.~~ Done 2026-10-28.
 4. Go live (Vercel), with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set.
-5. The admin dashboard on the live database. Its saves will need pages to refresh without a redeploy, so `league.ts` then moves from one read per build to cached reads tagged per event and team.
+5. The admin dashboard on the live database. Reads are now cached and tagged, so saves show without a redeploy. Sign-in and Events done 2026-10-28; the rest of section 5 next.
 6. Heaven Index link for results (with Stats), if ever wanted.
 
 ## 8. Questions for the owner

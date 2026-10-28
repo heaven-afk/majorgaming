@@ -1,5 +1,5 @@
-import { featuredEvent } from "@/lib/league";
-import { standings } from "@/content/home";
+import { getHome } from "@/content/home";
+import { getLeague } from "@/lib/league";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 import { Ladder } from "./Ladder";
@@ -8,7 +8,8 @@ import { Ladder } from "./Ladder";
  * Home's Tier 1 top ten. Shows the live event while one is running, otherwise the newest
  * finished event's first table; the full tables live on the Events page.
  */
-export default function Standings() {
+export default async function Standings() {
+  const [{ featuredEvent }, { standings }] = await Promise.all([getLeague(), getHome()]);
   const { live } = standings;
   const title = live ? standings.title.live : standings.title.final;
 

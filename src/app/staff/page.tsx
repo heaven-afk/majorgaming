@@ -6,8 +6,8 @@ import SmoothScroll from "@/components/motion/SmoothScroll";
 import Nav from "@/components/Nav";
 import { CrewCard, FounderCard, LeadCard } from "@/components/staff/StaffCard";
 import { staffPage } from "@/content/staff";
-import { latestSeason } from "@/lib/league";
-import { founder, leaders, leadership, otherGroups, staff, staffCountries, staffGroups } from "@/lib/staff";
+import { getLeague } from "@/lib/league";
+import { getStaff } from "@/lib/staff";
 import "./staff.css";
 
 export const metadata: Metadata = {
@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 };
 
 /** MGL's own people: the founder's profile, the rest of leadership as portraits, then the crew group by group. */
-export default function StaffPage() {
+export default async function StaffPage() {
+  const [{ latestSeason }, { founder, leaders, leadership, otherGroups, staff, staffCountries, staffGroups }] = await Promise.all([getLeague(), getStaff()]);
   const copy = staffPage;
   const faces = staff.filter((s) => s.photo).slice(0, 5);
   const facts = [

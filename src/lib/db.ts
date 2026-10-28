@@ -5,8 +5,13 @@
  * `src/data/types.ts` and `src/data/staff.ts`.
  *
  * Uses the publishable key: the public site only ever reads, and row level security allows
- * nothing else. Server only; `src/lib/league.ts` is the one caller.
+ * nothing else. Server only.
+ *
+ * `readLeague` and `readContent` are cached with no expiry under the tags in `TAGS`; an admin
+ * save clears its tag (`updateTag`), and the next visit reads the database again.
  */
+
+import { cacheLife, cacheTag } from "next/cache";
 
 import type { StaffRecord } from "@/data/staff";
 import type { EntryRecord, EventRecord, KillRecord, PersonRecord, StoryRecord, TeamRecord } from "@/data/types";
@@ -58,10 +63,23 @@ export async function loadLeague(): Promise<League> {
   };
 }
 
-let content: Promise<{ stories: StoryRecord[]; staff: StaffRecord[] }> | undefined;
-
-/** News and staff, read once and shared by `league.ts` (news) and `staff.ts`. */
 export function loadContent() {
-  content ??= rpc("site_content");
-  return content;
+  return rpc<{ stories: StoryRecord[]; staff: StaffRecord[] }>("site_content");
+}
+
+/** Cache tags: what an admin save clears. */
+export const TAGS = { league: "league", content: "content" } as const;
+
+export async function readLeague() {
+  "use cache";
+  cacheTag(TAGS.league);
+  cacheLife("max");
+  return loadLeague();
+}
+
+export async function readContent() {
+  "use cache";
+  cacheTag(TAGS.content);
+  cacheLife("max");
+  return loadContent();
 }

@@ -1,10 +1,11 @@
 import { teamsPage } from "@/content/teams";
-import { activeEvent, activeTeams, entryOf, events } from "@/lib/league";
+import { getLeague } from "@/lib/league";
 import { Crest } from "../about/Crest";
 import Scene from "../motion/Scene";
 
 /** The top of the Teams page: what it holds, and a quiet row of crests from the directory. */
-export default function TeamsIntro() {
+export default async function TeamsIntro() {
+  const { activeEvent, activeTeams, entryOf, events } = await getLeague();
   const copy = teamsPage;
   const lineups = activeTeams.map((t) => entryOf(t.slug, activeEvent.slug)!);
   const countries = new Set(lineups.flatMap((e) => e.roster.flatMap((l) => l.person.country ?? [])));

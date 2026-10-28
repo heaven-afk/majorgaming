@@ -1,11 +1,11 @@
 import { eventsPage, registration, site } from "@/content/site";
-import { featuredEvent, latestSeason, upcomingEvents } from "@/lib/league";
+import { getLeague, type LeagueData } from "@/lib/league";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 
 /** What the "Now" card shows: a live event, open registration, or the break between seasons. */
-function now() {
+function now({ featuredEvent, latestSeason, upcomingEvents }: LeagueData) {
   const copy = eventsPage.now;
   if (featuredEvent.status === "live") {
     const progress = featuredEvent.matches ? `Match ${featuredEvent.matches.played} of ${featuredEvent.matches.total} played. ` : "";
@@ -25,8 +25,8 @@ function now() {
 }
 
 /** The top of the Events page: what Events is, at a glance, beside what is happening now. */
-export default function EventsIntro() {
-  const card = now();
+export default async function EventsIntro() {
+  const card = now(await getLeague());
   const words = card.title.split(" ");
   const [word, number] = [words.slice(0, -1).join(" "), words.at(-1)];
 

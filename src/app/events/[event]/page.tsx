@@ -15,13 +15,15 @@ import Nav from "@/components/Nav";
 import "../events.css";
 import { eventsPage, site } from "@/content/site";
 import { dateRange } from "@/lib/dates";
-import { eventBySlug, events, killTablesOf } from "@/lib/league";
+import { getLeague } from "@/lib/league";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const { events } = await getLeague();
   return events.map((e) => ({ event: e.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/events/[event]">): Promise<Metadata> {
+  const { eventBySlug } = await getLeague();
   const event = eventBySlug((await params).event);
   if (!event) return {};
   return {
@@ -61,6 +63,7 @@ function Placeholder() {
 }
 
 async function EventContent({ params }: { params: PageProps<"/events/[event]">["params"] }) {
+  const { events, eventBySlug, killTablesOf } = await getLeague();
   const event = eventBySlug((await params).event);
   if (!event) notFound();
 
