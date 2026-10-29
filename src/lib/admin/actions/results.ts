@@ -171,6 +171,15 @@ export async function saveKills(eventId: string, payload: KillsPayload): Promise
     for (const [person_id, i] of moved) {
       await db(admin.token, `entry_players?event_id=eq.${eventId}&person_id=eq.${person_id}`, { method: "PATCH", body: { entry_id: entryIds[i], sort: 100 + i, captain: false } });
     }
+    // While the event is upcoming or live, the teams' own rosters follow the sheet too; a
+    // finished event's sheet never changes who is on a team now.
+    const [{ status }] = await db<{ status: string }[]>(admin.token, `events?id=eq.${eventId}&select=status`);
+    const joined = [...missing.map((m) => ({ person_id: m.person_id, entry_id: m.entry_id, sort: m.sort })), ...moved.map(([person_id, i]) => ({ person_id, entry_id: entryIds[i], sort: 100 + i }))];
+    if (status !== "final" && joined.length) {
+      const teamOf = new Map((await db<{ id: string; team_id: string }[]>(admin.token, `entries?event_id=eq.${eventId}&select=id,team_id`)).map((e) => [e.id, e.team_id]));
+      await db(admin.token, `team_players?person_id=in.(${joined.map((j) => j.person_id).join(",")})`, { method: "DELETE" });
+      await insertMany(admin.token, "team_players", joined.map((j) => ({ team_id: teamOf.get(j.entry_id), person_id: j.person_id, sort: j.sort })), "return=minimal");
+    }
 
     // A sheet without in-game names keeps what this event's rows already had, else the profile's.
     const prior = new Map((await killsOf(admin.token, eventId)).map((k) => [k.person_id, k.ign]));

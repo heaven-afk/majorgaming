@@ -4,13 +4,10 @@ import ActionForm from "@/components/admin/ActionForm";
 import AdminShell, { AdminLoading } from "@/components/admin/AdminShell";
 import { Icon } from "@/components/Icons";
 import { league } from "@/content/site";
-import { removeEntry } from "@/lib/admin/actions/entries";
 import { deleteTeam } from "@/lib/admin/actions/teams";
 import { key } from "@/lib/admin/columns";
-import { currentSeason } from "@/lib/admin/events";
-import { listEntries, listTeams } from "@/lib/admin/league";
+import { listTeams } from "@/lib/admin/league";
 import { requireAdmin } from "@/lib/admin/session";
-import { db } from "@/lib/admin/supabase";
 
 /** One line of the list: a squad in the season, or a team on record. */
 type Row = {
@@ -110,23 +107,11 @@ function TeamTable({ rows, kind, empty }: { rows: Row[]; kind: "squads" | "teams
 
 async function Teams({ searchParams }: { searchParams: PageProps<"/admin/teams">["searchParams"] }) {
   const [admin, query] = await Promise.all([requireAdmin(), searchParams]);
-  const [season, teams] = await Promise.all([currentSeason(admin.token), listTeams(admin.token)]);
-  const [entries, withResults] = season
-    ? await Promise.all([
-        listEntries(admin.token, season.id),
-        db<{ id: string; standings: { count: number }[]; kill_rows: { count: number }[] }[]>(admin.token, `entries?event_id=eq.${season.id}&select=id,standings(count),kill_rows(count)&kill_rows.or=(kills.gt.0,matches.gt.0)`),
-      ])
-    : [[], []];
-  const played = new Set(withResults.filter((r) => (r.standings[0]?.count ?? 0) + (r.kill_rows[0]?.count ?? 0) > 0).map((r) => r.id));
-
+  const teams = await listTeams(admin.token);
   const q = typeof query.q === "string" ? query.q.trim() : "";
-  const tiers = season?.event_tables.filter((t) => t.tier !== null).map((t) => t.tier!) ?? [];
-  const inSeason = new Set(entries.map((e) => e.team_id));
-  const others = teams.filter((t) => !t.archived_at && !inSeason.has(t.id));
-  const archived = teams.filter((t) => t.archived_at);
-  const tab = typeof query.tier === "string" ? query.tier : String(tiers[0] ?? "other");
+  const tab = typeof query.tier === "string" ? query.tier : "1";
 
-  const teamRow = (t: (typeof teams)[number]): Row => {
+  const row = (t: (typeof teams)[number]): Row => {
     const last = [...t.entries].sort((a, b) => a.event.sort_order - b.event.sort_order)[0];
     return {
       id: t.id,
@@ -134,6 +119,9 @@ async function Teams({ searchParams }: { searchParams: PageProps<"/admin/teams">
       name: t.name,
       tag: t.tag,
       logo: t.logo_url,
+      players: t.team_players.length,
+      captain: t.team_players.find((p) => p.captain)?.person.name,
+      manager: t.manager,
       last: last ? `${last.event.name}${last.tier ? `, Tier ${last.tier}` : ""}` : undefined,
       // A team with no events at all has nothing to lose.
       remove: t.entries.length
@@ -149,28 +137,6 @@ async function Teams({ searchParams }: { searchParams: PageProps<"/admin/teams">
           },
     };
   };
-  const squadRow = (e: (typeof entries)[number]): Row => ({
-    id: e.id,
-    slug: e.team.slug,
-    name: e.team.name,
-    tag: e.team.tag,
-    logo: e.team.logo_url,
-    players: e.entry_players.length,
-    captain: e.entry_players.find((p) => p.captain)?.person.name,
-    manager: e.manager,
-    // Squads with results stay: removing them would delete their standings and kills.
-    remove:
-      season && !played.has(e.id)
-        ? {
-            label: "Remove",
-            confirm: `Remove ${e.team.name} from ${season.name}? They have no results there yet. The team and its past events stay.`,
-            action: async () => {
-              "use server";
-              return removeEntry(season.slug, e.id, `/admin/teams?tier=${e.tier ?? "none"}`);
-            },
-          }
-        : undefined,
-  });
 
   // A search looks across every team, whatever the tab.
   if (q) {
@@ -185,17 +151,17 @@ async function Teams({ searchParams }: { searchParams: PageProps<"/admin/teams">
             Clear
           </Link>
         </p>
-        <TeamTable rows={found.map(teamRow)} kind="teams" empty="No teams match. Check the spelling, or add the team." />
+        <TeamTable rows={found.map(row)} kind="squads" empty="No teams match. Check the spelling, or add the team." />
       </>
     );
   }
 
-  const tierList = (tier: number) => entries.filter((e) => e.tier === tier);
-  const noTier = entries.filter((e) => e.tier === null);
-  const list = tab === "other" ? others : tab === "archived" ? archived : null;
-  const tierNumber = Number(tab);
-  const current = list || tab === "none" ? null : tierList(tierNumber);
-  const over = current ? current.length - league.squadsPerTier : 0;
+  const active = teams.filter((t) => !t.archived_at);
+  const inTier = (tier: number) => active.filter((t) => t.tier === tier);
+  const noTier = active.filter((t) => !t.tier);
+  const archived = teams.filter((t) => t.archived_at);
+  const tiers = Array.from({ length: league.tiers }, (_, i) => i + 1);
+  const list = tab === "none" ? noTier : tab === "archived" ? archived : inTier(Number(tab));
 
   return (
     <>
@@ -204,33 +170,17 @@ async function Teams({ searchParams }: { searchParams: PageProps<"/admin/teams">
           Team deleted.
         </p>
       )}
-      {query.removed && (
-        <p className="ad-alert ad-alert--ok" role="status">
-          Squad removed from {season?.name}. The team and its past events are unchanged.
-        </p>
-      )}
       <Search q="" />
       <nav className="ad-tiers" aria-label="Tiers">
-        {tiers.map((t) => {
-          const n = tierList(t).length;
-          return (
-            <Link key={t} href={`/admin/teams?tier=${t}`} aria-current={tab === String(t) ? "page" : undefined} scroll={false}>
-              <strong>Tier {t}</strong>
-              <small data-tone={n > league.squadsPerTier ? "amber" : undefined}>
-                {n} / {league.squadsPerTier}
-              </small>
-            </Link>
-          );
-        })}
-        {noTier.length > 0 && (
-          <Link href="/admin/teams?tier=none" aria-current={tab === "none" ? "page" : undefined} scroll={false}>
-            <strong>No tier</strong>
-            <small data-tone="amber">{noTier.length}</small>
+        {tiers.map((t) => (
+          <Link key={t} href={`/admin/teams?tier=${t}`} aria-current={tab === String(t) ? "page" : undefined} scroll={false}>
+            <strong>Tier {t}</strong>
+            <small>{inTier(t).length} teams</small>
           </Link>
-        )}
-        <Link href="/admin/teams?tier=other" aria-current={tab === "other" ? "page" : undefined} scroll={false}>
-          <strong>Other teams</strong>
-          <small>{others.length}</small>
+        ))}
+        <Link href="/admin/teams?tier=none" aria-current={tab === "none" ? "page" : undefined} scroll={false}>
+          <strong>No tier</strong>
+          <small>{noTier.length} teams</small>
         </Link>
         {archived.length > 0 && (
           <Link href="/admin/teams?tier=archived" aria-current={tab === "archived" ? "page" : undefined} scroll={false}>
@@ -239,27 +189,14 @@ async function Teams({ searchParams }: { searchParams: PageProps<"/admin/teams">
           </Link>
         )}
       </nav>
-
-      {tab === "none" ? (
-        <>
-          <p className="ad-alert ad-alert--warn">These squads are in {season?.name} without a tier. Edit each one and pick its tier.</p>
-          <TeamTable rows={noTier.map(squadRow)} kind="squads" empty="" />
-        </>
-      ) : list ? (
-        <>
-          <p className="ad-note ad-count">{tab === "other" ? `Teams not in ${season?.name ?? "the current season"}: special-event squads and teams from earlier seasons. Their past results stay on the site.` : "Hidden from the site's Teams page and from pickers. Past results stay."}</p>
-          <TeamTable rows={list.map(teamRow)} kind="teams" empty={tab === "other" ? "Every team is in the current season." : "No archived teams."} />
-        </>
-      ) : (
-        <>
-          {over > 0 && (
-            <p className="ad-alert ad-alert--warn" role="status">
-              <Icon name="warning" size={14} /> Tier {tierNumber} has {current!.length} squads, {over} more than a full tier. Move the extra squads to another tier from their team page.
-            </p>
-          )}
-          <TeamTable rows={current!.map(squadRow)} kind="squads" empty={`No teams in Tier ${tierNumber} yet. Add one, or bring squads over from the last season under Events → Squads.`} />
-        </>
-      )}
+      <p className="ad-note ad-count">
+        {tab === "none"
+          ? "Teams with no current tier: teams from special events only, and teams that haven't played a ranked season lately. Give one a tier on its page."
+          : tab === "archived"
+            ? "Hidden from the site's Teams page and from pickers. Past results stay."
+            : `Teams whose current tier is ${tab}. A tier can hold any number of teams; an event takes ${league.squadsPerTier} per tier, picked on its Teams tab.`}
+      </p>
+      <TeamTable rows={list.map(row)} kind="squads" empty={tab === "none" || tab === "archived" ? "None." : `No teams in Tier ${tab}. Add one, or give a team this tier on its page.`} />
     </>
   );
 }
@@ -273,14 +210,12 @@ function Search({ q }: { q: string }) {
   );
 }
 
-async function Head() {
-  const admin = await requireAdmin();
-  const season = await currentSeason(admin.token);
+function Head() {
   return (
     <header className="ad-head">
       <div>
         <h1>Teams</h1>
-        <p>{season ? `${season.name} teams, by tier. Edit a team to change its roster, manager, tier or name.` : "Every team on record."}</p>
+        <p>Every team, by its current tier. Edit a team to change its roster, manager, tier or name; events still to come follow.</p>
       </div>
       <div className="ad-head__actions">
         <Link href="/admin/teams/new" className="ad-btn ad-btn--primary">

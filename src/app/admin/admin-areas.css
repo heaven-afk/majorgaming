@@ -48,6 +48,108 @@
   }
 }
 
+/* An event's three tabs, each saying where it stands. */
+.ad-steps {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-steps a {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 9px 12px 10px;
+  border-radius: 12px;
+  color: var(--ad-muted);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.ad-steps a:hover {
+  color: var(--color-text);
+}
+.ad-steps strong {
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.ad-steps small {
+  overflow: hidden;
+  font-size: 12px;
+  color: rgb(244 242 238 / 0.45);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ad-steps a[aria-current] {
+  background: linear-gradient(180deg, #303030 0%, #252525 100%);
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+.ad-steps a[aria-current] small {
+  color: var(--ad-muted);
+}
+@media (min-width: 900px) {
+  .ad-steps a {
+    padding: 11px 16px 12px;
+  }
+}
+
+/* Next steps after creating an event. */
+.ad-next {
+  display: grid;
+  gap: 14px;
+  max-width: 800px;
+  margin-bottom: 14px;
+  padding: 18px 16px;
+  border-radius: var(--radius);
+  background: rgb(127 212 155 / 0.06);
+  box-shadow: inset 0 0 0 1px rgb(127 212 155 / 0.2);
+}
+.ad-next h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ad-ok);
+}
+.ad-next ol {
+  display: grid;
+  gap: 8px;
+  counter-reset: next;
+}
+.ad-next li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.25);
+  font-size: 14px;
+  line-height: 1.45;
+  counter-increment: next;
+}
+.ad-next li > span::before {
+  content: counter(next) ". ";
+  color: var(--ad-muted);
+}
+.ad-next li small {
+  display: block;
+  color: var(--ad-muted);
+  font-size: 13px;
+}
+@media (min-width: 900px) {
+  .ad-next {
+    padding: 22px 24px;
+  }
+}
+
 /* Lists of rows (squads, teams, players, staff) ------------------------------------------------ */
 
 .ad-group {
@@ -608,16 +710,16 @@
   position: absolute;
   opacity: 0;
 }
-.ad-roster__captain span:not(.sr-only) {
+.ad-roster__captain span {
   display: grid;
   place-items: center;
-  width: 40px;
   height: 40px;
+  padding: 0 12px;
   border-radius: 11px;
   background: var(--ad-soft);
   box-shadow: inset 0 0 0 1px var(--ad-line);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ad-muted);
   transition:
     background-color 0.2s,
@@ -935,6 +1037,15 @@
   display: block;
   font-weight: 500;
 }
+.ad-preview__move {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ad-muted);
+}
+.ad-preview__move[data-tone="amber"] {
+  color: var(--color-amber);
+}
 .ad-preview__ign {
   display: block;
   margin: 2px 0 4px;
@@ -1028,4 +1139,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* A sentence under a page's tabs saying what the page is for. */
+.ad-lede {
+  max-width: 44rem;
+  margin: 0 0 16px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ad-muted);
 }

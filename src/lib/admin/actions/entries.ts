@@ -5,11 +5,11 @@ import { redirect, unstable_rethrow } from "next/navigation";
 import type { FormState } from "@/components/admin/Form";
 import { TAGS } from "@/lib/db";
 import { resolvePeople, resolveTeam } from "../ids";
+import { league } from "@/content/site";
 import { insertMany, listEntries, previousEntry, resultsOf } from "../league";
+import { readRoster, teamSlots } from "../roster";
 import { requireAdmin } from "../session";
 import { DbError, db } from "../supabase";
-
-const ROLES = ["IGL", "Fragger", "Support", "Anchor"];
 
 function failed(err: unknown): FormState {
   unstable_rethrow(err);
@@ -31,12 +31,9 @@ export async function saveEntry(eventSlug: string, eventId: string, entryId: str
   if (!team) fields.team = "Pick a team, or type a new one.";
   const tierRaw = String(form.get("tier") ?? "");
   const tier = tierRaw ? Number(tierRaw) : null;
-  const players = form.getAll("player").map(String);
-  const roles = form.getAll("role").map(String);
-  const captain = Number(form.get("captain") ?? -1);
   const manager = String(form.get("manager") ?? "").trim().replace(/\s+/g, " ") || null;
   if (manager && manager.length > 80) fields.manager = "Keep the manager's name under 80 characters.";
-  const filled = players.map((p, i) => ({ p, role: ROLES.includes(roles[i]) ? roles[i] : null, captain: i === captain })).filter((x) => x.p);
+  const filled = readRoster(form);
   if (Object.keys(fields).length) return { error: "Check the highlighted fields.", fields };
 
   try {
@@ -113,39 +110,74 @@ export async function removeEntry(eventSlug: string, entryId: string, back?: str
 }
 
 /**
- * Brings squads over from an earlier event, each into the tier picked for it (promotion and
- * relegation already applied in the preview), with its roster and manager copied.
+ * Locks in an event's teams: the ticked ones, each in the tier picked for it. New ones are
+ * registered with their name, manager and current roster copied; ones moved to another tier are
+ * moved; unticked ones leave the event, unless they already have results there. In a ranked
+ * season each team's current tier becomes the one it was locked into. A tier holds at most a
+ * full tier of teams in an event.
  */
-export async function carryOver(eventSlug: string, eventId: string, fromEventId: string, _: FormState, form: FormData): Promise<FormState> {
+export async function lockLineup(eventSlug: string, eventId: string, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
   try {
+    const [event] = await db<{ kind: string; status: string }[]>(admin.token, `events?id=eq.${eventId}&select=kind,status`);
     const picks = new Map(
       form
-        .getAll("carry")
+        .getAll("pick")
         .map(String)
         .map((v) => v.split(":") as [string, string])
-        .filter(([, tier]) => tier),
+        .map(([team, tier]) => [team, tier && tier !== "0" ? Number(tier) : null] as const),
     );
-    if (!picks.size) return { error: "Pick at least one squad to bring over." };
-    const [from, here] = await Promise.all([listEntries(admin.token, fromEventId), listEntries(admin.token, eventId)]);
-    const already = new Set(here.map((e) => e.team_id));
-    const taken = new Set(here.flatMap((e) => e.entry_players.map((p) => p.person_id)));
-    const chosen = from.filter((e) => picks.has(e.id) && !already.has(e.team_id));
+    const perTier = new Map<number, number>();
+    for (const tier of picks.values()) if (tier) perTier.set(tier, (perTier.get(tier) ?? 0) + 1);
+    const over = [...perTier].filter(([, n]) => n > league.squadsPerTier);
+    if (over.length) return { error: over.map(([t, n]) => `Tier ${t} has ${n} teams ticked; an event takes ${league.squadsPerTier} per tier.`).join(" ") };
 
-    const entries = await insertMany<{ id: string; team_id: string }>(
-      admin.token,
-      "entries",
-      chosen.map((e) => ({ event_id: eventId, team_id: e.team_id, tier: Number(picks.get(e.id)) || null, manager: e.manager, team_name: e.team.name, team_tag: e.team.tag })),
-    );
-    const byTeam = new Map(entries.map((e) => [e.team_id, e.id]));
-    const players = chosen.flatMap((e) =>
-      e.entry_players
-        .filter((p) => !taken.has(p.person_id) && (taken.add(p.person_id), true))
-        .map((p, i) => ({ entry_id: byTeam.get(e.team_id), event_id: eventId, person_id: p.person_id, sort: i, role: p.role, captain: p.captain })),
-    );
-    if (players.length) await insertMany(admin.token, "entry_players", players, "return=minimal");
+    const here = await listEntries(admin.token, eventId);
+    const leaving = here.filter((e) => !picks.has(e.team_id));
+    const stuck: string[] = [];
+    for (const e of leaving) {
+      const has = await resultsOf(admin.token, e.id);
+      if (has.standings || has.kills) stuck.push(e.team.name);
+    }
+    if (stuck.length) return { error: `${stuck.join(", ")} ${stuck.length === 1 ? "has" : "have"} results in this event, so ${stuck.length === 1 ? "it stays" : "they stay"}. Tick ${stuck.length === 1 ? "it" : "them"} again, or upload corrected sheets without ${stuck.length === 1 ? "it" : "them"} first.` };
+    if (leaving.length) await db(admin.token, `entries?id=in.(${leaving.map((e) => e.id).join(",")})`, { method: "DELETE" });
+
+    const byTeam = new Map(here.map((e) => [e.team_id, e]));
+    for (const e of here) {
+      const tier = picks.get(e.team_id);
+      if (tier !== undefined && tier !== e.tier) await db(admin.token, `entries?id=eq.${e.id}`, { method: "PATCH", body: { tier } });
+    }
+
+    const fresh = [...picks].filter(([team]) => !byTeam.has(team));
+    if (fresh.length) {
+      const teams = await db<{ id: string; name: string; tag: string | null; manager: string | null }[]>(admin.token, `teams?id=in.(${fresh.map(([t]) => t).join(",")})&select=id,name,tag,manager`);
+      const info = new Map(teams.map((t) => [t.id, t]));
+      const made = await insertMany<{ id: string; team_id: string }>(
+        admin.token,
+        "entries",
+        fresh.map(([team, tier]) => ({ event_id: eventId, team_id: team, tier, manager: info.get(team)?.manager ?? null, team_name: info.get(team)?.name ?? "", team_tag: info.get(team)?.tag ?? null })),
+      );
+      // Each brings its current roster; a player already on a squad in this event stays there.
+      const taken = new Set(here.filter((e) => picks.has(e.team_id)).flatMap((e) => e.entry_players.map((p) => p.person_id)));
+      const players = [];
+      for (const m of made) {
+        for (const [i, s] of (await teamSlots(admin.token, m.team_id)).entries()) {
+          if (taken.has(s.person_id)) continue;
+          taken.add(s.person_id);
+          players.push({ entry_id: m.id, event_id: eventId, person_id: s.person_id, sort: i, role: s.role, captain: s.captain });
+        }
+      }
+      if (players.length) await insertMany(admin.token, "entry_players", players, "return=minimal");
+    }
+
+    // A ranked season sets where each team plays now.
+    if (event?.kind === "season") {
+      const byTier = new Map<number | null, string[]>();
+      for (const [team, tier] of picks) byTier.set(tier, [...(byTier.get(tier) ?? []), team]);
+      for (const [tier, teams] of byTier) if (tier) await db(admin.token, `teams?id=in.(${teams.join(",")})`, { method: "PATCH", body: { tier } });
+    }
     updateTag(TAGS.league);
-    redirect(`/admin/events/${eventSlug}/squads?added=${entries.length}`);
+    return { saved: Date.now(), notice: `Saved. ${picks.size} ${picks.size === 1 ? "team" : "teams"} taking part${fresh.length ? `, ${fresh.length} joined` : ""}${leaving.length ? `, ${leaving.length} left` : ""}.` };
   } catch (err) {
     return failed(err);
   }

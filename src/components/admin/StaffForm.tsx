@@ -41,7 +41,7 @@ export default function StaffForm({ action, values, countries, saved }: { action
 
   return (
     <form className="ad-form" onSubmit={submitWith(formAction, startTransition)} noValidate>
-      <Section title="Person" lede="Groups set where they sit on the Staff page; lower numbers come first in a group.">
+      <Section title="Person" lede="The group decides where they sit on the Staff page. Within a group, lower numbers come first.">
         <div className="ad-grid">
           <Field name="name" label="Name or handle" error={f?.name}>
             <input
@@ -55,7 +55,7 @@ export default function StaffForm({ action, values, countries, saved }: { action
               {...invalid(f, "name")}
             />
           </Field>
-          <Field name="slug" label="Web address" error={f?.slug}>
+          <Field name="slug" label="Page link" error={f?.slug}>
             <input
               id="f-slug"
               name="slug"
@@ -89,7 +89,7 @@ export default function StaffForm({ action, values, countries, saved }: { action
               ))}
             </select>
           </Field>
-          <Field name="sort" label="Order in group" error={f?.sort}>
+          <Field name="sort" label="Position in group" error={f?.sort}>
             <input id="f-sort" name="sort" inputMode="numeric" defaultValue={values?.sort ?? 0} {...invalid(f, "sort")} />
           </Field>
         </div>

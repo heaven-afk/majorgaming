@@ -50,6 +50,16 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
   const peopleCandidates: Candidate[] = useMemo(() => people.map((p) => ({ id: p.id, keys: p.keys })), [people]);
   const entryOfTeam = useMemo(() => new Map(entries.map((e) => [e.teamId, e])), [entries]);
   const ignOf = useMemo(() => new Map(people.map((p) => [p.id, p.ign])), [people]);
+  /** Which squad each player is on in this event now. */
+  const squadOf = useMemo(() => new Map(entries.flatMap((e) => e.roster.map((p) => [p.personId, e] as const))), [entries]);
+  /** What saving does to a player's roster place: joins the squad's roster, or moves from another squad. */
+  const placeChange = (r: { person: string; squad: SquadPick }): { kind: "join" } | { kind: "move"; from: string } | undefined => {
+    if (!r.person || r.person === "skip" || r.person.startsWith("new:")) return r.person.startsWith("new:") ? { kind: "join" } : undefined;
+    const now = squadOf.get(r.person);
+    const target = r.squad.kind === "entry" ? r.squad.id : null;
+    if (!now) return { kind: "join" };
+    return now.id === target ? undefined : { kind: "move", from: now.name };
+  };
   /** The in-game name on record, when the sheet has a different one for a player already on record. */
   const oldIgn = (r: { person: string; ign: string }) => {
     if (!r.ign || r.person === "skip" || r.person.startsWith("new:")) return undefined;
@@ -200,7 +210,7 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
             else person = `new:${player}`;
           }
           if (num(cell(r, "kills")) === undefined) issue = "No kills number";
-          if (outside) issue = `A Tier ${tier} squad: upload it on the Tier ${tier} tab`;
+          if (outside) issue = `A Tier ${tier} team: upload it on the Tier ${tier} tab`;
         }
 
         const group = mode === "kills" ? (cell(r, "group") || (tabGroups ? sheet.name : "")) || null : null;
@@ -240,6 +250,8 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
     close: live.filter((r) => (r.squad.kind === "entry" || r.squad.kind === "team") && r.squad.close).length,
     newPeople: mode === "kills" ? live.filter((r) => r.person.startsWith("new:")).length : 0,
     igns: mode === "kills" ? live.filter((r) => oldIgn(r) !== undefined).length : 0,
+    moves: mode === "kills" ? live.filter((r) => placeChange(r)?.kind === "move").length : 0,
+    joins: mode === "kills" ? live.filter((r) => placeChange(r)?.kind === "join").length : 0,
     issues: rows.filter((r) => r.issue && !r.outside).length,
     outside: rows.filter((r) => r.outside).length,
   };
@@ -295,8 +307,8 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
             read(data);
           }}>
             <Icon name="plus" size={20} />
-            <strong>{reading ? "Reading…" : "Upload a sheet"}</strong>
-            <small>Excel (.xlsx) or CSV, any layout. Drop it here or tap to choose.</small>
+            <strong>{reading ? "Reading…" : "Choose a sheet"}</strong>
+            <small>Excel (.xlsx) or CSV, any layout. Drop it here or tap to choose. Nothing saves until you&apos;ve checked the preview.</small>
           </button>
           <input
             ref={fileRef}
@@ -346,7 +358,7 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
 
       <div className="ad-upload__config">
         <label className="ad-field">
-          <span>{mode === "standings" ? "Goes into" : "Use this sheet"}</span>
+          <span>{mode === "standings" ? "Put these rows into" : "Use this tab"}</span>
           <select value={cfg.target} onChange={(e) => setCfg({ target: e.target.value })}>
             {table ? (
               <option value={mode === "kills" ? "include" : table.id}>{mode === "kills" ? "Yes" : table.name}</option>
@@ -362,11 +374,11 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
             ) : (
               <option value="include">Yes</option>
             )}
-            <option value="skip">Skip this sheet</option>
+            <option value="skip">Skip this tab</option>
           </select>
         </label>
         <label className="ad-field">
-          <span>Header row</span>
+          <span>Row with the column names</span>
           <select
             value={cfg.header ?? -1}
             onChange={(e) => {
@@ -374,7 +386,7 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
               setCfg({ header: h < 0 ? undefined : h, cols: guessColumns(h < 0 ? undefined : sheet.rows[h], WANTED[mode], FALLBACK[mode]) });
             }}
           >
-            <option value={-1}>No header</option>
+            <option value={-1}>None, rows start straight away</option>
             {sheet.rows.slice(0, 20).map((r, i) => (
               <option key={i} value={i}>
                 Row {i + 1}: {r.filter(Boolean).slice(0, 4).join(" · ").slice(0, 60)}
@@ -389,14 +401,14 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
         )}
         {mode === "kills" && !table && (
           <label className="ad-field">
-            <span>Replaces</span>
+            <span>This sheet replaces</span>
             <select value={scope} onChange={(e) => setScope(e.target.value)}>
               <option value="all">The whole event&apos;s kill table</option>
               {tables
                 .filter((t) => t.tier !== null)
                 .map((t) => (
                   <option key={t.id} value={String(t.tier)}>
-                    Only {t.name} squads
+                    Only {t.name} teams
                   </option>
                 ))}
             </select>
@@ -411,8 +423,8 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
       </div>
 
       <fieldset className="ad-columns">
-        <legend>Columns</legend>
-        <p className="ad-note">Worked out from the header. Change any that&apos;s wrong.</p>
+        <legend>Match the columns</legend>
+        <p className="ad-note">Matched from the column names. If one is wrong, pick the right column; the rows below update as you do.</p>
         <div>
           {WANTED[mode]
             .filter((role) => !(mode === "standings" && role === "tier" && cfg.target !== "split" && !table))
@@ -443,14 +455,16 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
 
       <div className="ad-summary" role="status">
         <strong>
-          {live.length} {mode === "standings" ? "squads" : "players"} ready
+          {live.length} {mode === "standings" ? "teams" : "players"} ready to save
         </strong>
         {counts.close > 0 && <span data-tone="amber">{counts.close} close spellings to check</span>}
-        {counts.toRegister > 0 && <span>{counts.toRegister} squads will be registered</span>}
+        {counts.toRegister > 0 && <span>{counts.toRegister} teams will be added to this event</span>}
         {counts.newTeams > 0 && <span data-tone="amber">{counts.newTeams} new teams</span>}
         {counts.newPeople > 0 && <span>{counts.newPeople} new players</span>}
         {counts.igns > 0 && <span>{counts.igns} in-game names will update</span>}
-        {counts.issues > 0 && <span data-tone="error">{counts.issues} rows to look at</span>}
+        {counts.moves > 0 && <span data-tone="amber">{counts.moves} players will move team</span>}
+        {counts.joins > 0 && <span>{counts.joins} players will join a roster</span>}
+        {counts.issues > 0 && <span data-tone="error">{counts.issues} rows need a look</span>}
         {counts.outside > 0 && <span>{counts.outside} from other tiers, left out</span>}
       </div>
 
@@ -459,11 +473,11 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
           <thead>
             <tr>
               {mode === "kills" && <th>Player</th>}
-              <th>Squad</th>
+              <th>Team</th>
               {mode === "standings" ? (
                 <>
-                  <th className="num">Place</th>
-                  <th className="num">Kill</th>
+                  <th className="num">Place pts</th>
+                  <th className="num">Kill pts</th>
                   <th className="num">Bonus</th>
                   <th className="num">Total</th>
                 </>
@@ -485,6 +499,17 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
                   {mode === "kills" && (
                     <td>
                       <span className="ad-preview__sheet">{r.player}</span>
+                      {(() => {
+                        const change = placeChange(r);
+                        if (!change) return null;
+                        return change.kind === "move" ? (
+                          <span className="ad-preview__move" data-tone="amber">
+                            Moves to this team from {change.from}
+                          </span>
+                        ) : (
+                          <span className="ad-preview__move">Added to this team&apos;s roster</span>
+                        );
+                      })()}
                       {oldIgn(r) !== undefined && (
                         <span className="ad-preview__ign">
                           IGN {oldIgn(r) ? <s>{oldIgn(r)}</s> : null}
@@ -498,8 +523,8 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
                         data-tone={r.person.startsWith("new:") ? "new" : r.personClose ? "amber" : undefined}
                         onChange={(e) => setOverrides((o) => ({ ...o, [`${r.key}:player`]: e.target.value }))}
                       >
-                        <option value={`new:${r.player}`}>New player</option>
-                        <option value="skip">Skip</option>
+                        <option value={`new:${r.player}`}>Add as a new player</option>
+                        <option value="skip">Leave this row out</option>
                         {(entry?.roster ?? []).map((p) => (
                           <option key={p.personId} value={p.personId}>
                             {p.name}
@@ -514,8 +539,8 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
                   <td>
                     {mode === "standings" && <span className="ad-preview__sheet">{r.team}</span>}
                     <select aria-label={`Squad for ${r.team}`} value={squadValue} data-tone={r.squad.kind === "new" ? "new" : close ? "amber" : undefined} onChange={(e) => setOverrides((o) => ({ ...o, [`${r.key}:team`]: e.target.value }))}>
-                      <option value="new">New team “{r.team}”</option>
-                      <option value="skip">Skip</option>
+                      <option value="new">Add as a new team “{r.team}”</option>
+                      <option value="skip">Leave this row out</option>
                       <optgroup label="In this event">
                         {entries.map((e) => (
                           <option key={e.id} value={`e:${e.id}`}>
@@ -524,7 +549,7 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
                           </option>
                         ))}
                       </optgroup>
-                      <optgroup label="Register from all teams">
+                      <optgroup label="Other teams (adds them to this event)">
                         {teams
                           .filter((t) => !entryOfTeam.has(t.id))
                           .map((t) => (
@@ -564,14 +589,14 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
       {message.error && <p className="ad-alert ad-alert--error" role="alert">{message.error}</p>}
       <div className="ad-savebar">
         <p className="ad-savebar__msg">
-          {mode === "standings" ? (table ? `Saving replaces the ${table.name} table with the rows above.` : "Saving replaces these tables with the rows above.") : scope === "all" ? "Saving replaces the event's kill table." : `Saving replaces the Tier ${scope} kill rows.`} You can undo it.
+          {mode === "standings" ? (table ? `Saving replaces the ${table.name} standings with the rows above.` : "Saving replaces these standings with the rows above.") : scope === "all" ? "Saving replaces the whole event's kill table." : `Saving replaces the Tier ${scope} kill table.`} You can undo it.
         </p>
         <div className="ad-savebar__actions">
           <button type="button" className="ad-btn ad-btn--quiet" onClick={() => (setSheets(null), onDone?.())}>
             Cancel
           </button>
           <button type="button" className="ad-btn ad-btn--primary" disabled={saving || live.length === 0 || missingPoints} onClick={save}>
-            {saving ? "Saving…" : `Save ${live.length}`}
+            {saving ? "Saving…" : `Save ${live.length} ${live.length === 1 ? "row" : "rows"}`}
           </button>
         </div>
       </div>

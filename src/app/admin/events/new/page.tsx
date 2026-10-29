@@ -15,7 +15,7 @@ export default function NewEventPage() {
               ← Events
             </Link>
             <h1>New event</h1>
-            <p>Start with the basics; registrations and results come after it&apos;s created.</p>
+            <p>Three questions to start. Teams, registration and results are added once it&apos;s created.</p>
           </div>
         </header>
         <EventForm action={saveEvent.bind(null, null)} tiers={league.tiers} />

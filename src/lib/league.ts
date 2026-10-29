@@ -8,7 +8,7 @@
 import { cache } from "react";
 import { registration as registrationCopy, site } from "@/content/site";
 import { additionalCommunityAvatars, communityAvatars, communityAvatarsSetThree, referenceBasedCommunityAvatars } from "@/content/visual-assets";
-import type { EventRecord, KillRecord, PersonRecord, StoryRecord, TableRecord, TeamRecord } from "@/data/types";
+import type { EventRecord, KillRecord, LineupRecord, PersonRecord, StoryRecord, TableRecord, TeamRecord } from "@/data/types";
 import { readContent, readLeague, type League as Records } from "./db";
 
 /** How many players a kill table shows, unless the event sets its own. */
@@ -155,7 +155,7 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
               slug: k.player,
               name: person?.name ?? k.player,
               // The in-game name from this event's own sheet, not today's.
-              ign: (k.ign !== undefined ? k.ign : person?.ign) ?? undefined,
+              ign: k.ign ?? undefined,
               photo: person?.photo,
               country: person?.country,
               team: { slug: k.team, name: k.teamName ?? team?.name ?? k.team, tag: (k.teamName ? k.teamTag : team?.tag) ?? undefined },
@@ -181,19 +181,19 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
     return personMap.get(slug);
   }
 
-  /** The newest ranked season with registrations (else the newest event with any): its squads are the ones on the Teams page. */
+  /**
+   * The latest ranked season with teams locked in: the Teams page lists its teams, by the tier
+   * they play in it. When the next season's teams are locked in, it takes over by itself.
+   */
   const registered = (e: { slug: string }) => entries.some((r) => r.event === e.slug);
-  const activeEvent = events.find((e) => e.ranked && registered(e)) ?? events.find(registered) ?? events[0];
+  const activeEvent = events.find((e) => e.ranked && registered(e)) ?? events[0];
+  const seasonTier = new Map(entries.filter((r) => r.event === activeEvent.slug).map((r) => [r.team, r.tier]));
 
   /** A team's registration for one event, with its people resolved. */
   function entryOf(team: string, event: string) {
     const entry = entries.find((r) => r.team === team && r.event === event);
     if (!entry) return undefined;
-    return {
-      ...entry,
-      manager: entry.manager ? { name: entry.manager } : undefined,
-      roster: entry.lineup.map((l) => ({ ...l, person: personBySlug(l.player) ?? ({ slug: l.player, name: l.player, photo: avatarOf(l.player) } as PersonRecord) })),
-    };
+    return { ...entry, manager: entry.manager ? { name: entry.manager } : undefined, roster: resolve(entry.lineup) };
   }
 
   /** Every event a team registered for, newest first, with the tier it played in. */
@@ -204,23 +204,29 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
     });
   }
 
-  /** A team's newest registration. */
-  function latestEntryOf(team: string) {
-    const latest = eventsOf(team)[0];
-    return latest ? entryOf(team, latest.event.slug) : undefined;
+  const resolve = (lineup: LineupRecord[]) => lineup.map((l) => ({ ...l, person: personBySlug(l.player) ?? ({ slug: l.player, name: l.player, photo: avatarOf(l.player) } as PersonRecord) }));
+
+  /**
+   * What a team is now: its manager and roster, owned by the team and edited in the admin with
+   * no season involved (events keep the roster that played them), and its tier in the latest
+   * ranked season. A team not in that season isn't ranked.
+   */
+  function profileOf(slug: string) {
+    const team = teamMap.get(slug);
+    if (!team) return undefined;
+    const tier = seasonTier.get(slug) ?? undefined;
+    return { tier, ranked: seasonTier.has(slug), manager: team.manager ? { name: team.manager } : undefined, roster: resolve(team.roster ?? []) };
   }
 
-  /** The squads registered for the active event, tier by tier, then by name. */
-  const activeTeams: DirectoryTeam[] = entries
-    .filter((r) => r.event === activeEvent.slug)
-    .map((r) => {
-      const team = teamMap.get(r.team);
-      const faces = r.lineup.slice(0, 4).map((l) => {
+  /** The directory: the latest ranked season's teams, by their tier in it, then by name. */
+  const activeTeams: DirectoryTeam[] = teamRecords
+    .filter((t) => seasonTier.has(t.slug) && !t.archived)
+    .map((t) => {
+      const faces = (t.roster ?? []).slice(0, 4).map((l) => {
         const person = personBySlug(l.player);
         return { name: person?.name ?? l.player, photo: person?.photo };
       });
-      // The directory shows teams as they are now.
-      return { slug: r.team, name: team?.name ?? r.team, tag: team?.tag, tier: r.tier, players: r.lineup.length, faces };
+      return { slug: t.slug, name: t.name, tag: t.tag, tier: seasonTier.get(t.slug) ?? undefined, players: t.roster?.length ?? 0, faces };
     })
     .sort((a, b) => (a.tier ?? 99) - (b.tier ?? 99) || a.name.localeCompare(b.name));
 
@@ -242,7 +248,7 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
     activeEvent,
     entryOf,
     eventsOf,
-    latestEntryOf,
+    profileOf,
     activeTeams,
     stories,
     storyBySlug,

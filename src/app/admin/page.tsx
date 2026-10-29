@@ -56,7 +56,7 @@ async function Dashboard() {
             <li>
               <span>Players</span>
               <strong>{players}</strong>
-              <small>on rosters{noRoster ? ` · ${noRoster} squads with none` : ""}</small>
+              <small>on rosters{noRoster ? ` · ${noRoster} teams with none` : ""}</small>
             </li>
             <li>
               <span>Results in</span>
@@ -78,7 +78,7 @@ async function Dashboard() {
               <header className="ad-card__head">
                 <div>
                   <h2>{season.name} tiers</h2>
-                  <p>A full tier is {league.squadsPerTier} squads.</p>
+                  <p>A full tier in an event is {league.squadsPerTier} teams.</p>
                 </div>
                 <Link href="/admin/teams" className="ad-btn ad-btn--quiet">
                   All teams
@@ -132,7 +132,7 @@ async function Dashboard() {
         <header className="ad-card__head">
           <div>
             <h2>Events</h2>
-            <p>Newest first. Each has its own squads and results.</p>
+            <p>Newest first. Each has its own teams and results.</p>
           </div>
           <Link href="/admin/events" className="ad-btn ad-btn--quiet">
             All events
@@ -143,7 +143,7 @@ async function Dashboard() {
             <li key={e.id}>
               <Link href={`/admin/events/${e.slug}`}>
                 <strong>{e.name}</strong>
-                <span>{e.entries[0]?.count ?? 0} squads</span>
+                <span>{e.entries[0]?.count ?? 0} teams</span>
                 <span className="ad-chip" data-tone={e.status}>
                   {label(statusOptions, e.status)}
                 </span>

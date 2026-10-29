@@ -8,19 +8,28 @@ import { db } from "./supabase";
 
 // Teams --------------------------------------------------------------------------------------
 
-export type TeamRow = { id: string; slug: string; name: string; tag: string | null; clan: string | null; logo_url: string | null; archived_at: string | null };
+/** A team and what it owns now: its current tier, manager and roster (`team_players`). Seasons keep their own copy. */
+export type TeamRow = { id: string; slug: string; name: string; tag: string | null; clan: string | null; logo_url: string | null; archived_at: string | null; tier: number | null; manager: string | null };
+export type TeamPlayer = { id: string; person_id: string; sort: number; role: string | null; captain: boolean; person: { name: string; slug: string; ign: string | null } };
+const TEAM_PLAYERS = "team_players(id,person_id,sort,role,captain,person:people(name,slug,ign))";
 type EventRef = { id: string; slug: string; name: string; sort_order: number; status: string };
 
-export function listTeams(token: string) {
-  return db<(TeamRow & { entries: { tier: number | null; event: EventRef }[] })[]>(token, "teams?select=id,slug,name,tag,clan,logo_url,archived_at,entries(tier,event:events(id,slug,name,sort_order,status))&order=name.asc");
+export async function listTeams(token: string) {
+  const rows = await db<(TeamRow & { team_players: TeamPlayer[]; entries: { tier: number | null; event: EventRef }[] })[]>(
+    token,
+    `teams?select=id,slug,name,tag,clan,logo_url,archived_at,tier,manager,${TEAM_PLAYERS},entries(tier,event:events(id,slug,name,sort_order,status))&order=name.asc`,
+  );
+  for (const r of rows) r.team_players.sort((a, b) => a.sort - b.sort);
+  return rows;
 }
 
 export async function getTeam(token: string, slug: string) {
-  const [team] = await db<(TeamRow & { entries: { id: string; tier: number | null; event: EventRef; entry_players: { count: number }[] }[] })[]>(
+  const [team] = await db<(TeamRow & { team_players: TeamPlayer[]; entries: { id: string; tier: number | null; event: EventRef; entry_players: { count: number }[] }[] })[]>(
     token,
-    `teams?slug=eq.${encodeURIComponent(slug)}&select=*,entries(id,tier,event:events(id,slug,name,sort_order,status),entry_players(count))`,
+    `teams?slug=eq.${encodeURIComponent(slug)}&select=*,${TEAM_PLAYERS},entries(id,tier,event:events(id,slug,name,sort_order,status),entry_players(count))`,
   );
   team?.entries.sort((a, b) => a.event.sort_order - b.event.sort_order);
+  team?.team_players.sort((a, b) => a.sort - b.sort);
   return team;
 }
 
@@ -99,13 +108,24 @@ export async function previousEntry(token: string, teamId: string, beforeSort: n
 
 // Who is on which squad ------------------------------------------------------------------------
 
+/** Each player's current team, for pickers ("On Vortex One"). A player is on one team at a time. */
+export async function teamPlaces(token: string) {
+  const rows = await db<{ person_id: string; team_id: string; team: { name: string } }[]>(token, "team_players?select=person_id,team_id,team:teams(name)");
+  return new Map(rows.map((r) => [r.person_id, { entry: r.team_id, team: r.team.name }]));
+}
+
+/** Events still taking changes (upcoming or live): their registrations follow the teams' rosters. */
+export async function openEventIds(token: string) {
+  return (await db<{ id: string }[]>(token, "events?status=neq.final&select=id")).map((e) => e.id);
+}
+
 /** Each player's squad in an event: a player is on one squad per event. */
 export async function rosterPlaces(token: string, eventId: string) {
   const rows = await db<{ person_id: string; entry_id: string; entry: { team_name: string } }[]>(token, `entry_players?event_id=eq.${eventId}&select=person_id,entry_id,entry:entries(team_name)`);
   return new Map(rows.map((r) => [r.person_id, { entry: r.entry_id, team: r.entry.team_name }]));
 }
 
-/** Players for a roster picker: anyone on another squad in the event says so ("On Vortex One"). */
+/** Players for a roster picker: anyone on another team (or squad, in an event) says so ("On Vortex One"). */
 export function playerOptions(people: { id: string; name: string; ign: string | null }[], places: Map<string, { entry: string; team: string }>, entryId?: string) {
   return people.map((p) => {
     const at = places.get(p.id);

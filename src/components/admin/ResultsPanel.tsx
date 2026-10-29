@@ -23,15 +23,15 @@ export function AllTiersUpload({ eventId, tables, entries, teams, people }: { ev
     <section className="ad-card ad-alltiers">
       <header className="ad-card__head">
         <div>
-          <h2>Every tier at once</h2>
-          <p>For a sheet with all the tiers in it: a tab per tier, or one list with a Tier column. Each squad goes to its own tier.</p>
+          <h2>Have one sheet with every tier?</h2>
+          <p>Upload it here instead of tier by tier: a tab per tier, or one list with a Tier column. Each team&apos;s row goes to its own tier.</p>
         </div>
         <div className="ad-card__actions">
           <button type="button" className="ad-btn ad-btn--quiet" onClick={() => setOpen(open === "standings" ? null : "standings")} aria-expanded={open === "standings"}>
-            <Icon name="upload" size={16} /> All standings
+            <Icon name="upload" size={16} /> Standings sheet
           </button>
           <button type="button" className="ad-btn ad-btn--quiet" onClick={() => setOpen(open === "kills" ? null : "kills")} aria-expanded={open === "kills"}>
-            <Icon name="upload" size={16} /> All kills
+            <Icon name="upload" size={16} /> Kill sheet
           </button>
         </div>
       </header>
@@ -102,8 +102,8 @@ export default function ResultsPanel({
       <section className="ad-card">
         <header className="ad-card__head">
           <div>
-            <h2>Standings</h2>
-            <p>{standings.length ? `${standings.length} squads, ranked by total` : "No results yet"}</p>
+            <h2>{table.name} standings</h2>
+            <p>{standings.length ? `${standings.length} teams, ranked by total points` : "Nothing uploaded yet. Comes from the collation sheet."}</p>
           </div>
           <div className="ad-card__actions">
             {lastStandings && (
@@ -112,7 +112,7 @@ export default function ResultsPanel({
               </button>
             )}
             <button type="button" className="ad-btn ad-btn--primary" onClick={() => setOpen(open === "standings" ? null : "standings")} aria-expanded={open === "standings"}>
-              <Icon name="upload" size={16} /> Upload standings
+              <Icon name="upload" size={16} /> {standings.length ? "Upload a new version" : "Upload standings"}
             </button>
           </div>
         </header>
@@ -127,9 +127,9 @@ export default function ResultsPanel({
               <thead>
                 <tr>
                   <th className="num">#</th>
-                  <th>Squad</th>
-                  <th className="num">Place</th>
-                  <th className="num">Kill</th>
+                  <th>Team</th>
+                  <th className="num">Place pts</th>
+                  <th className="num">Kill pts</th>
                   <th className="num">Total</th>
                 </tr>
               </thead>
@@ -151,7 +151,7 @@ export default function ResultsPanel({
             </table>
           </div>
         ) : (
-          open !== "standings" && <p className="ad-card__empty">Upload the collation sheet for {table.name}. Any layout works; points are taken from the sheet as they are.</p>
+          open !== "standings" && <p className="ad-card__empty">Upload the collation sheet for {table.name}. Any layout works: you&apos;ll check every row before anything is saved. Points are taken from the sheet as they are.</p>
         )}
         {standings.length > 0 && (
           <button type="button" className="ad-card__clear" disabled={busy} onClick={() => run(() => clearTable(eventId, table.id, table.tier), `Empty the ${table.name} standings? You can undo it.`)}>
@@ -164,8 +164,8 @@ export default function ResultsPanel({
       <section className="ad-card">
         <header className="ad-card__head">
           <div>
-            <h2>Kill table</h2>
-            <p>{kills.length ? `${kills.length} players${kills[0] ? ` · top ${kills[0].kills} kills` : ""}` : "No kill rows yet"}</p>
+            <h2>{table.name} kill table</h2>
+            <p>{kills.length ? `${kills.length} players${kills[0] ? ` · most kills ${kills[0].kills}` : ""}` : "Nothing uploaded yet. Comes from the kill sheet."}</p>
           </div>
           <div className="ad-card__actions">
             {lastKills && (
@@ -174,7 +174,7 @@ export default function ResultsPanel({
               </button>
             )}
             <button type="button" className="ad-btn ad-btn--primary" onClick={() => setOpen(open === "kills" ? null : "kills")} aria-expanded={open === "kills"}>
-              <Icon name="upload" size={16} /> Upload kills
+              <Icon name="upload" size={16} /> {kills.length ? "Upload a new version" : "Upload kills"}
             </button>
           </div>
         </header>
@@ -214,7 +214,7 @@ export default function ResultsPanel({
             </table>
           </div>
         ) : (
-          open !== "kills" && <p className="ad-card__empty">Upload the kill sheet for {table.name}: player, squad and kills, in any order. Players missing from their squad&apos;s roster are added to it.</p>
+          open !== "kills" && <p className="ad-card__empty">Upload the kill sheet for {table.name}: player, team and kills, in any order. Players missing from their team&apos;s roster are added to it, and the preview shows who moves before you save.</p>
         )}
       </section>
 
@@ -228,7 +228,7 @@ export default function ResultsPanel({
           <details className="ad-card ad-versions">
             <summary>
               <strong>Earlier versions</strong>
-              <small>Every upload keeps what it replaced. Put any of them back.</small>
+              <small>Every upload keeps what it replaced, so any of them can be put back.</small>
             </summary>
             <ul>
               {versions.map((v) => (

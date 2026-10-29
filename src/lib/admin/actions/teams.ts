@@ -5,7 +5,9 @@ import { redirect, unstable_rethrow } from "next/navigation";
 import type { FormState } from "@/components/admin/Form";
 import { TAGS } from "@/lib/db";
 import { slugify } from "@/lib/slug";
+import { resolvePeople, resolveTeam } from "../ids";
 import { addAlias } from "../league";
+import { readRoster, writeTeamRoster } from "../roster";
 import { requireAdmin } from "../session";
 import { DbError, db } from "../supabase";
 import { imageFrom } from "../upload";
@@ -68,6 +70,37 @@ export async function saveTeam(id: string | null, _: FormState, form: FormData):
 }
 
 /**
+ * Saves what a team owns now: its current tier, manager and roster. No season is involved: the
+ * team's squads in upcoming or live events follow, finished events keep the roster that played.
+ * With no team id (Add team) the team is picked or created from the form first.
+ */
+export async function saveTeamRoster(id: string | null, _: FormState, form: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const fields: Record<string, string> = {};
+  const team = id ?? String(form.get("team") ?? "");
+  if (!team) fields.team = "Type the team's name.";
+  const tierRaw = String(form.get("tier") ?? "");
+  const tier = tierRaw ? Number(tierRaw) : null;
+  const manager = text(form, "manager");
+  if (manager && manager.length > 80) fields.manager = "Keep the manager's name under 80 characters.";
+  const filled = readRoster(form);
+  if (Object.keys(fields).length) return { error: "Check the highlighted fields.", fields };
+  if (new Set(filled.map((x) => x.p)).size !== filled.length) return { error: "The same player is on the roster twice." };
+
+  try {
+    const teamId = id ?? (await resolveTeam(admin.token, team, text(form, "tag")));
+    const ids = await resolvePeople(admin.token, filled.map((x) => x.p));
+    const [row] = await db<{ slug: string }[]>(admin.token, `teams?id=eq.${teamId}`, { method: "PATCH", body: { tier, manager }, prefer: "return=representation" });
+    const moved = await writeTeamRoster(admin.token, teamId, ids.map((person_id, i) => ({ person_id, role: filled[i].role, captain: filled[i].captain })));
+    updateTag(TAGS.league);
+    if (!id) redirect(`/admin/teams/${row.slug}?saved=1`);
+    return { saved: Date.now(), notice: moved.length ? `Saved. Moved here: ${moved.map((m) => `${m.name} (from ${m.from})`).join(", ")}.` : undefined };
+  } catch (err) {
+    return failed(err);
+  }
+}
+
+/**
  * Folds a duplicate team into another: its registrations move over (and with them its results
  * and kill rows), its name becomes an alias, and the duplicate is deleted.
  */
@@ -84,6 +117,8 @@ export async function mergeTeam(id: string, _: FormState, form: FormData): Promi
     // Merging fixes a duplicate, so its registrations take the right team's name.
     const [right] = await db<{ name: string; tag: string | null }[]>(admin.token, `teams?id=eq.${into}&select=name,tag`);
     await db(admin.token, `entries?team_id=eq.${id}`, { method: "PATCH", body: { team_id: into, team_name: right.name, team_tag: right.tag } });
+    // The duplicate's current players join the right team (its captain stays the captain).
+    await db(admin.token, `team_players?team_id=eq.${id}`, { method: "PATCH", body: { team_id: into, captain: false, sort: 100 } });
     await db(admin.token, `aliases?kind=eq.team&target_id=eq.${id}`, { method: "PATCH", body: { target_id: into } });
     await addAlias(admin.token, "team", into, dup.name);
     await db(admin.token, `teams?id=eq.${id}`, { method: "DELETE" });

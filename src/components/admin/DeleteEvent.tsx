@@ -16,7 +16,7 @@ export default function DeleteEvent({ action, name, squads }: { action: Action; 
       <header>
         <h2>Delete event</h2>
         <p>
-          Removes the event page{squads > 0 ? `, its ${squads} registrations` : ""} and every table and result in it. This can&apos;t be undone.
+          Removes the event page and every table and result in it{squads > 0 ? `, and takes its ${squads} teams out of it (the teams themselves stay)` : ""}. This can&apos;t be undone.
         </p>
       </header>
       {open ? (

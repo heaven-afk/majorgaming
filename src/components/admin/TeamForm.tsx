@@ -23,9 +23,9 @@ export default function TeamForm({ kind, action, values, countries, saved }: { k
 
   return (
     <form className="ad-form" onSubmit={submitWith(formAction, startTransition)} noValidate>
-      <Section title={kind === "team" ? "Team" : "Player"} lede={kind === "team" ? "A new name shows on the team's page and on events that haven't finished; finished events keep the name they played under. The old name stays as an alias, so older sheets still match." : "The professional name shows everywhere; the in-game name helps match kill sheets."}>
+      <Section title={kind === "team" ? "Name and logo" : "Player"} lede={kind === "team" ? "A new name shows on the team page and on events that aren't finished; finished events keep the name they played under. Old names are remembered, so older sheets still match." : "The pro name is who they are everywhere on the site and in sheets. The in-game name is shown beside it and updates from kill sheets."}>
         <div className="ad-grid">
-          <Field name="name" label={kind === "team" ? "Name" : "Professional name"} error={f?.name}>
+          <Field name="name" label={kind === "team" ? "Team name" : "Pro name"} error={f?.name}>
             <input
               id="f-name"
               name="name"
@@ -37,7 +37,7 @@ export default function TeamForm({ kind, action, values, countries, saved }: { k
               {...invalid(f, "name")}
             />
           </Field>
-          <Field name="slug" label="Web address" hint={kind === "team" ? `${base}${slug || "…"}` : undefined} error={f?.slug}>
+          <Field name="slug" label="Page link" hint={kind === "team" ? `${base}${slug || "…"}` : undefined} error={f?.slug}>
             <input
               id="f-slug"
               name="slug"

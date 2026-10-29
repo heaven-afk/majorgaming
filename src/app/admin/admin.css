@@ -413,39 +413,125 @@ a.ad-bar__link:hover {
 
 /* Editor ------------------------------------------------------------------------------------- */
 
+/* One column, read top to bottom: each section a quiet card with its title above its fields. */
 .ad-form {
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  max-width: 800px;
 }
 .ad-section {
   display: grid;
-  gap: 20px;
+  gap: 18px;
   padding: 20px 16px 22px;
   border-radius: var(--radius);
-  background: linear-gradient(180deg, #1c1c1c 0%, #181818 100%);
+  background: #161616;
   box-shadow: inset 0 0 0 1px var(--ad-line);
 }
+.ad-section > header {
+  display: grid;
+  gap: 4px;
+}
 .ad-section > header h2 {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.015em;
 }
 .ad-section > header p {
-  margin-top: 4px;
+  max-width: 38rem;
   font-size: 14px;
   color: var(--ad-muted);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 .ad-section__body {
   display: grid;
-  gap: 20px;
+  gap: 22px;
 }
 @media (min-width: 900px) {
   .ad-section {
-    grid-template-columns: 240px minmax(0, 1fr);
-    gap: 32px;
-    padding: 28px;
+    gap: 22px;
+    padding: 24px 26px 26px;
   }
+}
+
+/* A choice with one field beside it, e.g. By tier + Number of tiers. */
+.ad-split {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 600px) {
+  .ad-split {
+    grid-template-columns: minmax(0, 1fr) 9.5rem;
+    align-items: end;
+  }
+}
+
+/* Settings most people never touch, folded away. */
+.ad-more {
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-more > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+.ad-more > summary::-webkit-details-marker {
+  display: none;
+}
+.ad-more > summary::before {
+  content: "+";
+  width: 12px;
+  color: var(--ad-muted);
+}
+.ad-more[open] > summary::before {
+  content: "−";
+}
+.ad-more > summary small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ad-muted);
+}
+.ad-more > div {
+  padding: 4px 16px 18px;
+}
+
+/* What the site shows right now, worked out from the fields as they're filled. */
+.ad-live {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--ad-soft);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ad-muted);
+}
+.ad-live strong {
+  font-weight: 500;
+  color: var(--color-text);
+}
+.ad-live > span[aria-hidden] {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: rgb(244 242 238 / 0.3);
+}
+.ad-live[data-tone="open"] > span[aria-hidden] {
+  background: var(--ad-ok);
+  box-shadow: 0 0 0 4px rgb(127 212 155 / 0.15);
+}
+.ad-live[data-tone="soon"] > span[aria-hidden],
+.ad-live[data-tone="full"] > span[aria-hidden] {
+  background: var(--color-amber);
 }
 
 .ad-grid {
@@ -588,6 +674,13 @@ a.ad-bar__link:hover {
 }
 .ad-choice input:checked + span small {
   color: var(--ad-muted);
+}
+.ad-choice input:disabled + span {
+  opacity: 0.4;
+  cursor: default;
+}
+.ad-choice label:has(input:disabled) {
+  cursor: default;
 }
 .ad-choice input:focus-visible + span {
   outline: 2px solid var(--color-amber);

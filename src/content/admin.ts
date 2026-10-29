@@ -1,9 +1,9 @@
 /** Words used across the admin dashboard. */
 
 export const statusOptions = [
-  { value: "upcoming", label: "Upcoming", hint: "Shown under Coming up" },
-  { value: "live", label: "Live", hint: "Standings show as live" },
-  { value: "final", label: "Final", hint: "In the archive" },
+  { value: "upcoming", label: "Upcoming", hint: "Not started. Can take registrations." },
+  { value: "live", label: "Live", hint: "Being played. Standings show as live." },
+  { value: "final", label: "Finished", hint: "Over. Listed under past events." },
 ] as const;
 
 export const registrationOptions = [
@@ -14,17 +14,29 @@ export const registrationOptions = [
 ] as const;
 
 export const formatOptions = [
-  { value: "tiers", label: "Tiers", hint: "A table per tier" },
-  { value: "single", label: "One table", hint: "A single overall table" },
+  { value: "tiers", label: "By tier", hint: "A standings table for each tier" },
+  { value: "single", label: "One table", hint: "Every team in one standings table" },
 ] as const;
 
 export const kindOptions = [
-  { value: "season", label: "Ranked season", hint: "Sets the Teams page and tiers" },
-  { value: "other", label: "Other event", hint: "Cups, mixed and partner events" },
+  { value: "season", label: "Ranked season", hint: "Decides each team's tier and the Teams page" },
+  { value: "other", label: "Special event", hint: "Cups, mixed and partner events. Tiers stay as they are." },
 ] as const;
 
-/** Squads that move up and down between tiers each season, unless a season sets its own. */
-export const PROMOTION = { promote: 3, relegate: 3 } as const;
+/** What the site shows for each registration state, in a sentence. */
+export const registrationShown = {
+  closed: "Registration closed. No register buttons.",
+  soon: "Opening soon. Buttons say registration opens soon.",
+  open: "Open. Register buttons are live across the site.",
+  full: "Full. Buttons say the event is full.",
+} as const;
+
+/**
+ * Squads that move up and down between tiers each season. Switched off for now (owner,
+ * 2026-10-29): teams keep their tier until it's changed by hand. The numbers stay on each season
+ * in the database; set `enabled` to bring the setting back.
+ */
+export const PROMOTION = { enabled: false, promote: 3, relegate: 3 } as const;
 
 /** The categories and groups the database allows (check constraints in the migrations). */
 export const STORY_CATEGORIES = ["Announcement", "Season recap", "Feature", "Update"] as const;

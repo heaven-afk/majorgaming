@@ -5,10 +5,9 @@ import Scene from "../motion/Scene";
 
 /** The top of the Teams page: what it holds, and a quiet row of crests from the directory. */
 export default async function TeamsIntro() {
-  const { activeEvent, activeTeams, entryOf, events } = await getLeague();
+  const { activeEvent, activeTeams, profileOf, events } = await getLeague();
   const copy = teamsPage;
-  const lineups = activeTeams.map((t) => entryOf(t.slug, activeEvent.slug)!);
-  const countries = new Set(lineups.flatMap((e) => e.roster.flatMap((l) => l.person.country ?? [])));
+  const countries = new Set(activeTeams.flatMap((t) => profileOf(t.slug)!.roster.flatMap((l) => l.person.country ?? [])));
   const facts = [
     { label: copy.facts.squads, value: activeTeams.length },
     { label: copy.facts.tiers, value: new Set(activeTeams.map((t) => t.tier)).size },

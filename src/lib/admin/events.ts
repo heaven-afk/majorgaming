@@ -44,7 +44,7 @@ export type EventRow = {
 export type TableRow = { id: string; name: string; tier: number | null; sort: number; standings: { count: number }[] };
 
 /** What the events list shows for each event. */
-export type EventSummary = Pick<EventRow, "id" | "slug" | "name" | "series" | "sort_order" | "status" | "registration_state" | "start_date" | "end_date" | "poster_url" | "updated_at"> & {
+export type EventSummary = Pick<EventRow, "id" | "slug" | "name" | "series" | "kind" | "sort_order" | "status" | "registration_state" | "start_date" | "end_date" | "poster_url" | "updated_at"> & {
   event_tables: { count: number }[];
   entries: { count: number }[];
 };
@@ -52,7 +52,7 @@ export type EventSummary = Pick<EventRow, "id" | "slug" | "name" | "series" | "s
 export function listEvents(token: string) {
   return db<EventSummary[]>(
     token,
-    "events?select=id,slug,name,series,sort_order,status,registration_state,start_date,end_date,poster_url,updated_at,event_tables(count),entries(count)&order=sort_order.asc",
+    "events?select=id,slug,name,series,kind,sort_order,status,registration_state,start_date,end_date,poster_url,updated_at,event_tables(count),entries(count)&order=sort_order.asc",
   );
 }
 
@@ -108,7 +108,7 @@ export async function placeFor(token: string, event: { id?: string; kind: string
   return placeFor(token, event);
 }
 
-export type EventInput = Omit<EventRow, "id" | "sort_order" | "updated_at">;
+export type EventInput = Omit<EventRow, "id" | "sort_order" | "updated_at" | "promote" | "relegate"> & Partial<Pick<EventRow, "promote" | "relegate">>;
 
 export async function createEvent(token: string, input: EventInput) {
   const sort_order = await placeFor(token, input);

@@ -49,7 +49,7 @@ async function People({ searchParams }: { searchParams: PageProps<"/admin/people
                     </strong>
                     <span>
                       {p.ign && p.ign !== p.name ? `${p.ign} · ` : ""}
-                      {latest ? latest.entry.team_name : "No squad yet"}
+                      {latest ? latest.entry.team_name : "No team yet"}
                       {p.entry_players.length > 1 && ` · ${p.entry_players.length} events`}
                     </span>
                   </span>

@@ -41,7 +41,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/people/[slug]"
       <section className="ad-section">
         <header>
           <h2>Squads</h2>
-          <p>Where they&apos;ve played. Change a roster from the squad&apos;s page.</p>
+          <p>Where they&apos;ve played. Change a roster from the team&apos;s page.</p>
         </header>
         {person.entry_players.length ? (
           <ul className="ad-rows">
@@ -71,7 +71,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/people/[slug]"
       <section className="ad-danger">
         <header>
           <h2>Duplicate of another player?</h2>
-          <p>Merging moves their roster places, kill rows and managed squads to the other player, keeps this name as an alias, then deletes this one.</p>
+          <p>Merging moves their roster places, and kill rows to the other player, keeps this name as an alias, then deletes this one.</p>
         </header>
         <MergeForm action={mergePerson.bind(null, person.id)} options={others.map((p) => ({ value: p.id, label: p.name, sub: p.ign ?? undefined }))} noun="player" />
         {person.entry_players.length === 0 && person.kill_rows.length === 0 && (

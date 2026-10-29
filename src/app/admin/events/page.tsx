@@ -53,7 +53,7 @@ async function EventList({ searchParams }: { searchParams: PageProps<"/admin/eve
                     )}
                   </span>
                   <span className="ad-event__counts">
-                    {tables} {tables === 1 ? "table" : "tables"} · {squads} {squads === 1 ? "squad" : "squads"}
+                    {tables} {tables === 1 ? "table" : "tables"} · {squads} {squads === 1 ? "team" : "teams"}
                   </span>
                   <Icon name="chevron" size={16} className="ad-event__go" />
                 </Link>

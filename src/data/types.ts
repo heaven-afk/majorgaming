@@ -116,6 +116,11 @@ export type TeamRecord = {
   clan?: string;
   /** Logo image path, once teams have them. Teams have no country: their players can come from anywhere. */
   logo?: string;
+  /** What the team is now, owned by the team (events keep their own copy): its current tier (none if unranked), manager and roster. */
+  tier?: number | null;
+  manager?: string | null;
+  roster?: LineupRecord[];
+  archived?: boolean;
 };
 
 export type Role = "IGL" | "Fragger" | "Support" | "Anchor";

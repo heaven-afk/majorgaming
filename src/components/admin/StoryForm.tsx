@@ -85,7 +85,7 @@ export default function StoryForm({ action, values, saved }: { action: Action; v
           />
         </Field>
         <div className="ad-grid">
-          <Field name="slug" label="Web address" hint={`/news/${slug || "…"}`} error={f?.slug}>
+          <Field name="slug" label="Page link" hint={`/news/${slug || "…"}`} error={f?.slug}>
             <input
               id="f-slug"
               name="slug"
@@ -126,7 +126,7 @@ export default function StoryForm({ action, values, saved }: { action: Action; v
             { value: "published", label: "Published", hint: "On the News page" },
           ]}
         />
-        <Field name="excerpt" label="Excerpt" hint="One or two lines for the News page cards">
+        <Field name="excerpt" label="Short summary" hint="One or two lines shown on the News page cards">
           <textarea id="f-excerpt" name="excerpt" rows={2} defaultValue={values?.excerpt ?? ""} />
         </Field>
       </Section>
@@ -134,12 +134,12 @@ export default function StoryForm({ action, values, saved }: { action: Action; v
       <Section title="Cover" lede="Shown on the News page and at the top of the story. Wide images work best.">
         <ImageField name="cover" label="Cover" current={values?.cover_url} shape="wide" kind="story" />
         {f?.cover && <small className="ad-field__error">{f.cover}</small>}
-        <Field name="cover_alt" label="Cover description" hint="Read out by screen readers">
+        <Field name="cover_alt" label="What the cover shows" hint="A few words for people using screen readers">
           <input id="f-cover_alt" name="cover_alt" defaultValue={values?.cover_alt ?? ""} />
         </Field>
       </Section>
 
-      <Section title="Body" lede="Build the story from blocks. Lists take one item per line.">
+      <Section title="Body" lede="Add paragraphs, headings, quotes, images and lists as blocks, in order. In a list, put each item on its own line.">
         {f?.body && <small className="ad-field__error">{f.body}</small>}
         <ol className="ad-blocks">
           {blocks.map((b, i) => (

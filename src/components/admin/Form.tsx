@@ -29,14 +29,14 @@ export const invalid = (fields: Record<string, string> | undefined, key: string)
   fields?.[key] ? { "aria-invalid": true as const, "aria-describedby": `f-${key}-error` } : {};
 
 /** Radio buttons drawn as a segmented switch. */
-export function Choice({ name, label, options, value, onChange }: { name: string; label: string; options: readonly Option[]; value: string; onChange?: (v: string) => void }) {
+export function Choice({ name, label, options, value, onChange, disabled }: { name: string; label: string; options: readonly Option[]; value: string; onChange?: (v: string) => void; /** Options shown but not pickable right now. */ disabled?: readonly string[] }) {
   return (
     <fieldset className="ad-choice">
       <legend>{label}</legend>
       <div>
         {options.map((o) => (
           <label key={o.value} data-value={o.value}>
-            <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange?.(o.value)} />
+            <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange?.(o.value)} disabled={disabled?.includes(o.value)} />
             <span>
               {o.label}
               {o.hint && <small>{o.hint}</small>}
@@ -79,7 +79,7 @@ export function useFocusError(state: FormState) {
   }, [state]);
 }
 
-export function SaveBar({ state, toast, pending, label, idle }: { state: FormState; toast: boolean; pending: boolean; label: string; idle: string }) {
+export function SaveBar({ state, toast, pending, label, idle, disabled }: { state: FormState; toast: boolean; pending: boolean; label: string; idle: string; disabled?: boolean }) {
   return (
     <div className="ad-savebar">
       <p aria-live="polite" className="ad-savebar__msg" data-tone={state.error ? "error" : toast ? "ok" : undefined}>
@@ -93,7 +93,7 @@ export function SaveBar({ state, toast, pending, label, idle }: { state: FormSta
           idle
         )}
       </p>
-      <button className="ad-btn ad-btn--primary" disabled={pending}>
+      <button className="ad-btn ad-btn--primary" disabled={pending || disabled}>
         {pending ? "Saving…" : label}
       </button>
     </div>

@@ -71,10 +71,10 @@ function readEvent(form: FormData) {
   const name = text(form, "name");
   if (!name) fields.name = "Give the event a name.";
   const slug = text(form, "slug")?.toLowerCase() ?? null;
-  if (!slug) fields.slug = "Add the web address.";
+  if (!slug) fields.slug = "Add the page link.";
   else if (!SLUG.test(slug)) fields.slug = "Lowercase letters, numbers and single dashes only.";
   const series = text(form, "series");
-  if (!series) fields.series = "Add the series, e.g. MGL Season.";
+  if (!series) fields.series = "Add the small label shown above the name, e.g. MGL Season.";
 
   const format = oneOf(form, "format", ["tiers", "single"] as const, "tiers");
   const tiers = format === "tiers" ? count(form, "tiers", fields, "Tiers", 1) : null;
@@ -130,14 +130,14 @@ function readEvent(form: FormData) {
     matches_played,
     matches_total,
     kill_table_size: count(form, "kill_table_size", fields, "Kill table size", 1),
-    promote: count(form, "promote", fields, "Promoted"),
-    relegate: count(form, "relegate", fields, "Relegated"),
+    // Promotion and relegation are switched off; seasons keep whatever numbers they had.
+    ...(form.has("promote") ? { promote: count(form, "promote", fields, "Promoted"), relegate: count(form, "relegate", fields, "Relegated") } : {}),
   };
   return { input, tiers: tiers ?? 1, fields };
 }
 
 function fail(err: unknown): FormState {
-  if (err instanceof DbError && /duplicate key/.test(err.message)) return { error: "Another event already uses that web address." };
+  if (err instanceof DbError && /duplicate key/.test(err.message)) return { error: "Another event already uses that page link." };
   return { error: err instanceof Error ? err.message : "Something went wrong. Try again." };
 }
 
@@ -147,7 +147,7 @@ export async function saveEvent(id: string | null, _: FormState, form: FormData)
   if (Object.keys(fields).length) return { error: "Check the highlighted fields.", fields };
 
   try {
-    if (await slugTaken(admin.token, input.slug, id ?? undefined)) return { error: "Check the highlighted fields.", fields: { slug: "Another event already uses this address." } };
+    if (await slugTaken(admin.token, input.slug, id ?? undefined)) return { error: "Check the highlighted fields.", fields: { slug: "Another event already uses this page link." } };
 
     // The poster: keep it, replace it with an upload, or remove it.
     const current = id ? await getEvent(admin.token, String(form.get("current_slug") ?? input.slug)) : undefined;
@@ -176,7 +176,8 @@ export async function saveEvent(id: string | null, _: FormState, form: FormData)
     const synced = await syncTables(admin.token, row.id, input.format, tiers);
     updateTag(TAGS.league);
     if (synced.error) return { error: `Saved, but: ${synced.error}`, fields: { tiers: synced.error } };
-    if (!id || (current && current.slug !== row.slug)) redirect(`/admin/events/${row.slug}?saved=1`);
+    if (!id) redirect(`/admin/events/${row.slug}?created=1`);
+    if (current && current.slug !== row.slug) redirect(`/admin/events/${row.slug}?saved=1`);
     return { saved: Date.now() };
   } catch (err) {
     unstable_rethrow(err); // the redirect

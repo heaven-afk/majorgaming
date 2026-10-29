@@ -35,7 +35,7 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
   if (!tables.length) {
     return (
       <>
-        <EventTabs slug={slug} name={event.name} active="Results" />
+        <EventTabs event={event} active="Results" />
         <p className="ad-empty">
           This event has no tables yet. Set its format under{" "}
           <Link className="ad-link" href={`/admin/events/${slug}`}>
@@ -82,7 +82,10 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
 
   return (
     <>
-      <EventTabs slug={slug} name={event.name} active="Results" note="Upload each tier's collation and kill sheet as they come in. Each upload replaces only its own tier, goes live within seconds, and can be undone." />
+      <EventTabs event={event} active="Results" />
+      <p className="ad-lede">
+        Upload the standings (collation) sheet and the kill sheet {tables.length > 1 ? "for each tier " : ""}as they come in. You check every row before it saves; each upload replaces only what it covers, goes live within seconds, and can be undone.
+      </p>
 
       {tables.length > 1 && <AllTiersUpload eventId={event.id} tables={tables} entries={uploadEntries} teams={uploadTeams} people={uploadPeople} />}
 
@@ -94,7 +97,7 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
               <Link key={t.id} href={`/admin/events/${slug}/results?tab=${i + 1}`} aria-current={i === index ? "page" : undefined} scroll={false}>
                 <strong>{t.name}</strong>
                 <small>
-                  {squadsIn(t.tier)} squads{done ? "" : " · no results"}
+                  {squadsIn(t.tier)} teams · {done ? "uploaded" : "no results yet"}
                 </small>
               </Link>
             );

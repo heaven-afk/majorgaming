@@ -11,7 +11,7 @@ type Slot = { id: number; value: string; label: string; role: string };
 
 const ROLES = ["", "IGL", "Fragger", "Support", "Anchor"];
 
-/** One squad's registration for an event: team, tier, manager, and the roster in order. */
+/** A team's current tier, manager and roster, or one squad's registration for an event: the same fields in both. */
 export default function EntryForm({
   action,
   eventSort,
@@ -22,10 +22,13 @@ export default function EntryForm({
   fixedTeam,
   back,
   title,
+  lede,
+  submit,
   saved,
 }: {
   action: Action;
-  eventSort: number;
+  /** For an event's registration: offers "Copy roster from their last event". */
+  eventSort?: number;
   tiers: number;
   teams: PickOption[];
   people: PickOption[];
@@ -35,6 +38,8 @@ export default function EntryForm({
   /** Where to go after registering, instead of the event's squad page. */
   back?: string;
   title?: string;
+  lede?: string;
+  submit?: string;
   saved?: boolean;
 }) {
   const [state, formAction] = useActionState(action, {});
@@ -72,6 +77,7 @@ export default function EntryForm({
 
   function copyLast() {
     startCopy(async () => {
+      if (eventSort === undefined) return;
       const last = await lastRoster(eventSort, team);
       if (!last) return setCopied("No earlier registration for this team.");
       let id = nextId;
@@ -88,7 +94,7 @@ export default function EntryForm({
   return (
     <form className="ad-form" onSubmit={submitWith(formAction, startTransition)} noValidate>
       {back && <input type="hidden" name="back" value={back} />}
-      <Section title={title ?? "Team"} lede={fixedTeam ? "Their tier and manager for this event." : "Type the team's name. A team that played before shows up to pick, so its history stays together."}>
+      <Section title={title ?? "Team"} lede={lede ?? (fixedTeam ? "Their tier and manager for this event." : "Start typing the team's name. If it has played before, pick it from the list so its history stays together; otherwise it's added as a new team.")}>
         <div className="ad-grid">
           {fixedTeam ? (
             <input type="hidden" name="team" value={fixedTeam} />
@@ -118,8 +124,8 @@ export default function EntryForm({
         </div>
       </Section>
 
-      <Section title="Roster" lede="Search for a player, or type a new name to add them. Someone on another team this season moves here when you save. Any number of players; mark one captain.">
-        {known(team) && (
+      <Section title="Roster" lede="Type a player's pro name and pick them, or keep typing to add someone new. Anyone already on another team moves to this one when you save. Tap Captain on one player.">
+        {known(team) && eventSort !== undefined && (
           <div className="ad-roster__copy">
             <button type="button" className="ad-btn ad-btn--quiet" onClick={copyLast} disabled={copying}>
               {copying ? "Copying…" : "Copy roster from their last event"}
@@ -135,14 +141,13 @@ export default function EntryForm({
               <select name="role" aria-label={`Player ${i + 1} role`} value={s.role} onChange={(e) => setSlots((all) => all.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))}>
                 {ROLES.map((r) => (
                   <option key={r} value={r}>
-                    {r || "Role"}
+                    {r || "No role"}
                   </option>
                 ))}
               </select>
-              <label className="ad-roster__captain" title="Captain">
-                <input type="radio" name="captain" value={i} checked={captain === i} onChange={() => setCaptain(i)} />
-                <span>C</span>
-                <span className="sr-only">Captain</span>
+              <label className="ad-roster__captain">
+                <input type="radio" name="captain" value={i} checked={captain === i} onChange={() => setCaptain(i)} aria-label={`Player ${i + 1} is captain`} />
+                <span>Captain</span>
               </label>
               <span className="ad-roster__tools">
                 <button type="button" className="ad-icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move player ${i + 1} up`}>
@@ -163,7 +168,7 @@ export default function EntryForm({
         </button>
       </Section>
 
-      <SaveBar state={state} toast={toast} pending={pending} label={entry ? "Save" : fixedTeam ? "Add to season" : "Add team"} idle="New players and teams are created when you save." />
+      <SaveBar state={state} toast={toast} pending={pending} label={submit ?? (entry ? "Save changes" : "Add team")} idle="New players and teams are created when you save." />
     </form>
   );
 }
