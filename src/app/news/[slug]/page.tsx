@@ -12,8 +12,8 @@ import Nav from "@/components/Nav";
 import ShareLink from "@/components/news/ShareLink";
 import { StoryCard } from "@/components/news/StoryCard";
 import { newsPage } from "@/content/news";
-import { site } from "@/content/site";
 import { formatDate, getLeague, readingTime } from "@/lib/league";
+import { getSettings } from "@/lib/settings";
 import type { Block } from "@/data/types";
 
 export async function generateStaticParams() {
@@ -77,7 +77,7 @@ function BlockView({ block }: { block: Block }) {
 }
 
 async function StoryContent({ params }: { params: PageProps<"/news/[slug]">["params"] }) {
-  const { stories, storyBySlug } = await getLeague();
+  const [{ stories, storyBySlug }, { discord }] = await Promise.all([getLeague(), getSettings()]);
   const story = storyBySlug((await params).slug);
   if (!story) notFound();
 
@@ -127,7 +127,7 @@ async function StoryContent({ params }: { params: PageProps<"/news/[slug]">["par
           <aside className="nw-story__aside" aria-label={copy.share}>
             <span>{copy.share}</span>
             <ShareLink title={story.title} />
-            <a className="btn-ghost" href={site.discord} target="_blank" rel="noreferrer">
+            <a className="btn-ghost" href={discord} target="_blank" rel="noreferrer">
               <Icon name="discord" size={16} />
               {copy.discord}
             </a>

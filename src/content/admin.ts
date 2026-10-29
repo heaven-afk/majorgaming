@@ -52,6 +52,7 @@ export const adminCopy = {
     { href: "/admin/news", label: "News", icon: "news" },
     { href: "/admin/staff", label: "Staff", icon: "people" },
     { href: "/admin/media", label: "Media", icon: "image" },
+    { href: "/admin/settings", label: "Settings", icon: "settings" },
   ],
   viewSite: "View site",
   failed: {

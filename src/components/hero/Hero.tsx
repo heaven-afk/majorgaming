@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { hero } from "@/content/site";
+import { getSettings } from "@/lib/settings";
 import { getLeague } from "@/lib/league";
 import { Mark } from "../brand/Mark";
 import { Icon } from "../Icons";
@@ -9,6 +10,7 @@ import MeshGradient from "./MeshGradient";
 export default async function Hero() {
   const { registration } = await getLeague();
   const { community, title, images } = hero;
+  const { community: text } = await getSettings();
 
   return (
     <section className="hero" aria-labelledby="hero-title">
@@ -25,8 +27,8 @@ export default async function Hero() {
             ))}
           </ul>
           <p className="community__text">
-            <span>{community.text[0]}</span>
-            <span>{community.text[1]}</span>
+            <span>{text[0]}</span>
+            <span>{text[1]}</span>
             <svg className="community__scribble" viewBox="0 0 220 24" aria-hidden>
               <path d="M2 14c22-2 44-3 66-3 18 0 30 1 34 2-14 2-30 4-26 6 8 3 40-6 62-6 16 0 22 4 34 4 12 0 26-3 46-3" />
             </svg>

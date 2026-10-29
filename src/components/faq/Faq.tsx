@@ -1,10 +1,12 @@
 import Image from "next/image";
 import { faq } from "@/content/site";
+import { getSettings } from "@/lib/settings";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 import Accordion from "./Accordion";
 
-export default function Faq() {
+export default async function Faq() {
+  const { discord } = await getSettings();
   return (
     <Scene className="faq" id="faq" aria-labelledby="faq-title">
       <div className="faq__aside">
@@ -29,7 +31,7 @@ export default function Faq() {
           </ul>
           <strong>{faq.ask.title}</strong>
           <p>{faq.ask.body}</p>
-          <a className="btn-light" href={faq.ask.href} target="_blank" rel="noreferrer">
+          <a className="btn-light" href={discord} target="_blank" rel="noreferrer">
             <Icon name="discord" size={18} className="btn-light__icon" />
             {faq.ask.label}
           </a>

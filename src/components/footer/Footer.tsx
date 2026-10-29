@@ -1,5 +1,7 @@
-import { footer, site, socials } from "@/content/site";
+import { footer, site } from "@/content/site";
 import { getLeague } from "@/lib/league";
+import { getSettings } from "@/lib/settings";
+import { socialLinks } from "../Nav";
 import { Mark } from "../brand/Mark";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
@@ -14,8 +16,8 @@ const WORDMARK = site.name.split(" ");
  */
 export default async function Footer() {
   const { scene } = footer;
-  const { registration } = await getLeague();
-  const primary = registration.open ? registration : { label: "Join the Discord", href: site.discord };
+  const [{ registration }, { discord }, socials] = await Promise.all([getLeague(), getSettings(), socialLinks()]);
+  const primary = registration.open ? registration : { label: "Join the Discord", href: discord };
 
   return (
     <Scene as="footer" className="footer" aria-labelledby="footer-title">
@@ -37,7 +39,7 @@ export default async function Footer() {
               {primary.label}
             </a>
             {registration.open && (
-              <a className="btn-glass" href={site.discord} target="_blank" rel="noreferrer">
+              <a className="btn-glass" href={discord} target="_blank" rel="noreferrer">
                 <Icon name="discord" size={18} />
                 Join the Discord
               </a>
@@ -63,7 +65,7 @@ export default async function Footer() {
           <h3>Community</h3>
           <ul className="footer__socials">
             <li>
-              <a href={site.discord} target="_blank" rel="noreferrer">
+              <a href={discord} target="_blank" rel="noreferrer">
                 <Icon name="discord" size={18} />
                 Discord
               </a>

@@ -69,7 +69,7 @@ export function loadContent() {
 }
 
 /** Cache tags: what an admin save clears. */
-export const TAGS = { league: "league", content: "content" } as const;
+export const TAGS = { league: "league", content: "content", settings: "settings" } as const;
 
 export async function readLeague() {
   "use cache";
@@ -86,4 +86,25 @@ export async function readContent() {
   cacheTag(TAGS.content);
   cacheLife("max");
   return loadContent();
+}
+
+/**
+ * The admin's Settings row, as saved (fields never saved are missing). Empty when the row or the
+ * table isn't there yet, so the site falls back to its defaults instead of failing.
+ */
+export async function readSettings(): Promise<Record<string, unknown>> {
+  "use cache";
+  cacheTag(TAGS.settings);
+  cacheLife("max");
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) return {};
+  try {
+    const res = await fetch(`${url}/rest/v1/site_settings?id=eq.1&select=data`, { headers: { apikey: key } });
+    if (!res.ok) return {};
+    const [row] = (await res.json()) as { data?: Record<string, unknown> }[];
+    return row?.data ?? {};
+  } catch {
+    return {};
+  }
 }

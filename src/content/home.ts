@@ -5,13 +5,14 @@
 
 import { cache } from "react";
 import { getLeague } from "@/lib/league";
+import { getSettings } from "@/lib/settings";
 import { additionalCommunityAvatars } from "./visual-assets";
 
 const [mantaRay, , nikto, krueger] = additionalCommunityAvatars;
 
 /** Home's data-built copy for this request. */
 export const getHome = cache(async () => {
-  const { events, featuredEvent, killTablesOf, latestSeason } = await getLeague();
+  const [{ events, featuredEvent, killTablesOf, latestSeason }, { stats }] = await Promise.all([getLeague(), getSettings()]);
 
   const about = {
     label: "About MGL",
@@ -30,12 +31,12 @@ export const getHome = cache(async () => {
       caption: "Ranked by MGL",
       sub: "Every match counts",
     },
-    /** SAMPLE numbers: replace with real figures. */
+    /** Ranked seasons from the data; the rest set in the admin (Settings). */
     stats: [
       { value: latestSeason.number ?? events.length, suffix: "", label: "Ranked seasons", icon: "trophy" },
-      { value: 480, suffix: "+", label: "Squads ranked", icon: "squad" },
-      { value: 1200, suffix: "+", label: "Matches played", icon: "crosshair" },
-      { value: 2000, suffix: "+", label: "Players in the community", icon: "discord" },
+      { ...stats.squads, label: "Squads ranked", icon: "squad" },
+      { ...stats.matches, label: "Matches played", icon: "crosshair" },
+      { ...stats.players, label: "Players in the community", icon: "discord" },
     ],
   } as const;
 

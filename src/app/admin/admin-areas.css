@@ -1149,3 +1149,30 @@
   line-height: 1.55;
   color: var(--ad-muted);
 }
+
+/* Settings: an input with its network's icon, and number tiles with their suffix. */
+.ad-input-icon {
+  position: relative;
+  display: block;
+}
+.ad-input-icon > svg {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  translate: 0 -50%;
+  color: var(--ad-muted);
+  pointer-events: none;
+}
+.ad .ad-input-icon > input {
+  padding-left: 38px;
+}
+.ad-figures {
+  display: grid;
+  gap: 14px;
+}
+.ad-figures > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7.5rem;
+  gap: 12px;
+  align-items: start;
+}

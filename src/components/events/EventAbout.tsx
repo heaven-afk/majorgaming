@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { eventsPage, site } from "@/content/site";
+import { eventsPage } from "@/content/site";
 import { formatDate } from "@/lib/dates";
 import type { LeagueEvent } from "@/lib/league";
 import { Icon } from "../Icons";
@@ -16,7 +16,7 @@ export function hasAbout(event: LeagueEvent) {
  * An event's poster, write-up, key dates and other details. Each part appears only once the
  * admins set it, so past events without posters or dates show none of this.
  */
-export default function EventAbout({ event }: { event: LeagueEvent }) {
+export default function EventAbout({ event, discord }: { event: LeagueEvent; discord: string }) {
   const copy = eventsPage.event.about;
   const steps = STEPS.filter((k) => event[k]).map((k) => ({ key: k, label: copy.steps[k], date: formatDate(event[k]!) }));
   const open = event.status === "upcoming" && event.registration === "open";
@@ -73,7 +73,7 @@ export default function EventAbout({ event }: { event: LeagueEvent }) {
         )}
 
         {event.status === "upcoming" && (
-          <a className={open ? "btn-light ev-about__cta" : "btn-ghost ev-about__cta"} href={open ? (event.registrationUrl ?? site.discord) : site.discord} target="_blank" rel="noreferrer" data-rise="3">
+          <a className={open ? "btn-light ev-about__cta" : "btn-ghost ev-about__cta"} href={open ? (event.registrationUrl ?? discord) : discord} target="_blank" rel="noreferrer" data-rise="3">
             {open ? copy.register : copy.discord}
             <Icon name="arrow" size={16} />
           </a>

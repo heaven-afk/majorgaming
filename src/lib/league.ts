@@ -6,10 +6,11 @@
  */
 
 import { cache } from "react";
-import { registration as registrationCopy, site } from "@/content/site";
+import { registration as registrationCopy } from "@/content/site";
 import { additionalCommunityAvatars, communityAvatars, communityAvatarsSetThree, referenceBasedCommunityAvatars } from "@/content/visual-assets";
 import type { EventRecord, KillRecord, LineupRecord, PersonRecord, StoryRecord, TableRecord, TeamRecord } from "@/data/types";
 import { readContent, readLeague, type League as Records } from "./db";
+import { getSettings } from "./settings";
 
 /** How many players a kill table shows, unless the event sets its own. */
 const KILL_TABLE_SIZE = 20;
@@ -74,7 +75,7 @@ const AVATARS = [...communityAvatars, ...additionalCommunityAvatars, ...communit
 const avatarOf = (slug: string) => AVATARS[[...slug].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % AVATARS.length];
 
 /** Everything the pages read, built from the stored records. */
-function build({ events: eventRecords, teams: teamRecords, people, entries, kills: killRecords }: Records, storyRecords: StoryRecord[]) {
+function build({ events: eventRecords, teams: teamRecords, people, entries, kills: killRecords }: Records, storyRecords: StoryRecord[], discord: string) {
   const teamMap = new Map(teamRecords.map((t) => [t.slug, t]));
 
   function rank(table: TableRecord): Table {
@@ -119,8 +120,8 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
   const openNow = upcomingEvents.filter((e) => e.registration === "open");
   const registering = openNow.find((e) => e.ranked) ?? openNow[0];
   const registration = registering
-    ? { open: true, event: registering, label: registrationCopy.label, href: registering.registrationUrl ?? site.discord, note: registering.registrationNote }
-    : { open: false, event: undefined, label: registrationCopy.label, href: site.discord, note: undefined };
+    ? { open: true, event: registering, label: registrationCopy.label, href: registering.registrationUrl ?? discord, note: registering.registrationNote }
+    : { open: false, event: undefined, label: registrationCopy.label, href: discord, note: undefined };
 
   /** The newest finished MGL Season: names the honours and the next season to register for. */
   const latestSeason = events.find((e) => e.series === "MGL Season" && e.status === "final") ?? featuredEvent;
@@ -259,8 +260,8 @@ export type LeagueData = ReturnType<typeof build>;
 
 /** The league for this request: read from the cache (or the database), built once per request. */
 export const getLeague = cache(async () => {
-  const [league, content] = await Promise.all([readLeague(), readContent()]);
-  return build(league, content.stories);
+  const [league, content, settings] = await Promise.all([readLeague(), readContent(), getSettings()]);
+  return build(league, content.stories, settings.discord);
 });
 
 export function readingTime(story: StoryRecord) {

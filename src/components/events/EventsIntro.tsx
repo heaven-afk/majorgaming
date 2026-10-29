@@ -1,11 +1,12 @@
-import { eventsPage, site } from "@/content/site";
+import { eventsPage } from "@/content/site";
 import { getLeague, type LeagueData } from "@/lib/league";
+import { getSettings } from "@/lib/settings";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 
 /** What the "Now" card shows: a live event, open registration, or the break between seasons. */
-function now({ featuredEvent, latestSeason, upcomingEvents, registration }: LeagueData) {
+function now({ featuredEvent, latestSeason, upcomingEvents, registration }: LeagueData, discord: string) {
   const copy = eventsPage.now;
   if (featuredEvent.status === "live") {
     const progress = featuredEvent.matches ? `Match ${featuredEvent.matches.played} of ${featuredEvent.matches.total} played. ` : "";
@@ -18,12 +19,13 @@ function now({ featuredEvent, latestSeason, upcomingEvents, registration }: Leag
     return { state: soon.registration === "open" ? "registration" : "offseason", status, title: soon.name, body: soon.summary ?? copy.upcoming.body, cta: copy.upcoming.cta, href: `/events/${soon.slug}`, external: false };
   }
   const next = (latestSeason.number ?? 0) + 1;
-  return { state: "offseason", ...copy.offseason, title: copy.offseason.title(next), href: site.discord, external: true };
+  return { state: "offseason", ...copy.offseason, title: copy.offseason.title(next), href: discord, external: true };
 }
 
 /** The top of the Events page: what Events is, at a glance, beside what is happening now. */
 export default async function EventsIntro() {
-  const card = now(await getLeague());
+  const [league, { discord }] = await Promise.all([getLeague(), getSettings()]);
+  const card = now(league, discord);
   const words = card.title.split(" ");
   const [word, number] = [words.slice(0, -1).join(" "), words.at(-1)];
 
