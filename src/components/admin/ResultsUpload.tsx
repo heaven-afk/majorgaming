@@ -20,6 +20,7 @@ const WANTED: Record<Mode, Role[]> = {
 };
 // Columns assumed when pasted rows have no header.
 const FALLBACK: Record<Mode, Role[]> = { standings: ["team", "placement", "killpts", "total"], kills: ["player", "team", "kills", "matches"] };
+const SHEET_LIMIT = 4 * 1024 * 1024;
 const SKIP_NAMES = new Set(["total", "totals", "grandtotal", "sum", "average"]);
 
 /** Squad as a sheet names it: a registration, a team to register, a new team, or skipped. */
@@ -102,7 +103,10 @@ export default function ResultsUpload({ mode, eventId, tables, table, entries, t
   }
 
   function read(form: FormData) {
-    startRead(async () => load(await readSheet(form)));
+    // Sheets go through the server, which takes up to 4 MB (the host's limit).
+    const file = form.get("file");
+    if (file instanceof File && file.size > SHEET_LIMIT) return setMessage({ error: "That file is over 4 MB, usually from pictures or extra tabs. Save a copy with just the table, or copy the rows and paste them below." });
+    startRead(async () => load(await readSheet(form).catch(() => ({ error: "The sheet didn't reach the server. Check you're online and try again." }))));
   }
 
   // The preview ------------------------------------------------------------------------------

@@ -178,13 +178,34 @@ export async function historyOf(token: string, eventId: string) {
   }
 }
 
-/** Keeps the rows about to be replaced. Returns false when undo isn't set up yet, so uploads still work. */
-export async function keepVersion(token: string, version: { event_id: string; table_id: string | null; kind: "standings" | "kills"; tier: number | null; rows: unknown[]; summary: string; created_by: string }) {
+/** What an upload changed besides its rows, as it was before, so Undo can put it back. */
+export type Effects = {
+  newEntries?: string[];
+  newTeams?: string[];
+  newPeople?: string[];
+  people?: { id: string; ign: string | null }[];
+  roster?: { person_id: string; entry_id: string | null; sort: number; role: string | null; captain: boolean }[];
+  teamRoster?: { person_id: string; rows: { team_id: string; sort: number; role: string | null; captain: boolean }[] }[];
+};
+
+/**
+ * Keeps the rows about to be replaced, and what else the upload is about to change. "full" when
+ * both are kept; "rows" when the database can't keep the rest yet (migration
+ * 20261029150000_results_history_effects.sql not run); false when undo isn't set up at all, so
+ * uploads still work.
+ */
+export async function keepVersion(token: string, version: { event_id: string; table_id: string | null; kind: "standings" | "kills"; tier: number | null; rows: unknown[]; summary: string; created_by: string; effects?: Effects }): Promise<"full" | "rows" | false> {
   try {
     await db(token, "results_history", { method: "POST", body: version });
-    return true;
+    return "full";
   } catch {
-    return false;
+    if (!version.effects) return false;
+    try {
+      await db(token, "results_history", { method: "POST", body: { ...version, effects: undefined } });
+      return "rows";
+    } catch {
+      return false;
+    }
   }
 }
 

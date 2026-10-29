@@ -15,6 +15,9 @@ export async function proxy(request: NextRequest) {
   if (access && expiryOf(access) - Date.now() / 1000 > 60) return NextResponse.next();
 
   const session = await refreshSession(refresh);
+  // Supabase out of reach: keep the session and let the page try (it shows its error card if
+  // it can't load). Only a refresh token Supabase actually refuses signs the admin out.
+  if ("error" in session && session.offline) return NextResponse.next();
   if ("error" in session) {
     const response = signIn ? NextResponse.next() : NextResponse.redirect(new URL("/admin/login", request.url));
     response.cookies.delete(COOKIES.access);

@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/Icons";
-import { deleteMedia, describeMedia, uploadMedia, type MediaRow } from "@/lib/admin/actions/media";
-import type { FormState } from "./Form";
+import { deleteMedia, describeMedia, type MediaRow } from "@/lib/admin/actions/media";
+import { uploadDirect } from "@/lib/admin/direct-upload";
 
 const KINDS = [
   { value: "other", label: "General" },
@@ -19,24 +19,36 @@ const KINDS = [
 /** Every uploaded image: add more, filter by use, copy a link, describe or remove one. */
 export default function MediaLibrary({ media }: { media: MediaRow[] }) {
   const router = useRouter();
-  const [state, upload, uploading] = useActionState<FormState, FormData>(uploadMedia, {});
+  const [kind, setKind] = useState("other");
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
   const [filter, setFilter] = useState("all");
   const [copied, setCopied] = useState<string | null>(null);
   const [busy, start] = useTransition();
   const files = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (state.saved) router.refresh();
-  }, [state.saved, router]);
+  // Each file goes straight to Cloudinary, one after another, then the list reloads.
+  async function upload(list: File[]) {
+    const failed: string[] = [];
+    for (const [i, f] of list.entries()) {
+      setUploading(list.length > 1 ? `Uploading ${i + 1} of ${list.length}…` : "Uploading…");
+      const result = await uploadDirect(f, kind);
+      if ("error" in result) failed.push(result.error);
+    }
+    setUploading(null);
+    setErrors(failed);
+    if (files.current) files.current.value = "";
+    router.refresh();
+  }
 
   const shown = filter === "all" ? media : media.filter((m) => m.kind === filter);
 
   return (
     <>
-      <form action={upload} className="ad-media__upload">
+      <div className="ad-media__upload">
         <label className="ad-field">
           <span>For</span>
-          <select name="kind" defaultValue="other">
+          <select name="kind" value={kind} onChange={(e) => setKind(e.target.value)}>
             {KINDS.map((k) => (
               <option key={k.value} value={k.value}>
                 {k.label}
@@ -44,14 +56,14 @@ export default function MediaLibrary({ media }: { media: MediaRow[] }) {
             ))}
           </select>
         </label>
-        <input ref={files} type="file" name="files" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => e.currentTarget.form?.requestSubmit()} />
-        <button type="button" className="ad-btn ad-btn--primary" disabled={uploading} onClick={() => files.current?.click()}>
-          <Icon name="plus" size={16} /> {uploading ? "Uploading…" : "Upload images"}
+        <input ref={files} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => upload([...(e.target.files ?? [])])} />
+        <button type="button" className="ad-btn ad-btn--primary" disabled={Boolean(uploading)} onClick={() => files.current?.click()}>
+          <Icon name="plus" size={16} /> {uploading ?? "Upload images"}
         </button>
-      </form>
-      {state.error && (
+      </div>
+      {errors.length > 0 && (
         <p className="ad-alert ad-alert--error" role="alert">
-          {state.error}
+          {errors.join(" ")}
         </p>
       )}
 

@@ -54,6 +54,12 @@ export const adminCopy = {
     { href: "/admin/media", label: "Media", icon: "image" },
   ],
   viewSite: "View site",
+  failed: {
+    title: "This page didn't load",
+    lede: "Usually the connection to the database dropped for a moment. Check you're online, then try again. Nothing you saved before this was lost.",
+    retry: "Try again",
+    home: "Back to the dashboard",
+  },
   signOut: "Sign out",
   login: {
     title: "Sign in",

@@ -1,9 +1,9 @@
 "use server";
 
-import type { FormState } from "@/components/admin/Form";
-import { uploadImage } from "../cloudinary";
+import { FOLDERS, ticketFor, verifyReply, type UploadReply } from "../cloudinary";
 import { requireAdmin } from "../session";
 import { db } from "../supabase";
+import { checkIds } from "../ids";
 
 export type MediaRow = { id: string; url: string; kind: string; alt: string | null; width: number | null; height: number | null; created_at: string };
 
@@ -16,29 +16,38 @@ export async function pickMedia(kind?: string) {
   return kind ? [...rows.filter((r) => r.kind === kind), ...rows.filter((r) => r.kind !== kind)] : rows;
 }
 
-export async function uploadMedia(_: FormState, form: FormData): Promise<FormState> {
+const kindOf = (kind: string) => (KINDS.includes(kind) ? kind : "other");
+
+/** Permission for the browser to upload one image straight to Cloudinary. */
+export async function uploadTicket(kind: string) {
+  await requireAdmin();
+  return ticketFor(FOLDERS[kindOf(kind)]);
+}
+
+/**
+ * Records an image the browser just uploaded, once Cloudinary's signed reply checks out, so it
+ * shows in the library and can be used by any image field.
+ */
+export async function recordUpload(kind: string, reply: UploadReply, alt?: string): Promise<{ url: string; width: number; height: number } | { error: string }> {
   const admin = await requireAdmin();
-  const kind = KINDS.includes(String(form.get("kind"))) ? String(form.get("kind")) : "other";
-  const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
-  if (!files.length) return { error: "Choose one or more images." };
   try {
-    for (const file of files) {
-      const up = await uploadImage(file, `mgl/${kind}`);
-      await db(admin.token, "media", { method: "POST", body: { url: up.url, public_id: up.publicId, kind, alt: null, width: up.width, height: up.height, created_by: admin.id } });
-    }
+    const up = verifyReply(reply);
+    await db(admin.token, "media", { method: "POST", body: { url: up.url, public_id: up.publicId, kind: kindOf(kind), alt: alt?.trim() || null, width: up.width, height: up.height, created_by: admin.id } });
+    return { url: up.url, width: up.width, height: up.height };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "The upload failed." };
+    return { error: err instanceof Error ? err.message : "The upload couldn't be saved." };
   }
-  return { saved: Date.now() };
 }
 
 /** Takes an image out of the library. Pages already using it keep it (the file stays on Cloudinary). */
 export async function deleteMedia(id: string) {
   const admin = await requireAdmin();
+  checkIds(id);
   await db(admin.token, `media?id=eq.${id}`, { method: "DELETE" });
 }
 
 export async function describeMedia(id: string, alt: string) {
   const admin = await requireAdmin();
+  checkIds(id);
   await db(admin.token, `media?id=eq.${id}`, { method: "PATCH", body: { alt: alt.trim() || null } });
 }

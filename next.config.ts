@@ -6,10 +6,11 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.0.136", "192.168.1.136"],
   cacheComponents: true,
   partialPrefetching: true,
-  // Admin uploads (posters, photos) go through Server Actions; images are capped at 10 MB.
   // Posters, logos and photos uploaded in the admin.
   images: { remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }] },
-  experimental: { serverActions: { bodySizeLimit: "11mb" } },
+  // Images upload straight from the browser to Cloudinary; only spreadsheets (up to 4 MB) go
+  // through Server Actions. Vercel refuses request bodies over 4.5 MB.
+  experimental: { serverActions: { bodySizeLimit: "4.5mb" } },
   turbopack: {
     rules: {
       "*.css": {

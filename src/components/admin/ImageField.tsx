@@ -3,11 +3,12 @@
 import { useRef, useState } from "react";
 import { Icon } from "@/components/Icons";
 import { pickMedia, type MediaRow } from "@/lib/admin/actions/media";
+import { uploadDirect } from "@/lib/admin/direct-upload";
 
 /**
- * One image: upload a new file, pick one already in the library, or remove it. Sends
- * `<name>` (the file), `<name>_url` (a library pick) and `<name>_remove`; the server reads
- * them with `imageFrom` in `src/lib/admin/upload.ts`.
+ * One image: upload a new file, pick one already in the library, or remove it. A new file goes
+ * straight to Cloudinary and into the library as soon as it's chosen; the form then sends only
+ * `<name>_url` and `<name>_remove`, read on the server by `imageFrom` in `src/lib/admin/upload.ts`.
  */
 export default function ImageField({ name, label, current, shape = "square", kind, hint }: { name: string; label: string; current?: string | null; shape?: "square" | "poster" | "wide"; kind?: string; hint?: string }) {
   const [preview, setPreview] = useState<string | null>(current ?? null);
@@ -15,6 +16,8 @@ export default function ImageField({ name, label, current, shape = "square", kin
   const [removed, setRemoved] = useState(false);
   const [library, setLibrary] = useState<MediaRow[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const shown = removed ? null : preview;
@@ -27,11 +30,29 @@ export default function ImageField({ name, label, current, shape = "square", kin
     setLoading(false);
   }
 
+  async function upload(f: File) {
+    setError(null);
+    setUploading(true);
+    setPreview(URL.createObjectURL(f));
+    const result = await uploadDirect(f, kind ?? "other");
+    setUploading(false);
+    if (file.current) file.current.value = "";
+    if ("error" in result) {
+      setError(result.error);
+      setPreview(picked || current || null);
+      return;
+    }
+    setPicked(result.url);
+    setPreview(result.url);
+    setRemoved(false);
+    setLibrary(null);
+  }
+
   return (
-    <div className="ad-image" data-shape={shape}>
+    <div className="ad-image" data-shape={shape} data-busy={uploading ? "" : undefined}>
       <span className="ad-image__label">{label}</span>
       <div className="ad-image__row">
-        <button type="button" className="ad-image__drop" data-empty={shown ? undefined : ""} onClick={() => file.current?.click()} aria-label={shown ? `Replace ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
+        <button type="button" className="ad-image__drop" data-empty={shown ? undefined : ""} disabled={uploading} onClick={() => file.current?.click()} aria-label={shown ? `Replace ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
           {shown ? (
             // eslint-disable-next-line @next/next/no-img-element -- preview of a picked or uploaded file
             <img src={shown} alt="" />
@@ -43,10 +64,15 @@ export default function ImageField({ name, label, current, shape = "square", kin
           )}
         </button>
         <div className="ad-image__side">
-          <small>{hint ?? "JPG, PNG or WebP, up to 10 MB"}</small>
+          <small aria-live="polite">{uploading ? "Uploading…" : (hint ?? "JPG, PNG or WebP, up to 10 MB")}</small>
+          {error && (
+            <p className="ad-field__error" role="alert">
+              {error}
+            </p>
+          )}
           <div className="ad-image__actions">
-            <button type="button" className="ad-btn ad-btn--quiet" onClick={() => file.current?.click()}>
-              {shown ? "Replace" : "Upload"}
+            <button type="button" className="ad-btn ad-btn--quiet" disabled={uploading} onClick={() => file.current?.click()}>
+              {uploading ? "Uploading…" : shown ? "Replace" : "Upload"}
             </button>
             <button type="button" className="ad-btn ad-btn--quiet" onClick={openLibrary}>
               Library
@@ -78,15 +104,11 @@ export default function ImageField({ name, label, current, shape = "square", kin
       <input
         ref={file}
         type="file"
-        name={name}
         accept="image/jpeg,image/png,image/webp"
         hidden
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (!f) return;
-          setPreview(URL.createObjectURL(f));
-          setPicked("");
-          setRemoved(false);
+          if (f) upload(f);
         }}
       />
       <input type="hidden" name={`${name}_url`} value={picked} />

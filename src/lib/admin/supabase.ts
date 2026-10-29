@@ -19,14 +19,24 @@ function env() {
 
 type TokenResponse = { access_token: string; refresh_token: string; expires_in: number; user: AuthUser };
 
-async function token(grant: "password" | "refresh_token", body: Record<string, string>): Promise<Session | { error: string }> {
+/**
+ * A sign-in or refresh. `offline` means Supabase couldn't be reached or failed on its side, so
+ * nothing is known about the session: callers must not treat it as signed out.
+ */
+async function token(grant: "password" | "refresh_token", body: Record<string, string>): Promise<Session | { error: string; offline?: boolean }> {
   const { url, key } = env();
-  const res = await fetch(`${url}/auth/v1/token?grant_type=${grant}`, {
-    method: "POST",
-    headers: { apikey: key, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${url}/auth/v1/token?grant_type=${grant}`, {
+      method: "POST",
+      headers: { apikey: key, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+  } catch {
+    return { error: "Couldn't reach the sign-in service.", offline: true };
+  }
+  if (res.status >= 500) return { error: "The sign-in service had a problem.", offline: true };
   const data = await res.json().catch(() => ({}));
   if (!res.ok) return { error: (data as { error_description?: string; msg?: string }).error_description ?? (data as { msg?: string }).msg ?? "Sign-in failed." };
   const t = data as TokenResponse;

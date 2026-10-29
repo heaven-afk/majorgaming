@@ -9,6 +9,7 @@ import { slugify } from "@/lib/slug";
 import { requireAdmin } from "../session";
 import { DbError, db } from "../supabase";
 import { imageFrom } from "../upload";
+import { checkIds } from "../ids";
 
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -49,6 +50,7 @@ function readBody(raw: string): Block[] {
 
 export async function saveStory(id: string | null, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id);
   const fields: Record<string, string> = {};
   const title = line(form, "title");
   if (!title) fields.title = "Give the story a title.";
@@ -63,7 +65,7 @@ export async function saveStory(id: string | null, _: FormState, form: FormData)
 
   try {
     const [current] = id ? await db<{ slug: string; cover_url: string | null }[]>(admin.token, `stories?id=eq.${id}&select=slug,cover_url`) : [];
-    const cover = await imageFrom(form, "cover", admin, { folder: "mgl/news", kind: "story", alt: line(form, "cover_alt") ?? title ?? undefined });
+    const cover = await imageFrom(form, "cover", admin);
     const coverUrl = cover === undefined ? current?.cover_url : cover?.url;
     // A published story needs what the News page shows: a date, a cover and some text.
     if (status === "published") {
@@ -99,6 +101,7 @@ export async function saveStory(id: string | null, _: FormState, form: FormData)
 
 export async function deleteStory(id: string) {
   const admin = await requireAdmin();
+  checkIds(id);
   await db(admin.token, `stories?id=eq.${id}`, { method: "DELETE" });
   updateTag(TAGS.content);
   redirect("/admin/news?deleted=1");
@@ -110,6 +113,7 @@ const SOCIALS = ["x", "instagram", "discord"] as const;
 
 export async function saveStaff(id: string | null, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id);
   const fields: Record<string, string> = {};
   const name = line(form, "name");
   if (!name) fields.name = "Add a name or handle.";
@@ -145,7 +149,7 @@ export async function saveStaff(id: string | null, _: FormState, form: FormData)
 
   try {
     const [current] = id ? await db<{ slug: string }[]>(admin.token, `staff?id=eq.${id}&select=slug`) : [];
-    const photo = await imageFrom(form, "photo", admin, { folder: "mgl/staff", kind: "staff", alt: name ?? undefined });
+    const photo = await imageFrom(form, "photo", admin);
     const row = {
       name,
       slug,
@@ -171,6 +175,7 @@ export async function saveStaff(id: string | null, _: FormState, form: FormData)
 
 export async function deleteStaff(id: string) {
   const admin = await requireAdmin();
+  checkIds(id);
   await db(admin.token, `staff?id=eq.${id}`, { method: "DELETE" });
   updateTag(TAGS.content);
   redirect("/admin/staff?deleted=1");

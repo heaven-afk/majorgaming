@@ -4,6 +4,7 @@ import { useActionState, useRef, useState, useSyncExternalStore, useTransition }
 import { Icon } from "@/components/Icons";
 import { formatOptions, kindOptions, PROMOTION, registrationOptions, registrationShown, statusOptions } from "@/content/admin";
 import type { EventRow } from "@/lib/admin/events";
+import { uploadDirect } from "@/lib/admin/direct-upload";
 import { registrationOf, today } from "@/lib/registration";
 import { slugify } from "@/lib/slug";
 import { Choice, Field, invalid, SaveBar, Section, submitWith, useFocusError, useSavedToast, type FormState } from "./Form";
@@ -42,6 +43,9 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
   const [details, setDetails] = useState(event?.details.length ? event.details : []);
   const [detailKeys, setDetailKeys] = useState(() => (event?.details ?? []).map((_, i) => i));
   const [preview, setPreview] = useState<string | null>(event?.poster_url ?? null);
+  const [poster, setPoster] = useState("");
+  const [posterBusy, setPosterBusy] = useState(false);
+  const [posterError, setPosterError] = useState<string | null>(null);
   const [removePoster, setRemovePoster] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   // Today in the league's time zone, read after load (it isn't known while the page is built).
@@ -60,9 +64,21 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
     if (!numberEdited) setNumber(value === "season" ? numberIn(name) : "");
   }
 
-  function pickPoster(file?: File) {
+  async function pickPoster(file?: File) {
     if (!file) return;
+    setPosterError(null);
+    setPosterBusy(true);
     setPreview(URL.createObjectURL(file));
+    const result = await uploadDirect(file, "event", name);
+    setPosterBusy(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if ("error" in result) {
+      setPosterError(result.error);
+      setPreview(poster || event?.poster_url || null);
+      return;
+    }
+    setPoster(result.url);
+    setPreview(result.url);
     setRemovePoster(false);
   }
   const addDetail = () => {
@@ -180,6 +196,8 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
                 <input id="f-registration_closes" type="date" name="registration_closes" value={closes} onChange={(e) => setCloses(e.target.value)} {...invalid(f, "registration_closes")} />
               </Field>
             </div>
+            {/* Greyed-out choices aren't sent with the form, so the one chosen still is. */}
+            {byDates && <input type="hidden" name="registration_state" value={registration} />}
             <Choice name="registration_state" label={byDates ? "Set by the dates above. Pick Full to close it early." : "Registration is"} options={registrationOptions} value={registration} onChange={setRegistration} disabled={byDates ? ["closed", "soon", "open"] : undefined} />
             <div className="ad-grid">
               <Field name="registration_url" label="Register link" hint="Where the register buttons go, e.g. the Discord thread. Leave empty for the main Discord." error={f.registration_url}>
@@ -193,7 +211,7 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
 
           <Section title="Event page" lede="What visitors read about the event.">
             <div className="ad-poster" data-empty={!preview || removePoster ? "" : undefined}>
-              <button type="button" className="ad-poster__drop" onClick={() => fileRef.current?.click()} aria-label={preview ? "Replace poster" : "Upload poster"}>
+              <button type="button" className="ad-poster__drop" disabled={posterBusy} onClick={() => fileRef.current?.click()} aria-label={preview ? "Replace poster" : "Upload poster"}>
                 {preview && !removePoster ? (
                   // eslint-disable-next-line @next/next/no-img-element -- local preview of the picked file
                   <img src={preview} alt="" />
@@ -205,14 +223,21 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
                   </span>
                 )}
               </button>
-              <input ref={fileRef} type="file" name="poster" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => pickPoster(e.target.files?.[0])} />
+              <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => pickPoster(e.target.files?.[0])} />
+              <input type="hidden" name="poster_url" value={poster} />
               <div className="ad-poster__side">
                 <Field name="poster_alt" label="What the poster shows" hint="A few words for people using screen readers">
                   <input id="f-poster_alt" name="poster_alt" defaultValue={event.poster_alt ?? ""} />
                 </Field>
+                {posterBusy && <p className="ad-note" aria-live="polite">Uploading…</p>}
+                {posterError && (
+                  <p className="ad-field__error" role="alert">
+                    {posterError}
+                  </p>
+                )}
                 {preview && !removePoster && (
                   <div className="ad-poster__actions">
-                    <button type="button" className="ad-btn ad-btn--quiet" onClick={() => fileRef.current?.click()}>
+                    <button type="button" className="ad-btn ad-btn--quiet" disabled={posterBusy} onClick={() => fileRef.current?.click()}>
                       Replace
                     </button>
                     {event.poster_url && (
@@ -221,7 +246,7 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
                         className="ad-btn ad-btn--quiet"
                         onClick={() => {
                           setRemovePoster(true);
-                          if (fileRef.current) fileRef.current.value = "";
+                          setPoster("");
                         }}
                       >
                         Remove
@@ -237,7 +262,7 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
                     </button>
                   </p>
                 )}
-                <input type="hidden" name="remove_poster" value={removePoster ? "on" : ""} />
+                <input type="hidden" name="poster_remove" value={removePoster ? "on" : ""} />
               </div>
             </div>
 
@@ -299,7 +324,7 @@ export default function EventForm({ action, event, tiers: initialTiers, saved }:
         <input type="hidden" name="registration_state" value="closed" />
       )}
 
-      <SaveBar state={state} toast={toast} pending={pending} label={event ? "Save changes" : "Create event"} idle={event ? "Changes show on the site as soon as you save." : "Next you'll pick the teams and set up registration."} />
+      <SaveBar state={state} toast={toast} pending={pending} disabled={posterBusy} label={event ? "Save changes" : "Create event"} idle={event ? "Changes show on the site as soon as you save." : "Next you'll pick the teams and set up registration."} />
     </form>
   );
 }

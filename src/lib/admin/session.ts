@@ -6,7 +6,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { COOKIES, db, userOf, type Session } from "./supabase";
+import { COOKIES, db, DbError, userOf, type Session } from "./supabase";
 
 export type Admin = { id: string; email?: string; role: "owner" | "editor"; token: string };
 
@@ -34,7 +34,12 @@ export async function clearSession() {
 export async function adminOf(token: string): Promise<Admin | undefined> {
   const user = await userOf(token);
   if (!user) return undefined;
-  const rows = await db<{ role: Admin["role"] }[]>(token, `admins?user_id=eq.${user.id}&select=role`).catch(() => []);
+  // Only a refused token means "not an admin"; a dropped connection is thrown, so the page shows
+  // its error card instead of sending a signed-in admin back to sign in.
+  const rows = await db<{ role: Admin["role"] }[]>(token, `admins?user_id=eq.${user.id}&select=role`).catch((err) => {
+    if (err instanceof DbError && (err.status === 401 || err.status === 403)) return [];
+    throw err;
+  });
   if (!rows.length) return undefined;
   return { id: user.id, email: user.email, role: rows[0].role, token };
 }

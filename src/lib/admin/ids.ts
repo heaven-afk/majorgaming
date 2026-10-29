@@ -19,12 +19,27 @@ export async function freeSlugs(token: string, table: "teams" | "people", names:
   });
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Every id the browser sends (bound to an action, picked in a form, or in an upload) goes into a
+ * database query, so anything that isn't a record id (or a "new:<name>") is refused before it
+ * gets there. Empty values are allowed: they mean "none".
+ */
+export function checkIds(...values: unknown[]) {
+  for (const v of values.flat(2)) {
+    if (v === null || v === undefined || v === "") continue;
+    if (typeof v !== "string" || !(UUID.test(v) || v.startsWith("new:"))) throw new Error("This page is out of date. Reload it and try again.");
+  }
+}
+
 /** Pickers send an id, or "new:<name>" for someone typed in who isn't on record yet. */
 export const isNew = (v: string) => v.startsWith("new:");
 export const newName = (v: string) => v.slice(4).replace(/\s+/g, " ").trim();
 
 /** Turns picker values into ids, creating the new people in one go. */
 export async function resolvePeople(token: string, values: string[]) {
+  checkIds(values);
   const fresh = [...new Set(values.filter(isNew).map(newName).filter(Boolean))];
   const created = new Map<string, string>();
   if (fresh.length) {
@@ -36,6 +51,7 @@ export async function resolvePeople(token: string, values: string[]) {
 }
 
 export async function resolveTeam(token: string, value: string, tag?: string | null) {
+  checkIds(value);
   if (!isNew(value)) return value;
   const name = newName(value);
   const [slug] = await freeSlugs(token, "teams", [name]);

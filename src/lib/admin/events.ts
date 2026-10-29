@@ -143,8 +143,3 @@ export async function syncTables(token: string, eventId: string, format: "tiers"
   if (missing.length) await db(token, "event_tables", { method: "POST", body: missing.map((w) => ({ ...w, event_id: eventId })) });
   return {};
 }
-
-/** Keeps every uploaded image in the media library, so it can be picked again later. */
-export function recordMedia(token: string, media: { url: string; public_id: string; kind: string; alt?: string; width: number; height: number; created_by: string }) {
-  return db(token, "media", { method: "POST", body: media });
-}

@@ -5,7 +5,7 @@ import { redirect, unstable_rethrow } from "next/navigation";
 import type { FormState } from "@/components/admin/Form";
 import { TAGS } from "@/lib/db";
 import { slugify } from "@/lib/slug";
-import { resolvePeople, resolveTeam } from "../ids";
+import { resolvePeople, resolveTeam, checkIds } from "../ids";
 import { addAlias } from "../league";
 import { readRoster, writeTeamRoster } from "../roster";
 import { requireAdmin } from "../session";
@@ -33,6 +33,7 @@ function readNameSlug(form: FormData, fields: Record<string, string>) {
 
 export async function saveTeam(id: string | null, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id);
   const fields: Record<string, string> = {};
   const { name, slug } = readNameSlug(form, fields);
   const tag = text(form, "tag");
@@ -41,7 +42,7 @@ export async function saveTeam(id: string | null, _: FormState, form: FormData):
 
   try {
     const [current] = id ? await db<{ name: string; slug: string }[]>(admin.token, `teams?id=eq.${id}&select=name,slug`) : [];
-    const logo = await imageFrom(form, "logo", admin, { folder: "mgl/teams", kind: "team", alt: name });
+    const logo = await imageFrom(form, "logo", admin);
     const body = {
       name,
       slug,
@@ -76,6 +77,7 @@ export async function saveTeam(id: string | null, _: FormState, form: FormData):
  */
 export async function saveTeamRoster(id: string | null, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id);
   const fields: Record<string, string> = {};
   const team = id ?? String(form.get("team") ?? "");
   if (!team) fields.team = "Type the team's name.";
@@ -106,6 +108,7 @@ export async function saveTeamRoster(id: string | null, _: FormState, form: Form
  */
 export async function mergeTeam(id: string, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id, String(form.get("into") ?? ""));
   const into = String(form.get("into") ?? "");
   if (!into || into === id) return { error: "Pick the team to merge into." };
   try {
@@ -132,6 +135,7 @@ export async function mergeTeam(id: string, _: FormState, form: FormData): Promi
 /** Only a team with no registrations can be deleted; others are archived. */
 export async function deleteTeam(id: string) {
   const admin = await requireAdmin();
+  checkIds(id);
   await db(admin.token, `teams?id=eq.${id}`, { method: "DELETE" });
   updateTag(TAGS.league);
   redirect("/admin/teams?deleted=1");
@@ -141,6 +145,7 @@ export async function deleteTeam(id: string) {
 
 export async function savePerson(id: string | null, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id);
   const fields: Record<string, string> = {};
   const { name, slug } = readNameSlug(form, fields);
   const country = text(form, "country")?.toUpperCase() ?? null;
@@ -149,7 +154,7 @@ export async function savePerson(id: string | null, _: FormState, form: FormData
 
   try {
     const [current] = id ? await db<{ name: string; slug: string }[]>(admin.token, `people?id=eq.${id}&select=name,slug`) : [];
-    const photo = await imageFrom(form, "photo", admin, { folder: "mgl/people", kind: "person", alt: name });
+    const photo = await imageFrom(form, "photo", admin);
     const body = {
       name,
       slug,
@@ -173,6 +178,7 @@ export async function savePerson(id: string | null, _: FormState, form: FormData
 /** Folds a duplicate player into another: roster places, kill rows and managed squads move over. */
 export async function mergePerson(id: string, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id, String(form.get("into") ?? ""));
   const into = String(form.get("into") ?? "");
   if (!into || into === id) return { error: "Pick the player to merge into." };
   try {
@@ -195,6 +201,7 @@ export async function mergePerson(id: string, _: FormState, form: FormData): Pro
 
 export async function deletePerson(id: string) {
   const admin = await requireAdmin();
+  checkIds(id);
   await db(admin.token, `people?id=eq.${id}`, { method: "DELETE" });
   updateTag(TAGS.league);
   redirect("/admin/people?deleted=1");

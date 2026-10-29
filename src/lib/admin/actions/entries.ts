@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import type { FormState } from "@/components/admin/Form";
 import { TAGS } from "@/lib/db";
-import { resolvePeople, resolveTeam } from "../ids";
+import { resolvePeople, resolveTeam, checkIds } from "../ids";
 import { league } from "@/content/site";
 import { insertMany, listEntries, previousEntry, resultsOf } from "../league";
 import { readRoster, teamSlots } from "../roster";
@@ -26,6 +26,7 @@ function failed(err: unknown): FormState {
  */
 export async function saveEntry(eventSlug: string, eventId: string, entryId: string | null, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(eventId, entryId);
   const fields: Record<string, string> = {};
   const team = String(form.get("team") ?? "");
   if (!team) fields.team = "Pick a team, or type a new one.";
@@ -85,6 +86,7 @@ export async function saveEntry(eventSlug: string, eventId: string, entryId: str
 export async function lastRoster(eventSort: number, teamId: string) {
   const admin = await requireAdmin();
   if (!teamId || teamId.startsWith("new:")) return null;
+  checkIds(teamId);
   const prev = await previousEntry(admin.token, teamId, eventSort);
   if (!prev) return null;
   return {
@@ -100,6 +102,7 @@ export async function lastRoster(eventSort: number, teamId: string) {
  */
 export async function removeEntry(eventSlug: string, entryId: string, back?: string): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(entryId);
   const has = await resultsOf(admin.token, entryId);
   if (has.standings || has.kills) {
     return { error: `This squad has results in this event (${[has.standings && "standings", has.kills && `${has.kills} kill rows`].filter(Boolean).join(" and ")}), so it can't be removed without losing them. If it really shouldn't be there, upload the corrected sheets without it on the Results tab (that can be undone), then remove it.` };
@@ -118,6 +121,7 @@ export async function removeEntry(eventSlug: string, entryId: string, back?: str
  */
 export async function lockLineup(eventSlug: string, eventId: string, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(eventId, form.getAll("pick").map((v) => String(v).split(":")[0]));
   try {
     const [event] = await db<{ kind: string; status: string }[]>(admin.token, `events?id=eq.${eventId}&select=kind,status`);
     const picks = new Map(

@@ -2,12 +2,13 @@
 
 import { updateTag } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
-import { uploadImage } from "@/lib/admin/cloudinary";
-import { createEvent, deleteEvent, getEvent, placeFor, recordMedia, slugTaken, syncTables, updateEvent, type EventInput } from "@/lib/admin/events";
+import { createEvent, deleteEvent, getEvent, placeFor, slugTaken, syncTables, updateEvent, type EventInput } from "@/lib/admin/events";
+import { imageFrom } from "@/lib/admin/upload";
 import { adminOf, clearSession, requireAdmin, storeSession } from "@/lib/admin/session";
 import { COOKIES, DbError, signInWithPassword, signOutSession } from "@/lib/admin/supabase";
 import { cookies } from "next/headers";
 import { TAGS } from "@/lib/db";
+import { checkIds } from "@/lib/admin/ids";
 
 export type FormState = { error?: string; fields?: Record<string, string>; saved?: number };
 
@@ -19,7 +20,7 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
   if (!email || !password) return { error: "Enter your email and password." };
 
   const session = await signInWithPassword(email, password);
-  if ("error" in session) return { error: "That email and password don't match an account." };
+  if ("error" in session) return { error: session.offline ? "Couldn't reach the sign-in service. Check you're online and try again." : "That email and password don't match an account." };
   // Signed in, but not on the admin list: don't keep the session.
   if (!(await adminOf(session.accessToken))) {
     await signOutSession(session.accessToken);
@@ -143,29 +144,23 @@ function fail(err: unknown): FormState {
 
 export async function saveEvent(id: string | null, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id);
   const { input, tiers, fields } = readEvent(form);
   if (Object.keys(fields).length) return { error: "Check the highlighted fields.", fields };
 
   try {
     if (await slugTaken(admin.token, input.slug, id ?? undefined)) return { error: "Check the highlighted fields.", fields: { slug: "Another event already uses this page link." } };
 
-    // The poster: keep it, replace it with an upload, or remove it.
+    // The poster: keep it, swap in one just uploaded (already in the library), or remove it.
     const current = id ? await getEvent(admin.token, String(form.get("current_slug") ?? input.slug)) : undefined;
-    const poster = form.get("poster");
+    const poster = await imageFrom(form, "poster", admin);
     const { poster_alt, ...rest } = input;
-    let posterFields: Pick<EventInput, "poster_url" | "poster_alt" | "poster_width" | "poster_height"> = {
-      poster_url: current?.poster_url ?? null,
-      poster_width: current?.poster_width ?? null,
-      poster_height: current?.poster_height ?? null,
-      poster_alt,
-    };
-    if (poster instanceof File && poster.size > 0) {
-      const up = await uploadImage(poster, "mgl/events");
-      await recordMedia(admin.token, { url: up.url, public_id: up.publicId, kind: "event", alt: poster_alt ?? input.name, width: up.width, height: up.height, created_by: admin.id }).catch(() => {});
-      posterFields = { poster_url: up.url, poster_width: up.width, poster_height: up.height, poster_alt };
-    } else if (form.get("remove_poster") === "on") {
-      posterFields = { poster_url: null, poster_width: null, poster_height: null, poster_alt: null };
-    }
+    const posterFields: Pick<EventInput, "poster_url" | "poster_alt" | "poster_width" | "poster_height"> =
+      poster === null
+        ? { poster_url: null, poster_width: null, poster_height: null, poster_alt: null }
+        : poster
+          ? { poster_url: poster.url, poster_width: poster.width, poster_height: poster.height, poster_alt }
+          : { poster_url: current?.poster_url ?? null, poster_width: current?.poster_width ?? null, poster_height: current?.poster_height ?? null, poster_alt };
 
     const row = id ? await updateEvent(admin.token, id, { ...rest, ...posterFields }) : await createEvent(admin.token, { ...rest, ...posterFields });
     if (!row) return { error: "The event wasn't found. It may have been deleted." };
@@ -187,6 +182,7 @@ export async function saveEvent(id: string | null, _: FormState, form: FormData)
 
 export async function removeEvent(id: string, _: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  checkIds(id);
   if (String(form.get("confirm") ?? "").trim() !== String(form.get("expected") ?? "")) return { error: "Type the event's name exactly to delete it." };
   try {
     await deleteEvent(admin.token, id);

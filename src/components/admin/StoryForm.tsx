@@ -139,7 +139,7 @@ export default function StoryForm({ action, values, saved }: { action: Action; v
         </Field>
       </Section>
 
-      <Section title="Body" lede="Add paragraphs, headings, quotes, images and lists as blocks, in order. In a list, put each item on its own line.">
+      <Section title="Body" lede="Add paragraphs, headings, quotes and lists as blocks, in order. In a list, put each item on its own line.">
         {f?.body && <small className="ad-field__error">{f.body}</small>}
         <ol className="ad-blocks">
           {blocks.map((b, i) => (
