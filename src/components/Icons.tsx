@@ -133,6 +133,55 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
     </g>
   ),
+  settings: (
+    <g {...stroke}>
+      <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+      <circle cx="16" cy="7" r="2" />
+      <circle cx="10" cy="17" r="2" />
+    </g>
+  ),
+  home: (
+    <g {...stroke}>
+      <path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-4v-6h-5v6h-4A1.5 1.5 0 0 1 4 19v-8.5Z" />
+    </g>
+  ),
+  news: (
+    <g {...stroke}>
+      <rect x="4" y="4.5" width="16" height="15" rx="2.5" />
+      <path d="M8 9h8M8 12.5h8M8 16h5" />
+    </g>
+  ),
+  image: (
+    <g {...stroke}>
+      <rect x="4" y="4.5" width="16" height="15" rx="2.5" />
+      <circle cx="9.5" cy="9.5" r="1.6" />
+      <path d="m5 18 5-5 3.5 3.5L16 14l4 4" />
+    </g>
+  ),
+  people: (
+    <g {...stroke}>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <path d="M3.5 19.5a5.5 5.5 0 0 1 11 0M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17 14.4a5.5 5.5 0 0 1 3.5 5.1" />
+    </g>
+  ),
+  undo: (
+    <g {...stroke}>
+      <path d="M8.5 5.5 4.5 9.5l4 4" />
+      <path d="M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3" />
+    </g>
+  ),
+  upload: (
+    <g {...stroke}>
+      <path d="M12 15.5V4.5M7.5 9 12 4.5 16.5 9" />
+      <path d="M4.5 15v2.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15" />
+    </g>
+  ),
+  warning: (
+    <g {...stroke}>
+      <path d="M12 4.5 21 19.5H3L12 4.5Z" />
+      <path d="M12 10v4M12 16.8v.2" />
+    </g>
+  ),
   "sound-on": (
     <g {...stroke}>
       <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5Z" />

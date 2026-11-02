@@ -5,14 +5,15 @@ import Nav from "@/components/Nav";
 import NewsFeed from "@/components/news/NewsFeed";
 import Scene from "@/components/motion/Scene";
 import { newsPage } from "@/content/news";
-import { formatDate, readingTime, stories } from "@/lib/league";
+import { formatDate, getLeague, readingTime } from "@/lib/league";
 
 export const metadata: Metadata = {
   title: "News · MGL",
   description: "Announcements, season recaps and features from MGL, Africa's ranked CODM Battle Royale league.",
 };
 
-export default function NewsPage() {
+export default async function NewsPage() {
+  const { stories } = await getLeague();
   const items = stories.map((s) => ({
     slug: s.slug,
     title: s.title,

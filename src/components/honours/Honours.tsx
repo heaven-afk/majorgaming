@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { honours } from "@/content/home";
+import { getHome } from "@/content/home";
 import { Crest } from "../about/Crest";
 import { Odometer } from "../about/Odometer";
 import { Mark } from "../brand/Mark";
@@ -16,7 +16,8 @@ const DEAL = [
 ];
 
 /** Last season's top three players, honoured as collectible cards. */
-export default function Honours() {
+export default async function Honours() {
+  const { honours } = await getHome();
   if (!honours.players.length) return null;
   return (
     <Scene className="honours" id="honours" aria-labelledby="honours-title">

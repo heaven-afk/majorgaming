@@ -1,12 +1,11 @@
 /**
- * The one reader of staff records, from Supabase (`site_content()`, through `db.ts`), read once
- * per build. Server only.
+ * The one reader of staff records, from Supabase (`site_content()`, through `db.ts`), cached
+ * until an admin save clears it. Server only.
  */
 
+import { cache } from "react";
 import type { StaffGroup, StaffRecord } from "@/data/staff";
-import { loadContent } from "./db";
-
-const { staff: records } = await loadContent();
+import { readContent } from "./db";
 
 export type { StaffGroup };
 export type StaffMember = StaffRecord;
@@ -14,21 +13,30 @@ export type StaffMember = StaffRecord;
 /** Groups in the order the page shows them. */
 export const groupOrder: StaffGroup[] = ["Leadership", "Operations", "Media", "Community"];
 
-/** Everyone, group by group, then by their order within the group. */
-export const staff = [...records].sort((a, b) => groupOrder.indexOf(a.group) - groupOrder.indexOf(b.group) || a.order - b.order);
+/** The staff for this request, grouped the way the Staff page shows them. */
+export const getStaff = cache(async () => {
+  const { staff: records } = await readContent();
 
-/** The groups that have people, with their members. */
-export const staffGroups = groupOrder.map((group) => ({ group, people: staff.filter((s) => s.group === group) })).filter((g) => g.people.length);
+  /** Everyone, group by group, then by their order within the group. */
+  const staff = [...records].sort((a, b) => groupOrder.indexOf(a.group) - groupOrder.indexOf(b.group) || a.order - b.order);
 
-export const leadership = staff.filter((s) => s.group === "Leadership");
+  /** The groups that have people, with their members. */
+  const staffGroups = groupOrder.map((group) => ({ group, people: staff.filter((s) => s.group === group) })).filter((g) => g.people.length);
 
-/** The featured profile at the top of Leadership (the founder), when there is one. */
-export const founder = staff.find((s) => s.spotlight);
+  const leadership = staff.filter((s) => s.group === "Leadership");
 
-/** Leadership cards under the founder's profile. */
-export const leaders = leadership.filter((s) => s !== founder);
+  /** The featured profile at the top of Leadership (the founder), when there is one. */
+  const founder = staff.find((s) => s.spotlight);
 
-/** Every group except Leadership, which the page shows on its own. */
-export const otherGroups = staffGroups.filter((g) => g.group !== "Leadership");
-
-export const staffCountries = new Set(staff.flatMap((s) => s.country ?? []));
+  return {
+    staff,
+    staffGroups,
+    leadership,
+    founder,
+    /** Leadership cards under the founder's profile. */
+    leaders: leadership.filter((s) => s !== founder),
+    /** Every group except Leadership, which the page shows on its own. */
+    otherGroups: staffGroups.filter((g) => g.group !== "Leadership"),
+    staffCountries: new Set(staff.flatMap((s) => s.country ?? [])),
+  };
+});

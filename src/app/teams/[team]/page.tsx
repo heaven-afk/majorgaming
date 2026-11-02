@@ -13,13 +13,15 @@ import Nav from "@/components/Nav";
 import "../teams.css";
 import { TeamCard } from "@/components/teams/TeamCard";
 import { teamsPage } from "@/content/teams";
-import { activeTeams, eventsOf, latestEntryOf, teamBySlug, teams } from "@/lib/league";
+import { getLeague, type LeagueData } from "@/lib/league";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const { teams } = await getLeague();
   return teams.map((t) => ({ team: t.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/teams/[team]">): Promise<Metadata> {
+  const { teamBySlug } = await getLeague();
   const team = teamBySlug((await params).team);
   if (!team) return {};
   return { title: `${team.name} · Teams · MGL`, description: `${team.name}'s lineup, manager and the MGL events they have played.` };
@@ -27,7 +29,8 @@ export async function generateMetadata({ params }: PageProps<"/teams/[team]">): 
 
 /**
  * One squad: who they are (tier, players, events played, and the manager once there is one), their roster, the events they
- * have played, and other squads in their tier. A profile, not a results page: placings stay on
+ * have played, and other squads in their tier. Tier, roster and manager are what the team is now
+ * (kept on the team, not on a season); each event keeps the roster that played it. A profile, not a results page: placings stay on
  * the Events page. The team streams in behind a placeholder prebuilt teams never show.
  */
 export default function TeamPage({ params }: PageProps<"/teams/[team]">) {
@@ -57,7 +60,7 @@ function Placeholder() {
 
 const regions = new Intl.DisplayNames(["en"], { type: "region" });
 
-type Member = NonNullable<ReturnType<typeof latestEntryOf>>["roster"][number];
+type Member = NonNullable<ReturnType<LeagueData["profileOf"]>>["roster"][number];
 
 function PlayerCard({ member, index }: { member: Member; index: number }) {
   const copy = teamsPage.team.roster;
@@ -98,15 +101,16 @@ function PlayerCard({ member, index }: { member: Member; index: number }) {
 }
 
 async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["params"] }) {
+  const { activeTeams, eventsOf, profileOf, teamBySlug } = await getLeague();
   const team = teamBySlug((await params).team);
   if (!team) notFound();
 
   const copy = teamsPage.team;
   const played = eventsOf(team.slug);
-  const entry = latestEntryOf(team.slug);
-  const size = entry?.roster.length ?? 0;
-  const tier = entry?.tier;
-  const others = activeTeams.filter((t) => t.slug !== team.slug && t.tier === tier).slice(0, 6);
+  const profile = profileOf(team.slug)!;
+  const { ranked, tier, manager, roster } = profile;
+  const size = roster.length;
+  const others = ranked ? activeTeams.filter((t) => t.slug !== team.slug && t.tier === tier).slice(0, 6) : [];
 
   return (
     <>
@@ -131,10 +135,10 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
             </p>
           </div>
         </div>
-        <dl className="tm-facts" data-rise="2" style={{ "--n": entry?.manager ? 4 : 3 } as React.CSSProperties}>
+        <dl className="tm-facts" data-rise="2" style={{ "--n": manager ? 4 : 3 } as React.CSSProperties}>
           <div>
             <dt>{copy.facts.tier}</dt>
-            <dd>{teamsPage.tier(tier)}</dd>
+            <dd>{ranked ? teamsPage.tier(tier) : copy.facts.unranked}</dd>
           </div>
           <div>
             <dt>{copy.facts.players}</dt>
@@ -144,19 +148,19 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
             <dt>{copy.facts.events}</dt>
             <dd>{played.length}</dd>
           </div>
-          {entry?.manager && (
+          {manager && (
             <div className="tm-facts__manager">
               <dt>{copy.facts.manager}</dt>
               <dd>
-                <Crest name={entry.manager.name} size={28} tone={4} />
-                <span>{entry.manager.name}</span>
+                <Crest name={manager.name} size={28} tone={4} />
+                <span>{manager.name}</span>
               </dd>
             </div>
           )}
         </dl>
       </Scene>
 
-      {entry && size > 0 && (
+      {size > 0 && (
         <Scene className="tile tm-roster" aria-labelledby="roster-title">
           <header className="tm-section__head" data-rise>
             <div>
@@ -169,12 +173,12 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
               </h2>
             </div>
             <span className="tm-section__meta">
-              {copy.roster.players(size)} · {copy.roster.for(played[0].event.name)}
+              {copy.roster.players(size)} · {copy.roster.current}
             </span>
           </header>
 
           <ul className="tm-players">
-            {entry.roster.map((m, i) => (
+            {roster.map((m, i) => (
               <PlayerCard key={m.player} member={m} index={i} />
             ))}
           </ul>
@@ -202,7 +206,7 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
                   <span className="tm-played__series">{event.series}</span>
                   <strong>{event.name}</strong>
                   <span className="tm-played__foot">
-                    <span>{teamsPage.tier(tier)}</span>
+                    <span>{event.ranked ? teamsPage.tier(tier) : copy.history.special(tier)}</span>
                     <span className="tm-played__go">
                       <span className="sr-only">{copy.history.open}</span>
                       <Icon name="arrow" size={16} />

@@ -1,7 +1,9 @@
 import Image from "next/image";
 import { Fragment } from "react";
-import { about } from "@/content/home";
-import { howItWorks, registration, site } from "@/content/site";
+import { getHome } from "@/content/home";
+import { howItWorks } from "@/content/site";
+import { getSettings } from "@/lib/settings";
+import { getLeague } from "@/lib/league";
 import { Mark } from "../brand/Mark";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
@@ -20,10 +22,10 @@ const words = (text: string, key: string) =>
     </Fragment>
   ));
 
-function Statement() {
+function Statement({ statement }: { statement: Awaited<ReturnType<typeof getHome>>["about"]["statement"] }) {
   return (
     <h2 className="statement" id="about-title" data-statement>
-      {about.statement.map((t, i) => {
+      {statement.map((t, i) => {
         if ("text" in t) return words(t.text, `t${i}`);
         if ("accent" in t) return <em key={i}>{words(t.accent, `a${i}`)}</em>;
         return (
@@ -44,9 +46,11 @@ function Statement() {
 
 const visuals = [<StepRegister key="r" />, <StepPlacement key="p" />, <StepClimb key="c" />];
 
-export default function About() {
+export default async function About() {
+  const { about } = await getHome();
   const { image, stats } = about;
-  const join = registration.open ? registration : { label: "Join the Discord", href: site.discord };
+  const [{ registration }, { discord }] = await Promise.all([getLeague(), getSettings()]);
+  const join = registration.open ? registration : { label: "Join the Discord", href: discord };
 
   return (
     <Scene className="about" id="about" aria-labelledby="about-title">
@@ -59,7 +63,7 @@ export default function About() {
             </span>
             <span className="about__meta">{about.meta}</span>
           </header>
-          <Statement />
+          <Statement statement={about.statement} />
         </article>
 
         <figure className="tile about__photo" data-photo>

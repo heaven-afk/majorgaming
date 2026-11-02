@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { eventsPage } from "@/content/site";
 import { dateRange } from "@/lib/dates";
-import { events, sizeOf, upcomingEvents, type LeagueEvent } from "@/lib/league";
+import { getLeague, sizeOf, type LeagueEvent } from "@/lib/league";
 import { Crest } from "../about/Crest";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
@@ -71,7 +71,8 @@ export function EventCard({ event, latest = false, note }: { event: LeagueEvent;
 }
 
 /** Announced events, soonest first; hidden while there are none. */
-export function UpcomingEvents() {
+export async function UpcomingEvents() {
+  const { upcomingEvents } = await getLeague();
   const copy = eventsPage.upcoming;
   if (!upcomingEvents.length) return null;
 
@@ -99,7 +100,8 @@ export function UpcomingEvents() {
 }
 
 /** Every finished event, newest first. */
-export default function EventArchive() {
+export default async function EventArchive() {
+  const { events } = await getLeague();
   const finished = events.filter((e) => e.status === "final");
   const copy = eventsPage.archive;
 
