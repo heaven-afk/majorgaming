@@ -117,7 +117,14 @@ Done. `src/lib/league.ts` reads the league from Supabase through `src/lib/db.ts`
 
 ## 5. The admin dashboard
 
-Owner and editors sign in (Supabase Auth); the public site never writes. Every save revalidates only the pages it affects (cache tags such as `event:season-10`, `team:kyzon-esport`), so changes show within seconds without a redeploy.
+Owner and editors sign in (Supabase Auth); the public site never writes. The public reads are cached and tagged (`league`, `content` in `src/lib/db.ts`); every save calls `updateTag` on its tag, so changes show within seconds without a redeploy.
+
+**Built (2026-10-28):** every area below except league settings and import, at `/admin`. Details and files in AGENTS.md Status ("Admin"). How it works:
+- Sign-in: Supabase Auth over plain HTTP (`src/lib/admin/supabase.ts`), session in two httpOnly cookies refreshed by `src/proxy.ts`; only users in `admins` get in. Every write uses the admin's own token, so row level security decides.
+- Saving results: standings rows are upserted on (table, entry) and leftovers removed after, kill rows upserted on (event, person) and leftovers in scope (whole event or one tier) removed, so a failure part-way never empties a table. Points are stored exactly as the sheet gives them.
+- Renaming or merging a team or player adds its old name to `aliases`, which sheet matching uses.
+- Squads carried into a new season take their tier from the earlier event's final table and its `promote` / `relegate` numbers; the admin can change any tier before saving.
+- Adding an admin: create the person in Supabase (Authentication, Add user), then `insert into admins (user_id, role) select id, 'owner' from auth.users where email = '...';`.
 
 | Area | What it does |
 |---|---|
@@ -193,7 +200,7 @@ Plan: build A first (needed for the past events anyway); add B when the stats AP
 2. ~~Map the owner's sheets for all four events.~~ Done (`scripts/league-data.py`).
 3. ~~Apply the schema, import, switch `src/lib/league.ts` to the database.~~ Done 2026-10-28.
 4. Go live (Vercel), with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set.
-5. The admin dashboard on the live database. Its saves will need pages to refresh without a redeploy, so `league.ts` then moves from one read per build to cached reads tagged per event and team.
+5. The admin dashboard on the live database. Reads are now cached and tagged, so saves show without a redeploy. Sign-in and Events done 2026-10-28; the rest of section 5 next.
 6. Heaven Index link for results (with Stats), if ever wanted.
 
 ## 8. Questions for the owner

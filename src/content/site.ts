@@ -13,13 +13,14 @@ const [mantaRay, urbanTracker, nikto, krueger] = additionalCommunityAvatars;
  */
 
 /** How MGL runs today. Used in copy; the admin's league settings will replace it. */
-export const league = { tiers: 5, squadsPerTier: 25 };
+/** `timeZone` decides the day registration dates open and close on. */
+export const league = { tiers: 5, squadsPerTier: 25, timeZone: "Africa/Lagos" };
 const { tiers: TIERS, squadsPerTier: SQUADS_PER_TIER } = league;
 
+/** The Discord invite and social links are set in the admin (Settings): `getSettings()`. */
 export const site = {
   name: "Major Gaming League",
   short: "MGL",
-  discord: "https://discord.gg/your-invite",
 };
 
 /** Pages not built yet point nowhere for now. */
@@ -32,23 +33,17 @@ export const nav = [
   { label: "Stats", href: "#" },
 ];
 
-export const socials = [
-  { label: "X", href: "#", icon: "x" },
-  { label: "Instagram", href: "#", icon: "instagram" },
-  { label: "YouTube", href: "#", icon: "youtube" },
-  { label: "TikTok", href: "#", icon: "tiktok" },
-] as const;
+export const cta = { label: "Join the Discord" };
 
-export const cta = { label: "Join the Discord", href: site.discord };
-
-/** Registration happens on Discord. While open, the hero button asks squads to register. */
-export const registration = { open: false, label: "Register your squad", href: site.discord };
+/**
+ * The register buttons' words. Whether they show, and where they link, follows the event taking
+ * registrations (set in the admin, opened and closed by its dates): `registration` in `getLeague()`.
+ */
+export const registration = { label: "Register your squad" };
 
 export const hero = {
   community: {
     avatars: communityAvatars,
-    /** Two short lines; each stays on one line. */
-    text: ["2,000+ ranked players", "across the AF region."],
   },
   /** First line ends with the MGL mark and the italic accent; the remaining lines follow. */
   title: { first: "Africa’s", accent: "top", rest: ["CODM BR org."] },
@@ -169,7 +164,7 @@ export const fantasy = {
     { icon: "crown", title: "Captain scores 2×", body: "Back one player to carry your matchday." },
     { icon: "chart", title: "Live matchday points", body: "Points land as the kills and placements do." },
   ],
-  cta: { label: "Get notified on Discord", href: site.discord },
+  cta: { label: "Get notified on Discord" },
   board: {
     manager: "kairo",
     squadName: "Kairo’s Squad",
@@ -205,7 +200,6 @@ export const faq = {
     title: "Still unsure?",
     body: "Staff and squads are in the Discord every day.",
     label: "Ask on Discord",
-    href: site.discord,
     faces: [ghost, urbanTracker, farah, nikto],
   },
   items: [

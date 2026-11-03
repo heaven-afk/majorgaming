@@ -7,7 +7,7 @@
 export const teamsPage = {
   label: "Teams",
   title: { before: "Meet the", accent: "squads." },
-  lede: (event: string) => `The squads registered for ${event}, tier by tier. Open one for its lineup, its manager and the events it has played.`,
+  lede: (season: string) => `The ranked teams of ${season}, tier by tier. Open one for its roster, its manager and the events it has played.`,
   facts: { squads: "Registered squads", tiers: "Tiers", players: "Players", countries: "Countries", events: "Events on record" },
   tools: {
     search: "Search squads or tags",
@@ -24,7 +24,7 @@ export const teamsPage = {
   },
   team: {
     back: "All teams",
-    facts: { tier: "Tier", players: "Players", events: "Events played", manager: "Manager" },
+    facts: { tier: "Tier", players: "Players", events: "Events played", manager: "Manager", unranked: "Not ranked yet" },
     roster: {
       label: "Roster",
       title: { before: "The", accent: "roster." },
@@ -32,12 +32,14 @@ export const teamsPage = {
       captain: "Captain",
       /** The in-game name, under the professional name when they differ. */
       ign: (ign: string) => `IGN ${ign}`,
-      for: (event: string) => `Registered for ${event}`,
+      current: "Current roster",
     },
     history: {
       label: "Events",
       title: { before: "Where they’ve", accent: "played." },
       open: "Open the event",
+      /** Special events have tiers of their own, never MGL tiers. */
+      special: (tier?: number) => (tier ? `Special event · Tier ${tier}` : "Special event"),
     },
     more: (tier?: number) => (tier ? `More from Tier ${tier}` : "More squads"),
   },

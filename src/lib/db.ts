@@ -5,11 +5,16 @@
  * `src/data/types.ts` and `src/data/staff.ts`.
  *
  * Uses the publishable key: the public site only ever reads, and row level security allows
- * nothing else. Server only; `src/lib/league.ts` is the one caller.
+ * nothing else. Server only.
+ *
+ * `readLeague` and `readContent` are cached with no expiry under the tags in `TAGS`; an admin
+ * save clears its tag (`updateTag`), and the next visit reads the database again.
  */
 
+import { cacheLife, cacheTag } from "next/cache";
 import type { StaffRecord } from "@/data/staff";
 import type { EntryRecord, EventRecord, KillRecord, PersonRecord, StoryRecord, TeamRecord } from "@/data/types";
+import { registrationOf, today } from "./registration";
 
 export type League = { events: EventRecord[]; teams: TeamRecord[]; people: PersonRecord[]; entries: EntryRecord[]; kills: KillRecord[] };
 
@@ -49,8 +54,9 @@ export async function loadLeague(): Promise<League> {
   const data = await rpc<Snapshot>("league_snapshot");
   return {
     ...data,
-    events: data.events.map(({ matchesPlayed, matchesTotal, kind: _kind, description, details, ...e }) => ({
+    events: data.events.map(({ matchesPlayed, matchesTotal, kind, description, details, ...e }) => ({
       ...e,
+      ...(kind === "season" ? { ranked: true } : {}),
       ...(description?.length ? { description } : {}),
       ...(details?.length ? { details } : {}),
       ...(matchesTotal !== undefined ? { matches: { played: matchesPlayed ?? 0, total: matchesTotal } } : {}),
@@ -58,10 +64,47 @@ export async function loadLeague(): Promise<League> {
   };
 }
 
-let content: Promise<{ stories: StoryRecord[]; staff: StaffRecord[] }> | undefined;
-
-/** News and staff, read once and shared by `league.ts` (news) and `staff.ts`. */
 export function loadContent() {
-  content ??= rpc("site_content");
-  return content;
+  return rpc<{ stories: StoryRecord[]; staff: StaffRecord[] }>("site_content");
+}
+
+/** Cache tags: what an admin save clears. */
+export const TAGS = { league: "league", content: "content", settings: "settings" } as const;
+
+export async function readLeague() {
+  "use cache";
+  cacheTag(TAGS.league);
+  // Hourly, so registration opens and closes on its dates without anyone saving.
+  cacheLife("hours");
+  const data = await loadLeague();
+  const day = today();
+  return { ...data, events: data.events.map((e) => ({ ...e, registration: registrationOf(e, day) })) };
+}
+
+export async function readContent() {
+  "use cache";
+  cacheTag(TAGS.content);
+  cacheLife("max");
+  return loadContent();
+}
+
+/**
+ * The admin's Settings row, as saved (fields never saved are missing). Empty when the row or the
+ * table isn't there yet, so the site falls back to its defaults instead of failing.
+ */
+export async function readSettings(): Promise<Record<string, unknown>> {
+  "use cache";
+  cacheTag(TAGS.settings);
+  cacheLife("max");
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) return {};
+  try {
+    const res = await fetch(`${url}/rest/v1/site_settings?id=eq.1&select=data`, { headers: { apikey: key } });
+    if (!res.ok) return {};
+    const [row] = (await res.json()) as { data?: Record<string, unknown> }[];
+    return row?.data ?? {};
+  } catch {
+    return {};
+  }
 }

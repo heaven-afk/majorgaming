@@ -145,7 +145,7 @@ const entryRows = await insert(
     event_id: eventId.get(e.event),
     team_id: teamId.get(e.team),
     tier: n(e.tier),
-    manager_id: e.manager ? n(personId.get(e.manager)) : null,
+    manager: e.manager ?? null,
     team_name: teamBySlug.get(e.team).name,
     team_tag: n(teamBySlug.get(e.team).tag),
   })),

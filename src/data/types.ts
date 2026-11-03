@@ -20,6 +20,8 @@ export type EventRecord = {
   name: string;
   /** Which run of events it belongs to, e.g. "MGL Season", "Mixed Event". */
   series: string;
+  /** A ranked season (tiers, promotion): the Teams page follows the newest one. */
+  ranked?: boolean;
   /** Its number within the series, when it has one. */
   number?: number;
   status: EventStatus;
@@ -28,7 +30,11 @@ export type EventRecord = {
   registrationCloses?: string;
   startDate?: string;
   endDate?: string;
-  /** Where registration stands, for events still to come. */
+  /** Where to register (the Discord thread or a form); the Discord when empty. */
+  registrationUrl?: string;
+  /** A line shown with the register button, e.g. "Tiers 3 to 5 only". */
+  registrationNote?: string;
+  /** Where registration stands, for events still to come (worked out from the dates when set). */
   registration?: "soon" | "open" | "closed" | "full";
   /** Featured poster, portrait or landscape; uploaded in the admin. */
   poster?: { src: string; alt: string; width: number; height: number };
@@ -63,6 +69,9 @@ export type TableRecord = {
 export type StandingRecord = {
   /** Team slug. */
   team: string;
+  /** The team's name and tag as they were in this event (kept when it registered), so a later rename never rewrites it. */
+  teamName?: string;
+  teamTag?: string | null;
   /** Points from finishing positions. */
   placement: number;
   /** Points from eliminations. */
@@ -86,8 +95,13 @@ export type KillRecord = {
   event: string;
   /** Person slug. */
   player: string;
+  /** The in-game name the player had in this event, from its kill sheet. Null when it had none. */
+  ign?: string | null;
   /** Team slug. */
   team: string;
+  /** The team's name and tag as they were in this event (kept when it registered), so a later rename never rewrites it. */
+  teamName?: string;
+  teamTag?: string | null;
   kills: number;
   /** Matches the player played in the event, when the kill sheet has them. */
   matches?: number;
@@ -102,6 +116,11 @@ export type TeamRecord = {
   clan?: string;
   /** Logo image path, once teams have them. Teams have no country: their players can come from anywhere. */
   logo?: string;
+  /** What the team is now, owned by the team (events keep their own copy): its current tier (none if unranked), manager and roster. */
+  tier?: number | null;
+  manager?: string | null;
+  roster?: LineupRecord[];
+  archived?: boolean;
 };
 
 export type Role = "IGL" | "Fragger" | "Support" | "Anchor";
@@ -137,8 +156,11 @@ export type EntryRecord = {
   event: string;
   /** Team slug. */
   team: string;
+  /** The team's name and tag as they were in this event (kept when it registered), so a later rename never rewrites it. */
+  teamName?: string;
+  teamTag?: string | null;
   tier?: number;
-  /** Person slug. */
+  /** The manager's name, typed on the registration (managers aren't players). */
   manager?: string;
   lineup: LineupRecord[];
 };

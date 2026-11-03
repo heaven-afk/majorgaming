@@ -1,11 +1,13 @@
 import { fantasy } from "@/content/site";
+import { getSettings } from "@/lib/settings";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 import SquadBoard from "./SquadBoard";
 
 /** Fantasy teaser: the pitch on a light mesh panel, with a live squad board to play with. */
-export default function Fantasy() {
+export default async function Fantasy() {
+  const { discord } = await getSettings();
   return (
     <Scene className="mesh-panel fantasy" id="fantasy" aria-labelledby="fantasy-title">
       <MeshGradient />
@@ -36,7 +38,7 @@ export default function Fantasy() {
             </li>
           ))}
         </ul>
-        <a className="btn-dark" href={fantasy.cta.href} target="_blank" rel="noreferrer">
+        <a className="btn-dark" href={discord} target="_blank" rel="noreferrer">
           {fantasy.cta.label}
         </a>
       </div>

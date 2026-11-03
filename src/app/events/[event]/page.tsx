@@ -13,15 +13,18 @@ import Scene from "@/components/motion/Scene";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import Nav from "@/components/Nav";
 import "../events.css";
-import { eventsPage, site } from "@/content/site";
+import { eventsPage } from "@/content/site";
 import { dateRange } from "@/lib/dates";
-import { eventBySlug, events, killTablesOf } from "@/lib/league";
+import { getLeague } from "@/lib/league";
+import { getSettings } from "@/lib/settings";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const { events } = await getLeague();
   return events.map((e) => ({ event: e.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/events/[event]">): Promise<Metadata> {
+  const { eventBySlug } = await getLeague();
   const event = eventBySlug((await params).event);
   if (!event) return {};
   return {
@@ -61,6 +64,7 @@ function Placeholder() {
 }
 
 async function EventContent({ params }: { params: PageProps<"/events/[event]">["params"] }) {
+  const [{ events, eventBySlug, killTablesOf }, { discord }] = await Promise.all([getLeague(), getSettings()]);
   const event = eventBySlug((await params).event);
   if (!event) notFound();
 
@@ -130,7 +134,7 @@ async function EventContent({ params }: { params: PageProps<"/events/[event]">["
       </Scene>
 
       {hasAbout(event) ? (
-        <EventAbout event={event} />
+        <EventAbout event={event} discord={discord} />
       ) : (
         upcoming && (
           <Scene className="tile ev-empty" aria-labelledby="empty-title">
@@ -138,7 +142,7 @@ async function EventContent({ params }: { params: PageProps<"/events/[event]">["
               {copy.empty.title}
             </h2>
             <p data-rise="1">{copy.empty.body}</p>
-            <a className="btn-ghost" href={site.discord} target="_blank" rel="noreferrer" data-rise="2">
+            <a className="btn-ghost" href={discord} target="_blank" rel="noreferrer" data-rise="2">
               {copy.about.discord}
               <Icon name="arrow" size={16} />
             </a>

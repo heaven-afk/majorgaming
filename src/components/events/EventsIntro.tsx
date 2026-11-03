@@ -1,32 +1,31 @@
-import { eventsPage, registration, site } from "@/content/site";
-import { featuredEvent, latestSeason, upcomingEvents } from "@/lib/league";
+import { eventsPage } from "@/content/site";
+import { getLeague, type LeagueData } from "@/lib/league";
+import { getSettings } from "@/lib/settings";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 
 /** What the "Now" card shows: a live event, open registration, or the break between seasons. */
-function now() {
+function now({ featuredEvent, latestSeason, upcomingEvents, registration }: LeagueData, discord: string) {
   const copy = eventsPage.now;
   if (featuredEvent.status === "live") {
     const progress = featuredEvent.matches ? `Match ${featuredEvent.matches.played} of ${featuredEvent.matches.total} played. ` : "";
     return { state: "live", ...copy.live, title: featuredEvent.name, body: progress + copy.live.body, href: "#standings", external: false };
   }
-  // An announced event leads the card and links to its details.
-  const soon = upcomingEvents[0];
+  // An announced event leads the card and links to its details: the one taking registrations first.
+  const soon = registration.event ?? upcomingEvents[0];
   if (soon) {
     const status = eventsPage.event.registration[soon.registration ?? "closed"];
     return { state: soon.registration === "open" ? "registration" : "offseason", status, title: soon.name, body: soon.summary ?? copy.upcoming.body, cta: copy.upcoming.cta, href: `/events/${soon.slug}`, external: false };
   }
   const next = (latestSeason.number ?? 0) + 1;
-  if (registration.open) {
-    return { state: "registration", ...copy.registration, title: copy.registration.title(next), href: registration.href, external: true };
-  }
-  return { state: "offseason", ...copy.offseason, title: copy.offseason.title(next), href: site.discord, external: true };
+  return { state: "offseason", ...copy.offseason, title: copy.offseason.title(next), href: discord, external: true };
 }
 
 /** The top of the Events page: what Events is, at a glance, beside what is happening now. */
-export default function EventsIntro() {
-  const card = now();
+export default async function EventsIntro() {
+  const [league, { discord }] = await Promise.all([getLeague(), getSettings()]);
+  const card = now(league, discord);
   const words = card.title.split(" ");
   const [word, number] = [words.slice(0, -1).join(" "), words.at(-1)];
 
