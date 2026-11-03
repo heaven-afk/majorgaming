@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fantasy:check": "node scripts/check-fantasy.mjs",
+    "fantasy:setup-identity": "node scripts/setup-fantasy-identity.mjs",
+    "test:fantasy": "node --test tests/fantasy-*.test.mjs"
   },
   "dependencies": {
     "country-flag-icons": "^1.6.20",
