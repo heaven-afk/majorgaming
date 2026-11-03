@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter_Tight } from "next/font/google";
+import localFont from "next/font/local";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 
-const sans = Inter_Tight({ variable: "--font-sans-face", subsets: ["latin"] });
-const serif = Instrument_Serif({ variable: "--font-serif-face", subsets: ["latin"], weight: "400", style: "italic" });
+// Self-hosted (latin, from Google Fonts, SIL Open Font License): pages never wait on a font
+// server, and builds and dev work without reaching fonts.googleapis.com.
+const sans = localFont({ src: "./fonts/InterTight-Variable.woff2", variable: "--font-sans-face", weight: "100 900", display: "swap" });
+const serif = localFont({ src: "./fonts/InstrumentSerif-Italic.woff2", variable: "--font-serif-face", weight: "400", style: "italic", display: "swap" });
 
 export const metadata: Metadata = {
   title: "MGL · Major Gaming League",

@@ -50,9 +50,9 @@ export default function NavBar({ discord, socials }: { discord: string; socials:
             </a>
           ))}
         </div>
-        <a className="btn-light" href={discord} target="_blank" rel="noreferrer">
+        <a className="btn-light nav__cta" href={discord} target="_blank" rel="noreferrer" aria-label={cta.label}>
           <Icon name="discord" size={17} className="btn-light__icon" />
-          {cta.label}
+          <span className="nav__cta-label">{cta.label}</span>
         </a>
         <button className="nav__menu" aria-expanded={open} aria-controls="nav-sheet" onClick={() => setOpen((o) => !o)}>
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
