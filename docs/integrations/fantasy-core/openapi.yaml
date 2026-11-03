@@ -1,0 +1,5220 @@
+openapi: 3.0.3
+info:
+  title: Heaven Fantasy Core — Website APIs
+  version: 1.3.0
+  description: "Heaven Stat Engine (also called Heaven Index) owns competitive
+    data. MGL owns accounts and all user screens. Fantasy Core owns fantasy
+    calculations and operations. Real deployment origins remain unprovisioned;
+    use the same-origin server entry only until environments.json has verified
+    URLs. Transfer Rules V1.0: each replacement costs 4 manager points; one
+    single-player Free Transfer waiver per tournament. OPEN is required;
+    tournament prices are immutable."
+servers:
+  - url: /
+    description: Relative origin; use verified FANTASY_BASE_URL. Staging and
+      production are not yet provisioned.
+paths:
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      tags:
+        - MGL integration
+      summary: get Health
+      description: ""
+      security: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: &a2
+            type: string
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: &a3
+            X-RateLimit-Limit:
+              description: Requests allowed in the current fixed 60-second window.
+              schema: &a1
+                type: integer
+            X-RateLimit-Remaining:
+              description: Requests remaining.
+              schema: *a1
+            X-RateLimit-Reset:
+              description: UTC Unix seconds when the window resets.
+              schema: *a1
+            Cache-Control: &a10
+              description: "Public reads: 5s for leaderboards, 15s otherwise.
+                Private/diagnostic reads: private, max-age=0, must-revalidate.
+                Mutations and errors: no-store."
+              schema: *a2
+            ETag: &a11
+              description: Content hash of the complete selected representation. Send as
+                If-None-Match for a 304.
+              schema: *a2
+            Retry-After: &a12
+              description: Seconds before retrying a 429 response.
+              schema: *a1
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /api/v1/tournaments:
+    get:
+      operationId: listTournaments
+      tags:
+        - MGL integration
+      summary: list Tournaments
+      description: sync=true or refresh=true additionally requires the partner admin
+        credential; MGL must use the read-only request.
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: sync
+          in: query
+          required: false
+          schema: &a4
+            type: boolean
+        - name: refresh
+          in: query
+          required: false
+          schema: *a4
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tournaments"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/tournaments/{tournamentId}/matchdays:
+    get:
+      operationId: listMatchdays
+      tags:
+        - MGL integration
+      summary: list Matchdays
+      description: ""
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema: *a2
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Matchdays"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/markets/{tournamentId}:
+    get:
+      operationId: getMarket
+      tags:
+        - MGL integration
+      summary: get Market
+      description: ""
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema: *a2
+        - &a5
+          name: matchday
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Market"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/markets/{tournamentId}/window:
+    post:
+      operationId: manageWebsiteWindow
+      tags:
+        - MGL integration
+      summary: manage Website Window
+      description: Website administrator operation for assigned tournaments only.
+        Requires website API server credential plus a token signed by that
+        website issuer containing permissions [fantasy:windows:manage], with
+        maximum 15-minute lifetime. Ordinary Manager tokens and platform
+        dashboard login do not authorize this route. Open publishes frozen
+        official prices; lock/close ends squad and transfer changes. Cannot
+        reopen a played, expired or finalized matchday.
+      security:
+        - WebsiteIdentity: []
+          PartnerRead: []
+          ManagerBearer: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema: *a2
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                matchdayNumber:
+                  type: integer
+                  minimum: 1
+                action:
+                  type: string
+                  enum:
+                    - open
+                    - lock
+                    - close
+              required:
+                - matchdayNumber
+                - action
+  /api/v1/scoring/matchday:
+    get:
+      operationId: getMatchdayScores
+      tags:
+        - MGL integration
+      summary: get Matchday Scores
+      description: Default response contains approved source stats and final points
+        only. diagnostic=true can return operator-only diagnostics only when an
+        additional partner admin credential is valid.
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: tournamentId
+          in: query
+          required: true
+          schema: *a2
+        - *a5
+        - name: version
+          in: query
+          required: false
+          schema: *a2
+        - name: diagnostic
+          in: query
+          required: false
+          schema: *a4
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/MatchdayScores"
+                  - $ref: "#/components/schemas/AdminDiagnostic"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: ingestMatchdayScores
+      tags:
+        - MGL integration
+      summary: ingest Matchday Scores
+      description: ""
+      security: &a9
+        - PartnerAdmin: []
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tournamentId: *a2
+                matchdayNumber: *a1
+                rawHseData:
+                  $ref: "#/components/schemas/AdminDiagnostic"
+              required:
+                - tournamentId
+  /api/v1/players/history:
+    get:
+      operationId: listPlayerHistory
+      tags:
+        - MGL integration
+      summary: list Player History
+      description: ""
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/History"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/players/{playerId}/history:
+    get:
+      operationId: getPlayerHistory
+      tags:
+        - MGL integration
+      summary: get Player History
+      description: ""
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema: *a2
+        - name: excludeTournament
+          in: query
+          required: false
+          schema: *a2
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/History"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/leaderboards/{tournamentId}:
+    get:
+      operationId: getMatchdayLeaderboard
+      tags:
+        - MGL integration
+      summary: get Matchday Leaderboard
+      description: Score descending, manager ID ascending for deterministic tied
+        order. Competition ranks share rank when scores tie. Stale cursors
+        return 409; restart without cursor.
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema: *a2
+        - *a5
+        - &a6
+          name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - &a7
+          name: cursor
+          in: query
+          required: false
+          schema: *a2
+        - name: includeBreakdown
+          in: query
+          required: false
+          schema: *a4
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leaderboard"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/seasons/{tournamentId}/leaderboard:
+    get:
+      operationId: getSeasonLeaderboard
+      tags:
+        - MGL integration
+      summary: get Season Leaderboard
+      description: Overall standings sum persisted manager points across all matchdays
+        for this tournament. displayName is null until profile sync.
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema: *a2
+        - *a6
+        - *a7
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leaderboard"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/managers/{managerId}/profile:
+    put:
+      operationId: syncManagerProfile
+      tags:
+        - MGL integration
+      summary: sync Manager Profile
+      description: ""
+      security:
+        - MglService: []
+          WebsiteIdentity: []
+      parameters:
+        - name: managerId
+          in: path
+          required: true
+          schema: *a2
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagerProfile"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+  /api/v1/transfers:
+    post:
+      operationId: executeTransfer
+      tags:
+        - MGL integration
+      summary: execute Transfer
+      description: "Exactly one replacement per transaction, in an OPEN window only. A
+        successful replacement costs 4 points or consumes the
+        once-per-tournament Free Transfer chip. Required Idempotency-Key:
+        retries return the original immutable receipt; changed payload under the
+        same key returns 409. Server resolves prices from the fixed tournament
+        snapshot. No raw finalized score is rewritten."
+      security: &a8
+        - PartnerRead: []
+          MglManager: []
+          WebsiteIdentity: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 128
+            pattern: ^[A-Za-z0-9._:-]{8,128}$
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferReceipt"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferInput"
+  /api/v1/managers/me/points:
+    get:
+      operationId: getManagerPoints
+      tags:
+        - MGL integration
+      summary: get Manager Points
+      description: ""
+      security: *a8
+      parameters:
+        - name: tournamentId
+          in: query
+          required: true
+          schema: *a2
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagerPoints"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/admin/tournaments/{tournamentId}/complete:
+    post:
+      operationId: concludeTournament
+      tags:
+        - Partner operator
+      summary: conclude Tournament
+      description: "Partner-only: closes transfer windows, concludes the tournament,
+        and expires unused Free Transfer chips."
+      security: *a9
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema: *a2
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/squads:
+    post:
+      operationId: submitSquad
+      tags:
+        - Manager
+      summary: submit Squad
+      description: Initial selection is free. Carry-forward preserves player IDs.
+        Existing squads can change roles/captain/scoring chip without replacing
+        players. Use /transfers for every replacement. Omitted activeChip means
+        null.
+      security: *a8
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmittedSquad"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SquadSubmission"
+  /api/v1/squads/me:
+    get:
+      operationId: getOwnSquad
+      tags:
+        - Manager
+      summary: get Own Squad
+      description: ""
+      security: *a8
+      parameters:
+        - name: tournamentId
+          in: query
+          required: true
+          schema: *a2
+        - *a5
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnSquad"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/squads/chips:
+    get:
+      operationId: getChipAvailability
+      tags:
+        - Manager
+      summary: get Chip Availability
+      description: ""
+      security: *a8
+      parameters:
+        - name: tournamentId
+          in: query
+          required: true
+          schema: *a2
+        - *a5
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChipAvailability"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/squads/validate:
+    post:
+      operationId: validateSquad
+      tags:
+        - Manager
+      summary: validate Squad
+      description: ""
+      security:
+        - WebsiteIdentity: []
+        - PartnerRead: []
+          WebsiteIdentity: []
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Validation"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidationInput"
+  /api/v1/admin/sync:
+    get:
+      operationId: getSyncStatus
+      tags:
+        - Partner operator
+      summary: get Sync Status
+      description: ""
+      security: *a9
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncStatus"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: syncHse
+      tags:
+        - Partner operator
+      summary: sync Hse
+      description: ""
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResult"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/admin/analysis:
+    get:
+      operationId: getAnalysisEvents
+      tags:
+        - Partner operator
+      summary: get Analysis Events
+      description: Administrator-only source event directory for fantasy analysis.
+      security: *a9
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: analyzeEvent
+      tags:
+        - Partner operator
+      summary: analyze Event
+      description: Administrator-only read-only historical role analysis. Not
+        available to partner credentials.
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tournamentId: *a2
+              required:
+                - tournamentId
+  /api/v1/admin/prices:
+    get:
+      operationId: getCurrentPlayerPrices
+      tags:
+        - Partner operator
+      summary: get Current Player Prices
+      description: Owner-only current V1 valuations from the three completed backtest
+        events and completed events after 2026-09-20. Includes event provenance,
+        observation counts and pending source events. Existing published markets
+        remain fixed.
+      security: *a9
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: refreshPlayerPriceHistory
+      tags:
+        - Partner operator
+      summary: refresh Player Price History
+      description: Refresh one eligible completed tournament from authenticated Heaven
+        Index player stats. Idempotent history upserts only; skips events
+        without individual player results. Does not modify published markets,
+        squads or scores.
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tournamentId: *a2
+              required:
+                - tournamentId
+  /api/v1/admin/matchdays/complete:
+    post:
+      operationId: completeMatchday
+      tags:
+        - Partner operator
+      summary: complete Matchday
+      description: ""
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminMatchdayInput"
+  /api/v1/admin/matchdays/process:
+    post:
+      operationId: processMatchday
+      tags:
+        - Partner operator
+      summary: process Matchday
+      description: ""
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessResult"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminMatchdayInput"
+  /api/v1/admin/markets/generate:
+    post:
+      operationId: generateMarket
+      tags:
+        - Partner operator
+      summary: generate Market
+      description: ""
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tournamentId: *a2
+                matchdayNumber: *a1
+                players:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/MarketPlayer"
+              required:
+                - tournamentId
+  /api/v1/admin/markets/lock:
+    post:
+      operationId: publishOrCloseMarket
+      tags:
+        - Partner operator
+      summary: publish Or Close Market
+      description: ""
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tournamentId: *a2
+                matchdayNumber: *a1
+                action:
+                  type: string
+                  enum:
+                    - open
+                    - lock
+                    - close
+              required:
+                - tournamentId
+  /api/v1/pricing/calculate:
+    post:
+      operationId: calculatePrices
+      tags:
+        - Partner operator
+      summary: calculate Prices
+      description: ""
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                players:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      playerId: *a2
+                      historicalRNFP:
+                        type: array
+                        items: &a13
+                          type: number
+                    required:
+                      - playerId
+                      - historicalRNFP
+              required:
+                - players
+  /api/v1/cron/sync:
+    get:
+      operationId: cronSync
+      tags:
+        - Partner operator
+      summary: cron Sync
+      description: State-changing scheduled operation despite GET. Use no client
+        caching; MGL has no access.
+      security:
+        - CronBearer: []
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResult"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/sync/webhook:
+    get:
+      operationId: getWebhookStatus
+      tags:
+        - MGL integration
+      summary: get Webhook Status
+      description: ""
+      security:
+        - {}
+        - PartnerRead: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookStatus"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: receiveHseWebhook
+      tags:
+        - MGL integration
+      summary: receive Hse Webhook
+      description: ""
+      security:
+        - HseSecret: []
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResult"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+  /api/fantasy/score:
+    post:
+      operationId: diagnosticScore
+      tags:
+        - Partner operator
+      summary: diagnostic Score
+      description: ""
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tournamentId: *a2
+                playerAssignments:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      playerId: *a2
+                      role:
+                        $ref: "#/components/schemas/Role"
+                      modifier: *a2
+                    required:
+                      - playerId
+                      - role
+  /api/v1/admin/overview:
+    get:
+      operationId: getAdminOverview
+      tags:
+        - Partner operator
+      summary: get Admin Overview
+      description: Authenticated SELECT-only dashboard read. Supports legacy schema
+        with explicit readiness and read-only setup status; never consumes a
+        Core rate bucket or applies migrations. Does not unlock mutation
+        endpoints. Up to 500 operation records.
+      security: *a9
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+        "400":
+          description: Invalid parameters or unknown chip
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/admin/websites:
+    get:
+      operationId: getWebsiteRegistry
+      tags:
+        - Partner operator
+      summary: get Website Registry
+      description: Registry metadata or one website with recent redacted traffic.
+        Never returns raw secrets or credential hashes.
+      security: *a9
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema: *a2
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers: *a3
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: manageWebsite
+      tags:
+        - Partner operator
+      summary: manage Website
+      description: Register or configure an isolated website, register a
+        secret-manager credential, revoke it, or assign exclusive tournament
+        ownership. See WEBSITE_API_MANAGEMENT.md for operation payloads. Raw
+        credential input is write-only and stored as SHA256.
+      security: *a9
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers: *a3
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - CREATE
+                    - UPDATE
+                    - REGISTER_KEY
+                    - REVOKE_KEY
+                    - ASSIGN_TOURNAMENT
+                siteId: *a2
+                data:
+                  type: object
+                  additionalProperties: true
+              required:
+                - action
+                - data
+  /api/admin/session:
+    get:
+      operationId: getAdminSession
+      tags:
+        - Partner operator
+      summary: get Admin Session
+      description: Verifies the HttpOnly Supabase access token with Supabase Auth and
+        the administrator email allowlist. No signup endpoint exists.
+      security: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: *a2
+          required: false
+      responses:
+        "200":
+          description: Success
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "304":
+          description: Representation unchanged; no response body. Still counts toward the
+            request limit.
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+        "400":
+          description: Invalid parameters or unknown chip
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: signInAdmin
+      tags:
+        - Partner operator
+      summary: sign In Admin
+      description: Supabase Auth email/password sign-in for approved, confirmed
+        administrators only. Requires same-origin Origin header. Supabase
+        handles authentication rate limits. Sets an HttpOnly SameSite=Strict
+        access-token cookie; Secure in production. This route does not depend on
+        Fantasy Core database tables.
+      security: []
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: *a2
+                password:
+                  type: string
+                  writeOnly: true
+              required:
+                - email
+                - password
+    delete:
+      operationId: signOutAdmin
+      tags:
+        - Partner operator
+      summary: sign Out Admin
+      description: Same-origin sign-out; clears the administrator session cookie.
+      security: []
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      operationId: changeTemporaryAdminPassword
+      tags:
+        - Partner operator
+      summary: change Temporary Admin Password
+      description: Requires an approved verified Supabase session with the
+        server-protected temporary-password flag. Changes the password and
+        clears the flag atomically, invalidates older Core sessions, clears the
+        cookie and requires a fresh sign-in. Supabase password rules apply.
+      security: []
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDiagnostic"
+        "400":
+          description: Invalid parameters or unknown chip
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required or invalid credential
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Resource not found or not yet finalized
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict, closed submissions, name taken, or stale pagination cursor
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Squad role/validation rule failed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Persistence or processing failure
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Upstream HSE unavailable
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service not configured, rate limiter unavailable, or production
+            closed
+          headers:
+            Cache-Control: *a10
+            ETag: *a11
+            Retry-After: *a12
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 512
+                  writeOnly: true
+              required:
+                - newPassword
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: *a2
+        details:
+          nullable: true
+          oneOf:
+            - type: array
+              items: *a2
+            - type: object
+              additionalProperties: true
+      required:
+        - error
+    ActiveChip:
+      type: string
+      nullable: true
+      enum:
+        - null
+        - triple_captain
+        - bench_boost
+      description: One chip per matchday; each type once per manager per tournament.
+        Null selects none. Unknown strings return 400.
+    Role:
+      type: string
+      enum:
+        - Fragger
+        - IGL
+        - Support
+        - Anchor
+    StarterInput:
+      type: object
+      properties:
+        playerId: *a2
+        role:
+          $ref: "#/components/schemas/Role"
+        isCaptain: *a4
+        isViceCaptain: *a4
+      required:
+        - playerId
+        - role
+    SubstituteInput:
+      type: object
+      properties:
+        playerId: *a2
+        role:
+          type: string
+          enum:
+            - Fragger
+            - IGL
+            - Support
+            - Anchor
+            - bench
+      required:
+        - playerId
+    SquadInput:
+      type: object
+      properties:
+        captainPlayerId: *a2
+        starters:
+          type: array
+          items:
+            $ref: "#/components/schemas/StarterInput"
+          minItems: 4
+          maxItems: 4
+        substitute:
+          $ref: "#/components/schemas/SubstituteInput"
+      required:
+        - starters
+        - substitute
+    SquadSubmission:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber:
+          type: integer
+          minimum: 1
+          default: 1
+        activeChip:
+          $ref: "#/components/schemas/ActiveChip"
+        squad:
+          $ref: "#/components/schemas/SquadInput"
+      required:
+        - tournamentId
+        - squad
+    Starter:
+      type: object
+      properties:
+        playerId: *a2
+        role:
+          $ref: "#/components/schemas/Role"
+        isCaptain: *a4
+        isViceCaptain: *a4
+        cost: *a13
+      required:
+        - playerId
+        - role
+        - isCaptain
+        - isViceCaptain
+        - cost
+    Substitute:
+      type: object
+      properties:
+        playerId: *a2
+        role:
+          $ref: "#/components/schemas/Role"
+        cost: *a13
+      required:
+        - playerId
+        - role
+        - cost
+    Squad:
+      type: object
+      properties:
+        id: *a2
+        managerId: *a2
+        tournamentId: *a2
+        matchdayNumber: *a1
+        activeChip:
+          $ref: "#/components/schemas/ActiveChip"
+        totalCost: *a13
+        captainPlayerId: *a2
+        viceCaptainPlayerId: &a15
+          type: string
+          nullable: true
+        starters:
+          type: array
+          items:
+            $ref: "#/components/schemas/Starter"
+        substitute:
+          allOf:
+            - $ref: "#/components/schemas/Substitute"
+          nullable: true
+        createdAt: &a14
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt: *a14
+      required:
+        - id
+        - managerId
+        - tournamentId
+        - matchdayNumber
+        - activeChip
+        - totalCost
+        - captainPlayerId
+        - viceCaptainPlayerId
+        - starters
+        - substitute
+        - createdAt
+        - updatedAt
+    FreeTransferChip:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - AVAILABLE
+            - USED
+            - EXPIRED
+        transferId: *a15
+        usedAt: *a14
+        matchdayNumber:
+          type: integer
+          nullable: true
+      required:
+        - status
+        - transferId
+        - usedAt
+        - matchdayNumber
+    ManagerPoints:
+      type: object
+      properties:
+        tournamentId: *a2
+        tournamentStatus: *a2
+        scoringPoints: *a13
+        transferAdjustmentPoints: *a13
+        totalFantasyPoints: *a13
+        freeTransferChip:
+          $ref: "#/components/schemas/FreeTransferChip"
+        updatedAt: *a14
+      required:
+        - tournamentId
+        - tournamentStatus
+        - scoringPoints
+        - transferAdjustmentPoints
+        - totalFantasyPoints
+        - freeTransferChip
+        - updatedAt
+    Transfers:
+      type: object
+      properties:
+        remainingFreeTransfers:
+          type: integer
+          minimum: 0
+          maximum: 1
+          description: One single-player waiver when the tournament Free Transfer chip is
+            available; no other free replacements.
+        penaltyPerExtraTransfer:
+          type: integer
+          enum:
+            - 4
+        policyStatus:
+          type: string
+          enum:
+            - CONFIRMED
+        freeTransferChip:
+          $ref: "#/components/schemas/FreeTransferChip"
+      required:
+        - remainingFreeTransfers
+        - penaltyPerExtraTransfer
+        - policyStatus
+        - freeTransferChip
+    TransferInput:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber:
+          type: integer
+          minimum: 1
+        playerOutId: *a2
+        playerInId: *a2
+        useFreeTransferChip: *a4
+        expectedSquadUpdatedAt: *a14
+      required:
+        - tournamentId
+        - matchdayNumber
+        - playerOutId
+        - playerInId
+        - useFreeTransferChip
+      additionalProperties: false
+    TransferReceipt:
+      type: object
+      properties:
+        transferId: *a2
+        playerOutId: *a2
+        playerInId: *a2
+        sellPrice: *a13
+        buyPrice: *a13
+        penaltyApplied:
+          type: integer
+          enum:
+            - 0
+            - 4
+        adjustmentId: *a2
+        usedFreeTransferChip: *a4
+        squad:
+          $ref: "#/components/schemas/Squad"
+        remainingCredits: *a13
+        managerPoints:
+          $ref: "#/components/schemas/ManagerPoints"
+        transferredAt: *a14
+      required:
+        - transferId
+        - playerOutId
+        - playerInId
+        - sellPrice
+        - buyPrice
+        - penaltyApplied
+        - adjustmentId
+        - usedFreeTransferChip
+        - squad
+        - remainingCredits
+        - managerPoints
+        - transferredAt
+    OwnSquad:
+      type: object
+      properties:
+        managerId: *a2
+        squad:
+          $ref: "#/components/schemas/Squad"
+        transfers:
+          $ref: "#/components/schemas/Transfers"
+        managerPoints:
+          $ref: "#/components/schemas/ManagerPoints"
+        updatedAt: *a14
+      required:
+        - managerId
+        - squad
+        - transfers
+        - managerPoints
+        - updatedAt
+    SubmittedSquad:
+      type: object
+      properties:
+        success: *a4
+        squadId: *a2
+        totalCost: *a13
+        squad:
+          $ref: "#/components/schemas/Squad"
+      required:
+        - success
+        - squadId
+        - totalCost
+        - squad
+    ChipState:
+      type: object
+      properties:
+        available: *a4
+        matchdayNumber:
+          type: integer
+          nullable: true
+      required:
+        - available
+        - matchdayNumber
+    ChipAvailability:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber: *a1
+        usageLimit:
+          type: string
+          enum:
+            - once_per_tournament
+        chips:
+          type: object
+          properties:
+            triple_captain:
+              $ref: "#/components/schemas/ChipState"
+            bench_boost:
+              $ref: "#/components/schemas/ChipState"
+            free_transfer:
+              allOf:
+                - $ref: "#/components/schemas/FreeTransferChip"
+                - type: object
+                  properties:
+                    available: *a4
+                  required:
+                    - available
+          required:
+            - triple_captain
+            - bench_boost
+            - free_transfer
+        updatedAt: *a14
+      required:
+        - tournamentId
+        - matchdayNumber
+        - usageLimit
+        - chips
+        - updatedAt
+    ManagerProfile:
+      type: object
+      properties:
+        managerId: *a2
+        displayName: *a2
+        updatedAt: *a14
+      required:
+        - managerId
+        - displayName
+        - updatedAt
+    ProfileInput:
+      type: object
+      properties:
+        displayName:
+          type: string
+          minLength: 3
+          maxLength: 20
+          pattern: ^[A-Za-z0-9 _-]{3,20}$
+          description: Trimmed; unique case-insensitively. A taken name returns 409.
+      required:
+        - displayName
+    Tournament:
+      type: object
+      properties:
+        id: *a2
+        name: *a2
+        status: *a2
+        createdAt: *a14
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+    Tournaments:
+      type: object
+      properties:
+        count: *a1
+        tournaments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tournament"
+        updatedAt: *a14
+      required:
+        - count
+        - tournaments
+        - updatedAt
+    Matchday:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber: *a1
+        expectedMatches: *a1
+        matchesPlayed: *a1
+        fantasyStatus:
+          type: string
+          enum:
+            - DISCOVERED
+            - READY
+            - COMPLETED
+            - PROCESSING
+            - PROCESSED
+            - FAILED
+        fantasy_status: *a2
+        marketStatus: *a15
+        market_status: *a15
+        submissionDeadline: *a14
+        processedAt: *a14
+        updatedAt: *a14
+      required:
+        - tournamentId
+        - matchdayNumber
+        - expectedMatches
+        - matchesPlayed
+        - fantasyStatus
+        - fantasy_status
+        - marketStatus
+        - market_status
+        - submissionDeadline
+        - processedAt
+        - updatedAt
+    Matchdays:
+      type: object
+      properties:
+        tournamentId: *a2
+        count: *a1
+        matchdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Matchday"
+        updatedAt: *a14
+      required:
+        - tournamentId
+        - count
+        - matchdays
+        - updatedAt
+    MarketPlayer:
+      type: object
+      properties:
+        playerId: *a2
+        playerName: *a2
+        ign: *a15
+        teamIdAtLock: *a15
+        price: *a13
+        isEligible: *a4
+      required:
+        - playerId
+        - playerName
+        - ign
+        - teamIdAtLock
+        - price
+        - isEligible
+    Market:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber: *a1
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - OPEN
+            - LOCKED
+            - CLOSED
+        pricingVersion: *a2
+        lockTime: *a14
+        pricesFrozenAt: *a14
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketPlayer"
+        updatedAt: *a14
+      required:
+        - tournamentId
+        - matchdayNumber
+        - status
+        - pricingVersion
+        - lockTime
+        - pricesFrozenAt
+        - players
+        - updatedAt
+    ScoringStats:
+      type: object
+      properties:
+        kills: *a13
+        teamAveragePlacement:
+          type: number
+          nullable: true
+        killShare:
+          type: number
+          nullable: true
+          description: HSE percentage, not a proprietary transformed metric.
+        killContribution:
+          type: number
+          nullable: true
+          description: Optional upstream value only; absent in current HSE contract and
+            not used by V1 scoring.
+      required:
+        - kills
+        - teamAveragePlacement
+        - killShare
+        - killContribution
+    RoleScore:
+      type: object
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+        kills: *a13
+        killPoints: *a13
+        baseFantasyPoints: *a13
+        finalFantasyPoints: *a13
+        modifier: *a2
+      required:
+        - role
+        - modifier
+    PlayerScore:
+      type: object
+      properties:
+        playerId: *a2
+        stats:
+          $ref: "#/components/schemas/ScoringStats"
+        displayMeta:
+          type: object
+          properties:
+            playerName: *a15
+            team: *a15
+          required:
+            - playerName
+            - team
+        roleScores:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/RoleScore"
+      required:
+        - playerId
+        - stats
+    MatchdayScores:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber: *a1
+        scoringVersion: *a2
+        persistedAt: *a14
+        status:
+          type: string
+          enum:
+            - FINALIZED
+        playerScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerScore"
+        updatedAt: *a14
+      required:
+        - tournamentId
+        - matchdayNumber
+        - scoringVersion
+        - persistedAt
+        - status
+        - playerScores
+        - updatedAt
+    ScoredStarter:
+      type: object
+      properties:
+        playerId: *a2
+        role:
+          $ref: "#/components/schemas/Role"
+        kills: *a13
+        killPoints: *a13
+        baseFantasyPoints: *a13
+        modifier: *a2
+        multiplier: *a13
+        finalFantasyPoints: *a13
+      required:
+        - playerId
+        - role
+        - modifier
+        - multiplier
+    Breakdown:
+      type: object
+      properties:
+        totalFantasyPoints: *a13
+        benchBoostActive: *a4
+        starters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoredStarter"
+        substituteResult:
+          type: object
+          nullable: true
+          properties:
+            playerId: *a2
+            killPoints: *a13
+            substituteContribution: *a13
+      required:
+        - totalFantasyPoints
+        - benchBoostActive
+        - starters
+        - substituteResult
+    Ranking:
+      type: object
+      properties:
+        rank: *a1
+        managerId: *a2
+        displayName: *a15
+        totalScore: *a13
+        scoringPoints: *a13
+        transferAdjustmentPoints: *a13
+        breakdown:
+          $ref: "#/components/schemas/Breakdown"
+      required:
+        - rank
+        - managerId
+        - displayName
+        - totalScore
+        - scoringPoints
+        - transferAdjustmentPoints
+    Leaderboard:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber: *a1
+        count: *a1
+        totalCount: *a1
+        leaderboard:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ranking"
+        nextCursor: *a15
+        updatedAt: *a14
+        dataVersion: *a2
+      required:
+        - tournamentId
+        - count
+        - totalCount
+        - leaderboard
+        - nextCursor
+        - updatedAt
+        - dataVersion
+    Observation:
+      type: object
+      properties:
+        playerId: *a2
+        playerName: *a15
+        ign: *a15
+        teamId: *a15
+        tournamentId: *a2
+        tournamentName: *a15
+        matchdayNumber: *a1
+        fantasyPoints: *a13
+        scoringVersion: *a2
+        updatedAt: *a14
+      required:
+        - playerId
+        - tournamentId
+        - matchdayNumber
+        - fantasyPoints
+        - scoringVersion
+        - updatedAt
+    History:
+      type: object
+      properties:
+        playerId: *a2
+        count: *a1
+        observations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Observation"
+        updatedAt: *a14
+      required:
+        - count
+        - observations
+        - updatedAt
+    Health:
+      type: object
+      properties:
+        status: *a2
+        service:
+          type: string
+          enum:
+            - fantasy-core
+        dataVersion: *a2
+        updatedAt: *a14
+      required:
+        - status
+        - service
+        - dataVersion
+        - updatedAt
+    ValidationInput:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber: *a1
+        squad:
+          $ref: "#/components/schemas/SquadInput"
+        market:
+          type: object
+          properties:
+            players:
+              type: array
+              items:
+                $ref: "#/components/schemas/MarketPlayer"
+          required:
+            - players
+      required:
+        - squad
+    Validation:
+      type: object
+      properties:
+        valid: *a4
+        validationMode: *a2
+        tournamentId: *a2
+        matchdayNumber: *a1
+        marketStatus: *a2
+        totalCost: *a13
+        remainingBudget: *a13
+        errors:
+          type: array
+          items: *a2
+      required:
+        - valid
+        - totalCost
+        - remainingBudget
+        - errors
+    AdminMatchdayInput:
+      type: object
+      properties:
+        tournamentId: *a2
+        matchdayNumber: *a1
+      required:
+        - tournamentId
+        - matchdayNumber
+    AdminDiagnostic:
+      type: object
+      additionalProperties: true
+      description: Partner-operator-only diagnostic record; not accessible with any
+        MGL credential. Contains server diagnostics which MGL must not compute
+        or display.
+    ProcessResult:
+      type: object
+      properties:
+        success: *a4
+        tournamentId: *a2
+        matchdayNumber: *a1
+        scoringVersion: *a2
+        playerScoresCount: *a1
+        observationsCount: *a1
+        evaluatedSquadsCount: *a1
+        alreadyProcessed: *a4
+      required:
+        - success
+        - tournamentId
+        - matchdayNumber
+        - scoringVersion
+        - playerScoresCount
+        - observationsCount
+        - evaluatedSquadsCount
+    SyncResult:
+      type: object
+      properties:
+        success: *a4
+        tournamentsDiscovered: *a1
+        matchdaysDiscovered: *a1
+        tournaments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminDiagnostic"
+        syncLogId: *a2
+        syncedAt: *a14
+        timestamp: *a14
+      required:
+        - success
+        - tournamentsDiscovered
+        - matchdaysDiscovered
+    SyncStatus:
+      type: object
+      properties:
+        contractVersion: *a2
+        hseBaseUrl: *a2
+        hseConnection: *a2
+        latestSync:
+          type: object
+          nullable: true
+          additionalProperties: true
+        updatedAt: *a14
+      required:
+        - contractVersion
+        - hseBaseUrl
+        - hseConnection
+        - latestSync
+        - updatedAt
+    WebhookStatus:
+      type: object
+      properties:
+        status: *a2
+        endpoint: *a2
+        instructions: *a2
+        updatedAt: *a14
+      required:
+        - status
+        - endpoint
+        - instructions
+        - updatedAt
+  securitySchemes:
+    WebsiteIdentity:
+      type: apiKey
+      in: header
+      name: X-Fantasy-Site
+      description: Permanent website slug. Required for website data APIs; paired with
+        a credential belonging to this website.
+    PartnerRead:
+      type: apiKey
+      in: header
+      name: x-fantasy-api-key
+      description: Website API credential, registered per website and environment.
+        Send X-Fantasy-Site. Server use only.
+    MglService:
+      type: apiKey
+      in: header
+      name: x-fantasy-service-key
+      description: Website PROFILE credential for display-name sync only. Send
+        X-Fantasy-Site.
+    MglManager:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Website-signed RS256 or EdDSA; iss=the registered website issuer,
+        aud=fantasy-core; required sub, displayName, iat, exp; 60s skew. JWKS or
+        public PEM fallback. No passwords.
+    PartnerAdmin:
+      type: apiKey
+      in: header
+      name: x-fantasy-admin-key
+      description: Partner-only operator credential; never issued to MGL.
+    CronBearer:
+      type: http
+      scheme: bearer
+      description: CRON_SECRET; not a manager token.
+    HseSecret:
+      type: apiKey
+      in: header
+      name: x-hse-api-key
+      description: HSE service secret.

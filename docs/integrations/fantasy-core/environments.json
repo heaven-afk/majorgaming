@@ -1,0 +1,35 @@
+{
+  "staging": {
+    "status": "NOT_PROVISIONED",
+    "baseUrl": null,
+    "databaseProject": null,
+    "mglIssuer": null,
+    "mglJwksUrl": null,
+    "seeded": false,
+    "smokeTest": "NOT_RUN",
+    "performance": "NOT_MEASURED"
+  },
+  "production": {
+    "status": "DEPLOYED_SETUP_PENDING",
+    "baseUrl": "https://heavenfantasy-br-codm.vercel.app",
+    "databaseProject": null,
+    "mglAccess": "CLOSED"
+  },
+  "blockers": [
+    "Set FANTASY_ENV=production on the existing Vercel Production deployment and redeploy",
+    "Register partner website credentials, token issuer and signing keys",
+    "Review website ownership of existing participation before assigning its tournament",
+    "Complete partner website acceptance checks before enabling its production API"
+  ],
+  "existingConfiguredDatabase": {
+    "schemaProbeDate": "2026-11-02",
+    "reachable": true,
+    "websiteAndTransferSchemaInstalled": true,
+    "environment": "DEPLOYMENT_CLASSIFICATION_PENDING",
+    "userInstruction": "UPGRADE_APPLIED_AND_VERIFIED",
+    "migrationApplied": true,
+    "preflightDate": "2026-11-02",
+    "applicationDataBackupCreated": true,
+    "verifiedOriginalRecordsPreserved": true
+  }
+}
