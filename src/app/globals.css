@@ -264,6 +264,18 @@ body {
     padding: 0 13px;
   }
 }
+/* On the narrowest phones the Discord button keeps only its icon, so the logo never sits under it. */
+.nav__cta-label {
+  display: none;
+}
+.nav__main {
+  overflow: hidden;
+}
+@media (min-width: 380px) {
+  .nav__cta-label {
+    display: inline;
+  }
+}
 
 @media (min-width: 1080px) {
   .nav__links,

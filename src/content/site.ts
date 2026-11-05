@@ -31,6 +31,7 @@ export const nav = [
   { label: "Teams", href: "/teams" },
   { label: "News", href: "/news" },
   { label: "Staff", href: "/staff" },
+  { label: "Fantasy", href: "/fantasy" },
   { label: "Stats", href: "#" },
 ];
 
@@ -165,7 +166,7 @@ export const fantasy = {
     { icon: "crown", title: "Captain scores 2×", body: "Back one player to carry your matchday." },
     { icon: "chart", title: "Live matchday points", body: "Points land as the kills and placements do." },
   ],
-  cta: { label: "Get notified on Discord" },
+  cta: { label: "Create your manager", href: "/fantasy" },
   board: {
     manager: "kairo",
     squadName: "Kairo’s Squad",
@@ -262,7 +263,7 @@ export const footer = {
       links: [
         { label: "How MGL works", href: "/#about" },
         { label: "Standings", href: "/events#standings" },
-        { label: "Fantasy", href: "/#fantasy" },
+        { label: "Fantasy", href: "/fantasy" },
         { label: "FAQ", href: "/#faq" },
       ],
     },

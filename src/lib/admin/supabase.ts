@@ -6,7 +6,7 @@
  */
 
 export type Session = { accessToken: string; refreshToken: string; expiresAt: number };
-export type AuthUser = { id: string; email?: string };
+export type AuthUser = { id: string; email?: string; user_metadata?: Record<string, unknown> };
 
 export const COOKIES = { access: "mgl_at", refresh: "mgl_rt" } as const;
 
@@ -45,6 +45,56 @@ async function token(grant: "password" | "refresh_token", body: Record<string, s
 
 export const signInWithPassword = (email: string, password: string) => token("password", { email, password });
 export const refreshSession = (refreshToken: string) => token("refresh_token", { refresh_token: refreshToken });
+
+/** POSTs to Supabase Auth; `offline` as in `token`. */
+async function auth(path: string, body: unknown, accessToken?: string, method = "POST"): Promise<{ data: Record<string, unknown> } | { error: string; offline?: boolean; status?: number }> {
+  const { url, key } = env();
+  let res: Response;
+  try {
+    res = await fetch(`${url}/auth/v1/${path}`, {
+      method,
+      headers: { apikey: key, "Content-Type": "application/json", ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+  } catch {
+    return { error: "Couldn't reach the sign-in service.", offline: true };
+  }
+  if (res.status >= 500) return { error: "The sign-in service had a problem.", offline: true };
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) return { error: String(data.msg ?? data.error_description ?? data.message ?? "Request failed."), status: res.status };
+  return { data };
+}
+
+/**
+ * A new account. With email confirmation on (it is), no session comes back: the email's link
+ * lands on `redirectTo` carrying the session in the address's #fragment.
+ */
+export async function signUp(email: string, password: string, metadata: Record<string, string>, redirectTo: string) {
+  const res = await auth(`signup?redirect_to=${encodeURIComponent(redirectTo)}`, { email, password, data: metadata });
+  if ("error" in res) return res;
+  const d = res.data as Partial<TokenResponse>;
+  const session: Session | undefined = d.access_token && d.refresh_token ? { accessToken: d.access_token, refreshToken: d.refresh_token, expiresAt: Math.floor(Date.now() / 1000) + (d.expires_in ?? 3600) } : undefined;
+  return { session };
+}
+
+/** Sends the reset-password email; its link lands on `redirectTo` signed in for a moment. */
+export const sendPasswordReset = (email: string, redirectTo: string) => auth(`recover?redirect_to=${encodeURIComponent(redirectTo)}`, { email });
+
+export const updatePassword = (accessToken: string, password: string) => auth("user", { password }, accessToken, "PUT");
+
+/** A database function anyone may call (`rpc/<name>`), with the publishable key alone. */
+export async function publicRpc<T>(name: string, args: Record<string, unknown>): Promise<T> {
+  const { url, key } = env();
+  const res = await fetch(`${url}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: { apikey: key, "Content-Type": "application/json" },
+    body: JSON.stringify(args),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new DbError(`Database error ${res.status}`, res.status);
+  return (await res.json()) as T;
+}
 
 export async function signOutSession(accessToken: string) {
   const { url, key } = env();

@@ -1,10 +1,13 @@
 /** Shared by the server-only Next.js client and the terminal connectivity check. */
 export class FantasyCoreError extends Error {
-  constructor(message, status = 0, retryAfter = null) {
+  constructor(message, status = 0, retryAfter = null, body = null) {
     super(message);
     this.name = "FantasyCoreError";
     this.status = status;
     this.retryAfter = retryAfter;
+    // Core's parsed error body, for the server to pick safe fields from (the reason, or a
+    // manager's own carry-forward squad). Never sent to the browser as a whole.
+    this.body = body;
   }
 }
 
@@ -69,11 +72,13 @@ export function createFantasyTransport({ baseUrl, siteSlug, apiKey, profileKey, 
       throw new FantasyCoreError("Fantasy Core could not be reached or timed out.");
     }
     if (!response.ok) {
-      // Do not propagate partner response bodies, which may contain private data.
+      // The message never carries the partner's response body, which may contain private data.
+      const body = await response.json().catch(() => null);
       throw new FantasyCoreError(
         `Fantasy Core request failed (HTTP ${response.status}).`,
         response.status,
         response.headers.get("Retry-After"),
+        body && typeof body === "object" ? body : null,
       );
     }
     try {
