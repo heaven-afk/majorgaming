@@ -35,7 +35,8 @@
   background: linear-gradient(180deg, transparent 68%, var(--card-surface));
   pointer-events: none;
 }
-.fantasy-player__headshot { object-fit: contain; object-position: center bottom; padding-top: 12px; transform: scale(1.12); transform-origin: center bottom; }
+.fantasy-player__headshot { object-fit: cover; object-position: center top; }
+.fantasy-player__headshot[data-placeholder] { object-fit: contain; object-position: center bottom; padding-top: 12px; transform: scale(1.12); transform-origin: center bottom; }
 .fantasy-player__logo {
   position: absolute;
   z-index: 2;

@@ -8,6 +8,9 @@ export const fantasyCards = {
     makeCaptain: "Set captain",
     points: "pts",
     credits: "cr",
+    select: "Select player",
+    bringIn: "Bring in",
+    chooseReplacement: "Select outgoing player first",
     sample: "Sample squad · Players, prices and points are illustrative",
   },
   /** Example team themes; replace with each team's confirmed branding. */
@@ -21,11 +24,23 @@ export const fantasyCards = {
 
 export type FantasyCardPlayer = {
   name: string;
-  ign?: string;
+  ign?: string | null;
   team: string;
   logo?: string;
   photo?: string;
-  role: string;
-  price: number;
-  theme: { light: string; dark: string };
+  role?: string;
+  price?: number;
+  theme?: { light: string; dark: string };
 };
+
+/** Stable presentation fallback until teams have their own configured brand palette. */
+export function fantasyTeamTheme(team: string) {
+  const key = team.trim().toLowerCase();
+  if (key.startsWith("kyzon")) return fantasyCards.themes.gold;
+  if (key === "vortex one") return fantasyCards.themes.blue;
+  if (key === "goat esport") return fantasyCards.themes.plum;
+  if (key === "developers") return fantasyCards.themes.stone;
+  const themes = Object.values(fantasyCards.themes);
+  const hash = [...key].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7);
+  return themes[hash % themes.length];
+}

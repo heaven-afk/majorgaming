@@ -184,7 +184,7 @@ function PickArt({ cards }: { cards: CardPlayer[] }) {
       <ul>
         {roles.map((r, k) => (
           <li key={r} style={{ "--k": k } as React.CSSProperties}>
-            <Headshot src={cards[k]?.photo} size={38} />
+            <Headshot src={cards[k]?.photo} team={cards[k]?.team} size={38} />
             <span>{r}</span>
             {cards[k]?.price !== undefined && <small>{cards[k].price!.toFixed(1)}</small>}
           </li>
@@ -204,7 +204,7 @@ function CaptainArt({ p }: { p?: CardPlayer }) {
   return (
     <div className="fx-art-cap">
       <div className="fx-art-cap__row">
-        <Headshot src={p?.photo} size={44} />
+        <Headshot src={p?.photo} team={p?.team} size={44} />
         <span>
           <strong>{p?.name ?? "Your captain"}</strong>
           <small>{p?.team ?? "Fragger"}</small>

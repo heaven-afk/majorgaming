@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { fantasyPage } from "@/content/fantasy";
+import { fantasyCards } from "@/content/fantasy-cards";
 import { saveSquad, transfer, type PlayResult } from "@/lib/fantasy/actions";
 import type { Lineup, Player } from "@/lib/fantasy/game";
 import type { FantasyChip, FantasyRole } from "@/lib/fantasy/client";
@@ -263,7 +264,7 @@ export default function SquadBuilder({
         {active && activePlayer && !readOnly && (
           <div className="fx-actions" role="group" aria-label={`${byId.get(activePlayer)?.name}`}>
             <div className="fx-actions__who">
-              <Headshot src={byId.get(activePlayer)?.photo} size={36} />
+              <Headshot src={byId.get(activePlayer)?.photo} team={byId.get(activePlayer)?.team.name} size={36} />
               <span>
                 <strong>{byId.get(activePlayer)?.name}</strong>
                 <small>
@@ -375,33 +376,23 @@ export default function SquadBuilder({
             </div>
           </header>
 
-          <div className="fx-list__cols" aria-hidden>
-            <span>Player</span>
-            <span>Price</span>
-          </div>
-          <ul className="fx-list">
+          <ul className="fx-market-grid">
             {list.map((p) => {
               const why = blocked(p);
               const can = !why && (Boolean(replacing) || !editing);
               const picked = why === copy.why.picked;
               return (
                 <li key={p.id} data-off={why && !picked ? "" : undefined} data-picked={picked ? "" : undefined}>
-                  <Headshot src={p.photo} size={40} />
-                  <span className="fx-list__who">
-                    <strong>{p.name}</strong>
-                    <span>
-                      {p.team.name}
-                      {why && <em data-picked={picked ? "" : undefined}>{why}</em>}
-                    </span>
-                  </span>
-                  <span className="fx-list__price">{fmt(p.price)}</span>
-                  <button className="fx-add" disabled={!can} onClick={() => add(p)} aria-label={`${replacing ? "Bring in" : "Add"} ${p.name}`}>
-                    <Icon name={picked ? "check" : replacing ? "undo" : "plus"} size={15} />
-                  </button>
+                  <PlayerTile name={p.name} ign={p.ign} team={p.team.name} logo={p.team.logo} photo={p.photo} price={p.price} action={
+                    <button className="fx-player-select" disabled={!can} onClick={() => add(p)} aria-label={`${replacing ? "Bring in" : "Add"} ${p.name}`} title={!can && !why ? fantasyCards.labels.chooseReplacement : undefined}>
+                      <span>{why ?? (replacing ? fantasyCards.labels.bringIn : fantasyCards.labels.select)}</span>
+                      <Icon name={picked ? "check" : replacing ? "undo" : "plus"} size={14} />
+                    </button>
+                  } />
                 </li>
               );
             })}
-            {!list.length && <li className="fx-list__empty">{copy.empty}</li>}
+            {!list.length && <li className="fx-market-grid__empty">{copy.empty}</li>}
           </ul>
         </section>
       )}
@@ -464,7 +455,9 @@ function SlotCard({ slot, player, captain, chip, active, onClick, readOnly }: { 
         name={player ? player.name : `Add ${SHORT[slot]}`}
         team={player ? player.team.name : copy.tapToPick}
         photo={player?.photo}
-        stat={player ? fmt(player.price) : undefined}
+        ign={player?.ign}
+        logo={player?.team.logo}
+        price={player?.price}
         captain={captain ? (chip === "triple_captain" ? "3×" : "C") : undefined}
         empty={!player}
         sub={slot === "Sub"}
@@ -513,11 +506,7 @@ function TransferSheet({
           ].map(({ tag, p }) => (
             <div key={tag} className="fx-swap__side" data-side={tag.toLowerCase()}>
               <small>{tag}</small>
-              <Headshot src={p.photo} size={56} />
-              <strong>{p.name}</strong>
-              <span>
-                {p.team.name} · {p.price.toFixed(1)}
-              </span>
+              <PlayerTile name={p.name} ign={p.ign} team={p.team.name} logo={p.team.logo} photo={p.photo} price={p.price} />
             </div>
           ))}
           <span className="fx-swap__arrow" aria-hidden>

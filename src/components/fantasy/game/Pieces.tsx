@@ -4,6 +4,7 @@ import { Ticker } from "@/components/motion/Ticker";
 import { fantasyPage } from "@/content/fantasy";
 import type { FantasyRole } from "@/lib/fantasy/client";
 import { Headshot } from "./Headshot";
+import { PlayerTile } from "./PlayerTile";
 
 /** MGL Fantasy's wordmark: the MGL mark, then "Fantasy" in the serif accent. */
 export function Brand({ href = "/fantasy" }: { href?: string }) {
@@ -17,7 +18,7 @@ export function Brand({ href = "/fantasy" }: { href?: string }) {
   );
 }
 
-export type CardPlayer = { name: string; team: string; photo?: string; price?: number; role?: FantasyRole | "Sub"; points?: number };
+export type CardPlayer = { name: string; ign?: string | null; team: string; logo?: string; photo?: string; price?: number; role?: FantasyRole | "Sub"; points?: number };
 
 const SHORT: Record<FantasyRole | "Sub", string> = { Fragger: "FRG", IGL: "IGL", Support: "SUP", Anchor: "ANC", Sub: "SUB" };
 // Illustration only: what a matchday could score. The captain's double is shown.
@@ -35,10 +36,14 @@ export function SquadSheet({ players = [], matchday, ghost }: { players?: CardPl
   const total = points.slice(0, 4).reduce((a, b) => a + b, 0);
   const spent = rows.reduce((n, p) => n + (p.price ?? 0), 0);
 
-  const row = (p: CardPlayer, i: number) => (
+  const row = (p: CardPlayer, i: number) => !ghost && i < 4 ? (
+    <li key={i} className="fx-sheet-card">
+      <PlayerTile name={p.name} ign={p.ign} team={p.team} logo={p.logo} photo={p.photo} price={p.price} role={p.role} captain={i === 0 ? "C" : undefined} />
+    </li>
+  ) : (
     <li key={i} className="fx-sheet-row" data-sub={i === 4 ? "" : undefined} style={{ "--i": i } as React.CSSProperties}>
       <span className="fx-role">{SHORT[p.role ?? "Sub"]}</span>
-      <Headshot src={p.photo} size={40} />
+      <Headshot src={p.photo} team={p.team} size={40} />
       <span className="fx-sheet-row__who">
         {ghost ? (
           <>
@@ -48,7 +53,7 @@ export function SquadSheet({ players = [], matchday, ghost }: { players?: CardPl
         ) : (
           <>
             <strong>{p.name}</strong>
-            <small>{p.team}</small>
+            <small>{p.team}{p.ign ? ` · IGN ${p.ign}` : ""}</small>
           </>
         )}
       </span>
@@ -63,7 +68,7 @@ export function SquadSheet({ players = [], matchday, ghost }: { players?: CardPl
         <strong>{s.title}</strong>
         {matchday && <span>Matchday {matchday}</span>}
       </div>
-      <ol>{rows.slice(0, 4).map(row)}</ol>
+      <ol className={ghost ? undefined : "fx-sheet-cards"}>{rows.slice(0, 4).map(row)}</ol>
       {rows[4] && (
         <>
           <p className="fx-squadsheet__bench">{s.bench}</p>
