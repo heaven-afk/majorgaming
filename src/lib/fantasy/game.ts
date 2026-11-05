@@ -43,7 +43,7 @@ export type Player = {
   price: number;
   eligible: boolean;
   /** `key` is Fantasy Core's team id, which the two-per-team rule counts by. */
-  team: { key: string; name: string; slug?: string };
+  team: { key: string; name: string; slug?: string; logo?: string };
   /** A real photo only (from the admin, later maybe the API); screens show a dark headshot otherwise. */
   photo?: string;
 };
@@ -93,26 +93,27 @@ const realPhoto = (photo?: string) => (photo && !photo.startsWith("/images/") ? 
 /** MGL's players by name and in-game name, with their current team. */
 async function mglPlayers() {
   const { teams, personBySlug } = await getLeague();
-  const byName = new Map<string, { slug: string; name: string; ign?: string; photo?: string; team: { slug: string; name: string } }>();
+  const byName = new Map<string, { slug: string; name: string; ign?: string; photo?: string; team: { slug: string; name: string; logo?: string } }>();
   for (const team of teams) {
     if (team.archived) continue;
     for (const l of team.roster ?? []) {
       const p = personBySlug(l.player);
       if (!p) continue;
-      const entry = { slug: p.slug, name: p.name, ign: p.ign, photo: realPhoto(p.photo), team: { slug: team.slug, name: team.name } };
+      const entry = { slug: p.slug, name: p.name, ign: p.ign, photo: realPhoto(p.photo), team: { slug: team.slug, name: team.name, logo: team.logo } };
       for (const key of [norm(p.name), norm(p.ign)]) if (key && !byName.has(key)) byName.set(key, entry);
     }
   }
-  return { byName, teamName: new Map(teams.map((t) => [t.slug, t.name])) };
+  return { byName, teamName: new Map(teams.map((t) => [t.slug, t.name])), teamLogo: new Map(teams.map((t) => [t.slug, t.logo])) };
 }
 
 async function enrich(market: FantasyMarket): Promise<Player[]> {
-  const { byName, teamName } = await mglPlayers();
+  const { byName, teamName, teamLogo } = await mglPlayers();
   return market.players.map((p) => {
     const mgl = byName.get(norm(p.playerName)) ?? byName.get(norm(p.ign));
     const key = p.teamIdAtLock ?? `solo:${p.playerId}`;
     const name = (p.teamIdAtLock && teamName.get(p.teamIdAtLock)) ?? mgl?.team.name ?? p.teamIdAtLock ?? "No team";
-    return { id: p.playerId, name: p.playerName, ign: p.ign, price: p.price, eligible: p.isEligible, team: { key, name, slug: mgl?.team.slug }, photo: mgl?.photo };
+    const logo = teamLogo.get(key) ?? (norm(name) === norm(mgl?.team.name) ? mgl?.team.logo : undefined);
+    return { id: p.playerId, name: p.playerName, ign: p.ign, price: p.price, eligible: p.isEligible, team: { key, name, slug: mgl?.team.slug, logo }, photo: mgl?.photo };
   });
 }
 
@@ -347,14 +348,14 @@ export async function getShowcase(game: Game) {
       picks.push(p);
       spent += p.price;
     }
-    return picks.map((p, i) => ({ name: p.name, team: p.team.name, photo: p.photo, price: p.price, role: roles[i] }));
+    return picks.map((p, i) => ({ name: p.name, ign: p.ign, team: p.team.name, logo: p.team.logo, photo: p.photo, price: p.price, role: roles[i] }));
   }
-  const { activeTeams, profileOf } = await getLeague();
+  const { activeTeams, profileOf, teamBySlug } = await getLeague();
   return activeTeams
     .filter((t) => t.tier === 1)
     .slice(0, 5)
     .flatMap((t, i) => {
       const l = profileOf(t.slug)?.roster[0];
-      return l ? [{ name: l.person.name, team: t.name, photo: realPhoto(l.person.photo), role: roles[i] }] : [];
+      return l ? [{ name: l.person.name, ign: l.person.ign, team: t.name, logo: teamBySlug(t.slug)?.logo, photo: realPhoto(l.person.photo), role: roles[i] }] : [];
     });
 }

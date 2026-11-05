@@ -132,7 +132,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
             <Link className="fx-strip fx-strip--link" href="/fantasy/squad" aria-label="Open your squad">
               {strip.map((s) => (
                 <span key={s.key} className="fx-strip__item" data-sub={s.sub ? "" : undefined}>
-                  <PlayerTile role={s.role} name={s.p?.name ?? "Unknown"} team={s.p?.team.name} photo={s.p?.photo} stat={s.p?.price.toFixed(1)} captain={s.captain ? (mine.squad!.chip === "triple_captain" ? "3×" : "C") : undefined} sub={s.sub} />
+                  <PlayerTile role={s.role} name={s.p?.name ?? "Unknown"} ign={s.p?.ign} team={s.p?.team.name} logo={s.p?.team.logo} photo={s.p?.photo} price={s.p?.price} captain={s.captain ? (mine.squad!.chip === "triple_captain" ? "3×" : "C") : undefined} sub={s.sub} />
                 </span>
               ))}
             </Link>
