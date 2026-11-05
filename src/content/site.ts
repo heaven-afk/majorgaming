@@ -1,4 +1,5 @@
 import { additionalCommunityAvatars, communityAvatars, heroImages } from "./visual-assets";
+import { fantasyCards } from "./fantasy-cards";
 
 // Each section shows its own characters, so the same four faces don't repeat down the page.
 const [farah, ghost] = communityAvatars;
@@ -174,10 +175,10 @@ export const fantasy = {
     startRank: 1204,
     hint: "Tap a player to make them captain",
     players: [
-      { ign: "Sable", team: "Kyzon Esport", role: "Fragger", price: 26.5, image: nikto.src },
-      { ign: "Havoc", team: "Vortex One", role: "IGL", price: 21.0, image: urbanTracker.src },
-      { ign: "Juno", team: "Goat Esport", role: "Anchor", price: 18.0, image: krueger.src },
-      { ign: "Nova", team: "Developers", role: "Support", price: 17.5, image: mantaRay.src },
+      { name: "Sable", ign: "KYZ.Sable", team: "Kyzon Esport", role: "Fragger", price: 26.5, theme: fantasyCards.themes.gold },
+      { name: "Havoc", ign: "VTX.Havoc", team: "Vortex One", role: "IGL", price: 21.0, theme: fantasyCards.themes.blue },
+      { name: "Juno", ign: "GOAT.Juno", team: "Goat Esport", role: "Anchor", price: 18.0, theme: fantasyCards.themes.plum },
+      { name: "Nova", ign: "DEV.Nova", team: "Developers", role: "Support", price: 17.5, theme: fantasyCards.themes.stone },
     ],
     sub: { ign: "Rook", team: "Main Characters OG", role: "Support", price: 14.0 },
     /** Points events played on a loop: which player (index) scores how much, and why. */
