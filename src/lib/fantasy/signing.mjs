@@ -20,20 +20,27 @@ export function createFantasySigner({ issuer, privateKeyPem }) {
   const { kty, n, e } = publicKey.export({ format: "jwk" });
   const kid = createHash("sha256").update(publicKey.export({ type: "spki", format: "der" })).digest("base64url");
   const jwks = { keys: [{ kty, n, e, kid, alg: "RS256", use: "sig" }] };
+  function signIdentity(userId, displayName, permissions) {
+    if (typeof userId !== "string" || !userId.trim() || userId.length > 200 ||
+        typeof displayName !== "string" || displayName !== displayName.trim() || !/^[A-Za-z0-9 _-]{3,20}$/.test(displayName)) {
+      throw new Error("A verified identity and valid display name are required.");
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT", kid })).toString("base64url");
+    const payload = Buffer.from(JSON.stringify({ iss: issuer, aud: "fantasy-core", sub: userId, displayName, iat: now, exp: now + 300, ...(permissions ? { permissions } : {}) })).toString("base64url");
+    const message = `${header}.${payload}`;
+    return `${message}.${sign("RSA-SHA256", Buffer.from(message), privateKey).toString("base64url")}`;
+  }
   return {
     jwks,
     // Accept only identity already verified against MGL's auth provider and profile.
     // Do not expose this function as a browser-accessible token issuance endpoint.
     signManager({ userId, displayName }) {
-      if (typeof userId !== "string" || !userId.trim() || userId.length > 200 ||
-          typeof displayName !== "string" || displayName !== displayName.trim() || !/^[A-Za-z0-9 _-]{3,20}$/.test(displayName)) {
-        throw new Error("A verified manager ID and valid display name are required.");
-      }
-      const now = Math.floor(Date.now() / 1000);
-      const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT", kid })).toString("base64url");
-      const payload = Buffer.from(JSON.stringify({ iss: issuer, aud: "fantasy-core", sub: userId, displayName, iat: now, exp: now + 300 })).toString("base64url");
-      const message = `${header}.${payload}`;
-      return `${message}.${sign("RSA-SHA256", Buffer.from(message), privateKey).toString("base64url")}`;
+      return signIdentity(userId, displayName);
+    },
+    // Called only by the server-only admin controller after requireAdmin().
+    signWindowAdmin({ userId }) {
+      return signIdentity(userId, "MGL Admin", ["fantasy:windows:manage"]);
     },
   };
 }

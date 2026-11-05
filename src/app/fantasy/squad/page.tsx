@@ -19,7 +19,7 @@ async function Squad() {
   return (
     <AppShell game={game} manager={manager} title={<>Your <em>squad.</em></>}>
       {game.market.players.length ? (
-        <SquadBuilder players={game.market.players} squad={mine.squad} previous={mine.previous} open={game.open} chips={mine.chips} />
+        <SquadBuilder players={game.market.players} squad={mine.squad} previous={mine.previous} open={game.open} deadline={game.current.submissionDeadline} chips={mine.chips} />
       ) : (
         <section className="fx-panel fx-empty-state">
           <h2>{fantasyPage.status.unpublished}</h2>

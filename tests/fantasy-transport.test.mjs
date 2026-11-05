@@ -17,7 +17,7 @@ test("sends site and key in headers, blocks redirects and follows Core read cach
     assert.equal(options.headers["x-fantasy-api-key"], "test-key");
     assert.equal(options.headers["X-Fantasy-Site"], "mgl");
     assert.equal(options.redirect, "error");
-    assert.deepEqual(options.next, { revalidate: 15 });
+    assert.deepEqual(options.next, { revalidate: 15, tags: ["fantasy-core"] });
     assert.ok(options.signal instanceof AbortSignal);
     return Response.json({ status: "OPEN" });
   } });

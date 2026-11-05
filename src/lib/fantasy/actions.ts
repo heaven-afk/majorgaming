@@ -9,8 +9,9 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, DbError, publicRpc, sendPasswordReset, signInWithPassword, signOutSession, signUp, updatePassword, userOf } from "@/lib/admin/supabase";
 import { FantasyCoreError } from "./client";
-import { coreMessage, getGame, makeTransfer, ROLES, saveLineup, syncName, type Lineup, type Receipt, type TransferInput } from "./game";
+import { coreMessage, getGame, makeTransfer, saveLineup, syncName, type Lineup, type Receipt, type TransferInput } from "./game";
 import { preview } from "./preview";
+import { validLineupInput, validTransferInput } from "./inputs.mjs";
 import { clearManagerSession, DISPLAY_NAME, ensureManagerRow, getManager, MANAGER_COOKIES, storeManagerSession } from "./session";
 
 export type AuthState = { error?: string; fields?: Record<string, string>; sent?: string; saved?: number };
@@ -134,7 +135,10 @@ export async function rename(_: AuthState, form: FormData): Promise<AuthState> {
   const fields: Record<string, string> = {};
   checkName(displayName, fields);
   if (Object.keys(fields).length) return { fields };
-  if (displayName === manager.displayName) return { saved: Date.now() };
+  if (displayName === manager.displayName) {
+    try { await syncName(manager.id, displayName); return { saved: Date.now() }; }
+    catch (err) { return { error: coreMessage(err) }; }
+  }
   if (manager.preview) return { error: "The preview manager can't be renamed." };
 
   const before = manager.displayName;
@@ -170,8 +174,6 @@ export async function previewSignIn() {
 
 export type PlayResult = { ok: true; receipt?: Receipt } | { ok: false; error: string; retry?: boolean };
 
-const ID = /^[\w-]{1,100}$/;
-
 async function playing() {
   const manager = await getManager();
   if (!manager) return { error: "Sign in again." } as const;
@@ -183,14 +185,7 @@ async function playing() {
 }
 
 export async function saveSquad(lineup: Lineup): Promise<PlayResult> {
-  const ids = [...lineup.starters.map((s) => s.playerId), lineup.sub];
-  const roles = lineup.starters.map((s) => s.role);
-  if (
-    lineup.starters.length !== 4 || !ids.every((id) => ID.test(id)) || new Set(ids).size !== 5 ||
-    new Set(roles).size !== 4 || !roles.every((r) => ROLES.includes(r)) ||
-    !lineup.starters.some((s) => s.playerId === lineup.captain) ||
-    ![null, "triple_captain", "bench_boost"].includes(lineup.chip)
-  ) return { ok: false, error: "That squad isn't complete. Fill every role and pick a captain." };
+  if (!validLineupInput(lineup)) return { ok: false, error: "That squad isn't complete. Fill every role and pick a captain." };
   const ctx = await playing();
   if ("error" in ctx) return { ok: false, error: ctx.error! };
   try {
@@ -202,7 +197,7 @@ export async function saveSquad(lineup: Lineup): Promise<PlayResult> {
 }
 
 export async function transfer(input: TransferInput, key: string): Promise<PlayResult> {
-  if (!ID.test(input.playerOutId) || !ID.test(input.playerInId) || !/^[a-zA-Z0-9._:-]{8,128}$/.test(key) || typeof input.useFreeTransferChip !== "boolean")
+  if (!validTransferInput(input, key))
     return { ok: false, error: "That transfer isn't valid." };
   const ctx = await playing();
   if ("error" in ctx) return { ok: false, error: ctx.error! };
