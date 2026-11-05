@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { fantasy } from "@/content/site";
-import { Crest } from "../about/Crest";
+import { fantasyCards } from "@/content/fantasy-cards";
+import PlayerCard from "./PlayerCard";
 import { Icon } from "../Icons";
 import { Ticker } from "../motion/Ticker";
 import { useStages } from "../motion/useStages";
@@ -69,43 +69,14 @@ export default function SquadBoard() {
           const isCaptain = i === captain;
           return (
             <li key={p.ign}>
-              <button
-                type="button"
-                className="pick"
-                data-captain={isCaptain ? "" : undefined}
-                aria-pressed={isCaptain}
-                aria-label={`${p.ign}, ${p.role}, ${p.team}. ${isCaptain ? "Captain" : "Make captain"}`}
-                onClick={() => setCaptain(i)}
-              >
-                <span className="pick__top">
-                  <span className="pick__photo">
-                    <Image src={p.image} alt="" width={96} height={96} />
-                  </span>
-                  <span className="pick__role">{p.role}</span>
-                  {isCaptain && (
-                    <span className="pick__c" key={`c${i}`}>
-                      C
-                    </span>
-                  )}
-                </span>
-                <strong className="pick__name">{p.ign}</strong>
-                <span className="pick__team">
-                  <Crest name={p.team} size={16} />
-                  <span>{p.team}</span>
-                </span>
-                <span className="pick__foot">
-                  <span className="pick__price">{p.price.toFixed(1)} cr</span>
-                  <span className="pick__pts">
-                    <Ticker value={scored[i]} instant={reset} />
-                    {isCaptain && <em>×2</em>}
-                  </span>
-                </span>
-                {last && last.player === i && (
-                  <span className="pick__pop" key={stage}>
-                    +{last.pts * (isCaptain ? 2 : 1)} · {last.label}
-                  </span>
-                )}
-              </button>
+              <PlayerCard
+                player={p}
+                captain={isCaptain}
+                points={scored[i]}
+                instant={reset}
+                onSelect={() => setCaptain(i)}
+                event={last && last.player === i ? { key: stage, points: last.pts * (isCaptain ? 2 : 1), label: last.label } : null}
+              />
             </li>
           );
         })}
@@ -131,6 +102,7 @@ export default function SquadBoard() {
         <Icon name="crown" size={14} />
         {b.hint}
       </p>
+      <p className="squad__sample">{fantasyCards.labels.sample}</p>
     </div>
   );
 }
