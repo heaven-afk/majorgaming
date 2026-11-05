@@ -1,5 +1,6 @@
 import "server-only";
 import { createFantasyTransport } from "./transport.mjs";
+import { parseFantasyResponse } from "./responses.mjs";
 
 export { FantasyCoreError } from "./transport.mjs";
 
@@ -60,39 +61,38 @@ function request() {
   });
 }
 
-// Types reflect Heaven_fantasy_codm's current website contract; verify against OpenAPI
-// before building screens. These assertions are not runtime schema validation.
-export async function getFantasyTournaments(): Promise<{ count: number; tournaments: FantasyTournament[] }> {
-  return request()("/api/v1/tournaments");
+// Consumed responses are decoded against Core's contract before reaching screens.
+export async function getFantasyTournaments(fresh = false): Promise<{ count: number; tournaments: FantasyTournament[] }> {
+  return parseFantasyResponse("tournaments", await request()("/api/v1/tournaments", { fresh }));
 }
 
-export async function getFantasyMatchdays(tournamentId: string): Promise<{ tournamentId: string; count: number; matchdays: FantasyMatchday[] }> {
-  return request()(`/api/v1/tournaments/${id(tournamentId)}/matchdays`);
+export async function getFantasyMatchdays(tournamentId: string, fresh = false): Promise<{ tournamentId: string; count: number; matchdays: FantasyMatchday[] }> {
+  return parseFantasyResponse("matchdays", await request()(`/api/v1/tournaments/${id(tournamentId)}/matchdays`, { fresh }), { tournamentId });
 }
 
-export async function getFantasyMarket(tournamentId: string, day: number): Promise<FantasyMarket> {
-  return request()(`/api/v1/markets/${id(tournamentId)}`, { query: { matchday: matchday(day) } });
+export async function getFantasyMarket(tournamentId: string, day: number, fresh = false): Promise<FantasyMarket> {
+  return parseFantasyResponse("market", await request()(`/api/v1/markets/${id(tournamentId)}`, { fresh, query: { matchday: matchday(day) } }), { tournamentId, matchdayNumber: day });
 }
 
 // Never use cached market state to authorize a save. Core validates current prices
 // and lock state on each validation; actual manager saves need verified MGL sessions.
 export async function validateFantasySquad(tournamentId: string, day: number, squad: SquadSelection): Promise<unknown> {
-  return request()("/api/v1/squads/validate", {
+  return parseFantasyResponse("validation", await request()("/api/v1/squads/validate", {
     body: { tournamentId: id(tournamentId), matchdayNumber: matchday(day), squad },
-  });
+  }), { tournamentId, matchdayNumber: day });
 }
 
-// Detailed DTOs remain unknown until runtime response schemas are wired into screens.
+// The detailed scoring endpoint is reserved for a future match breakdown screen.
 export async function getFantasyScores(tournamentId: string, day: number): Promise<unknown> {
   return request()("/api/v1/scoring/matchday", { query: { tournamentId: id(tournamentId), matchday: matchday(day) } });
 }
 
 export async function getFantasyLeaderboard(tournamentId: string, day: number, cursor?: string): Promise<unknown> {
-  return request()(`/api/v1/leaderboards/${id(tournamentId)}`, { query: { matchday: matchday(day), limit: 50, cursor } });
+  return parseFantasyResponse("standings", await request()(`/api/v1/leaderboards/${id(tournamentId)}`, { query: { matchday: matchday(day), limit: 50, cursor } }), { tournamentId, matchdayNumber: day });
 }
 
 export async function getFantasySeasonLeaderboard(tournamentId: string, cursor?: string): Promise<unknown> {
-  return request()(`/api/v1/seasons/${id(tournamentId)}/leaderboard`, { query: { limit: 50, cursor } });
+  return parseFantasyResponse("standings", await request()(`/api/v1/seasons/${id(tournamentId)}/leaderboard`, { query: { limit: 50, cursor } }), { tournamentId });
 }
 
 // Internal server helpers only. Tokens must be minted from a verified MGL session;
@@ -101,23 +101,23 @@ export async function syncFantasyProfile(managerId: string, displayName: string)
   if (!/^[A-Za-z0-9 _-]{3,20}$/.test(displayName) || displayName !== displayName.trim()) {
     throw new Error("Display name must be 3–20 letters, numbers, spaces, underscores or hyphens.");
   }
-  return request()(`/api/v1/managers/${id(managerId)}/profile`, { profile: true, body: { displayName } });
+  return parseFantasyResponse("profile", await request()(`/api/v1/managers/${id(managerId)}/profile`, { profile: true, body: { displayName } }), { managerId, displayName });
 }
 
 export async function getFantasySquad(token: string, tournamentId: string, day: number): Promise<unknown> {
-  return request()("/api/v1/squads/me", { token, query: { tournamentId: id(tournamentId), matchday: matchday(day) } });
+  return parseFantasyResponse("ownSquad", await request()("/api/v1/squads/me", { token, query: { tournamentId: id(tournamentId), matchday: matchday(day) } }), { tournamentId, matchdayNumber: day });
 }
 
 export async function getFantasyChips(token: string, tournamentId: string, day: number): Promise<unknown> {
-  return request()("/api/v1/squads/chips", { token, query: { tournamentId: id(tournamentId), matchday: matchday(day) } });
+  return parseFantasyResponse("chips", await request()("/api/v1/squads/chips", { token, query: { tournamentId: id(tournamentId), matchday: matchday(day) } }), { tournamentId, matchdayNumber: day });
 }
 
 export async function saveFantasySquad(token: string, tournamentId: string, day: number, squad: SquadSelection, activeChip: FantasyChip = null): Promise<unknown> {
-  return request()("/api/v1/squads", { token, body: { tournamentId: id(tournamentId), matchdayNumber: matchday(day), squad, activeChip } });
+  return parseFantasyResponse("savedSquad", await request()("/api/v1/squads", { token, body: { tournamentId: id(tournamentId), matchdayNumber: matchday(day), squad, activeChip } }), { tournamentId, matchdayNumber: day });
 }
 
 export async function getFantasyManagerPoints(token: string, tournamentId: string): Promise<unknown> {
-  return request()("/api/v1/managers/me/points", { token, query: { tournamentId: id(tournamentId) } });
+  return parseFantasyResponse("points", await request()("/api/v1/managers/me/points", { token, query: { tournamentId: id(tournamentId) } }), { tournamentId });
 }
 
 export async function transferFantasyPlayer(token: string, idempotencyKey: string, input: {
@@ -127,5 +127,13 @@ export async function transferFantasyPlayer(token: string, idempotencyKey: strin
   id(input.tournamentId);
   matchday(input.matchdayNumber);
   // Preserve this exact key and body if a request has an unknown outcome.
-  return request()("/api/v1/transfers", { token, idempotencyKey, body: input });
+  return parseFantasyResponse("transfer", await request()("/api/v1/transfers", { token, idempotencyKey, body: input }), { tournamentId: input.tournamentId });
+}
+
+export async function setFantasyWindow(token: string, tournamentId: string, day: number, action: "open" | "lock" | "close"): Promise<{ success: true; tournamentId: string; matchdayNumber: number; status: MarketStatus }> {
+  if (!["open", "lock", "close"].includes(action)) throw new Error("Invalid window action.");
+  const result = parseFantasyResponse("window", await request()(`/api/v1/markets/${id(tournamentId)}/window`, { token, body: { matchdayNumber: matchday(day), action } }), { tournamentId, matchdayNumber: day });
+  const expected = { open: "OPEN", lock: "LOCKED", close: "CLOSED" }[action];
+  if (result.status !== expected) throw new Error("Fantasy Core did not confirm the requested window state. Refresh to check it.");
+  return result;
 }

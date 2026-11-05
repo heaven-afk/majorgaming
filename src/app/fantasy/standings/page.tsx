@@ -7,6 +7,7 @@ import { StandingsTable } from "@/components/fantasy/game/Chrome";
 import { fantasyPage } from "@/content/fantasy";
 import { getGame, getStandings } from "@/lib/fantasy/game";
 import { getManager } from "@/lib/fantasy/session";
+import { LiveRefresh } from "@/components/fantasy/game/LiveRefresh";
 
 export const metadata: Metadata = { title: "Standings · MGL Fantasy" };
 const copy = fantasyPage.standings;
@@ -22,6 +23,7 @@ async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cu
 
   return (
     <AppShell game={game} manager={manager} title={<>{copy.title.before} <em>{copy.title.accent}</em></>}>
+      <LiveRefresh />
       <section className="fx-panel fx-board">
         <nav className="fx-seg" aria-label="Table">
           <Link href={href({})} aria-current={!md ? "page" : undefined}>

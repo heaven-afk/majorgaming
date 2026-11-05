@@ -47,6 +47,7 @@ export const adminCopy = {
   nav: [
     { href: "/admin", label: "Dashboard", icon: "home" },
     { href: "/admin/events", label: "Events", icon: "calendar" },
+    { href: "/admin/fantasy", label: "Fantasy", icon: "fantasy" },
     { href: "/admin/teams", label: "Teams", icon: "squad" },
     { href: "/admin/people", label: "Players", icon: "crosshair" },
     { href: "/admin/news", label: "News", icon: "news" },
