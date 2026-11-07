@@ -32,12 +32,12 @@ function Home({ country }: { country?: string }) {
   );
 }
 
-/** The founder's profile: a large portrait beside their quote, bio and a few facts. */
-export function FounderCard({ person, seasons }: { person: StaffMember; seasons?: number }) {
+/** A featured profile: a large portrait beside their quote, bio and a few facts. `flip` puts the portrait on the right on wide screens. */
+export function FounderCard({ person, seasons, flip }: { person: StaffMember; seasons?: number; flip?: boolean }) {
   const spot = person.spotlight!;
   const copy = staffPage.founder;
   return (
-    <article className="sf-founder" aria-labelledby={`founder-${person.slug}`}>
+    <article className="sf-founder" data-flip={flip ? "" : undefined} aria-labelledby={`founder-${person.slug}`}>
       <span className="sf-founder__photo" data-rise>
         {person.photo ? (
           <Image src={person.photo} alt="" width={960} height={960} sizes="(min-width: 900px) 40vw, 92vw" />
@@ -62,7 +62,7 @@ export function FounderCard({ person, seasons }: { person: StaffMember; seasons?
             <p key={p}>{p}</p>
           ))}
         </div>
-        <dl className="sf-founder__facts" data-rise="3">
+        {(spot.since || seasons !== undefined || person.country) && <dl className="sf-founder__facts" data-rise="3">
           {spot.since && (
             <div>
               <dt>{copy.facts.since}</dt>
@@ -83,7 +83,7 @@ export function FounderCard({ person, seasons }: { person: StaffMember; seasons?
               </dd>
             </div>
           )}
-        </dl>
+        </dl>}
         <div data-rise="3.5">
           <Socials person={person} />
         </div>

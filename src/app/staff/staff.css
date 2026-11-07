@@ -158,7 +158,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
   overflow: hidden;
   background: radial-gradient(80% 80% at 50% 30%, #2c241e, #161616);
 }
@@ -166,13 +166,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 25%;
+  object-position: 50% 20%;
 }
 /* Phones: the portrait fades into the copy below it */
 .sf-founder__photo::after {
   content: "";
   position: absolute;
-  inset: 55% 0 0;
+  inset: 72% 0 0;
   background: linear-gradient(180deg, transparent, #1c1915);
 }
 @media (min-width: 900px) {
@@ -199,6 +199,21 @@
     gap: 20px;
     margin-top: 0;
     padding: 48px 48px 44px 28px;
+  }
+}
+@media (min-width: 900px) {
+  .sf-founder[data-flip] {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+  .sf-founder[data-flip] .sf-founder__photo {
+    order: 2;
+  }
+  .sf-founder[data-flip] .sf-founder__photo::after {
+    inset: 0 60% 0 0;
+    background: linear-gradient(270deg, transparent, rgb(28 25 21 / 0.9));
+  }
+  .sf-founder[data-flip] .sf-founder__body {
+    padding: 48px 28px 44px 48px;
   }
 }
 .sf-founder__name {
@@ -277,7 +292,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
   overflow: hidden;
   background: radial-gradient(80% 80% at 50% 30%, #2c241e, #161616);
 }
@@ -288,14 +303,14 @@
   /* Fewer, wider cards get a wider crop so they don't tower */
   .sf-leads[data-n="1"] .sf-lead__photo,
   .sf-leads[data-n="2"] .sf-lead__photo {
-    aspect-ratio: 5 / 4;
+    aspect-ratio: 1;
   }
 }
 .sf-lead__photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 25%;
+  object-position: 50% 20%;
   transition: transform 1s var(--ease-out);
 }
 .sf-lead:hover .sf-lead__photo img {
@@ -304,7 +319,7 @@
 .sf-lead__photo::after {
   content: "";
   position: absolute;
-  inset: 45% 0 0;
+  inset: 68% 0 0;
   background: linear-gradient(180deg, transparent, #1a1a1a 92%);
 }
 .sf-lead__info {
@@ -312,7 +327,7 @@
   z-index: 1;
   display: grid;
   gap: 10px;
-  margin-top: -64px;
+  margin-top: -44px;
   padding: 0 18px 18px;
 }
 .sf-lead__info strong {
@@ -329,6 +344,9 @@
   .sf-lead__info strong {
     font-size: 38px;
   }
+}
+.sf-lead__foot:empty {
+  display: none;
 }
 .sf-lead__foot {
   display: flex;

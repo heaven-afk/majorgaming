@@ -25,16 +25,16 @@ export const getStaff = cache(async () => {
 
   const leadership = staff.filter((s) => s.group === "Leadership");
 
-  /** The featured profile at the top of Leadership (the founder), when there is one. */
-  const founder = staff.find((s) => s.spotlight);
+  /** The featured profiles at the top of Leadership (the founder first), each with a bio. */
+  const profiles = leadership.filter((s) => s.spotlight);
 
   return {
     staff,
     staffGroups,
     leadership,
-    founder,
-    /** Leadership cards under the founder's profile. */
-    leaders: leadership.filter((s) => s !== founder),
+    profiles,
+    /** Leadership cards under the featured profiles. */
+    leaders: leadership.filter((s) => !s.spotlight),
     /** Every group except Leadership, which the page shows on its own. */
     otherGroups: staffGroups.filter((g) => g.group !== "Leadership"),
     staffCountries: new Set(staff.flatMap((s) => s.country ?? [])),

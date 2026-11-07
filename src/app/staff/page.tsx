@@ -15,17 +15,18 @@ export const metadata: Metadata = {
   description: "The team that runs MGL: leadership, match-day operations, media and community.",
 };
 
-/** MGL's own people: the founder's profile, the rest of leadership as portraits, then the crew group by group. */
+/** MGL's own people: the featured profiles, the rest of leadership as portraits, then the crew group by group. */
 export default async function StaffPage() {
-  const [{ latestSeason }, { founder, leaders, leadership, otherGroups, staff, staffCountries, staffGroups }] = await Promise.all([getLeague(), getStaff()]);
+  const [{ latestSeason }, { profiles, leaders, leadership, otherGroups, staff, staffCountries, staffGroups }] = await Promise.all([getLeague(), getStaff()]);
   const copy = staffPage;
   const faces = staff.filter((s) => s.photo).slice(0, 5);
+  // Only numbers that say something: no "0 countries", no leadership count equal to the whole staff.
   const facts = [
-    { label: copy.facts.people, value: staff.length },
-    { label: copy.facts.groups, value: staffGroups.length },
-    { label: copy.facts.countries, value: staffCountries.size },
-    { label: copy.facts.leadership, value: leadership.length },
-  ];
+    { label: copy.facts.people, value: staff.length, show: true },
+    { label: copy.facts.groups, value: staffGroups.length, show: staffGroups.length > 1 },
+    { label: copy.facts.countries, value: staffCountries.size, show: staffCountries.size > 0 },
+    { label: copy.facts.leadership, value: leadership.length, show: leadership.length < staff.length },
+  ].filter((f) => f.show);
 
   return (
     <div className="page">
@@ -74,7 +75,9 @@ export default async function StaffPage() {
               </h2>
               <p className="sf-section__note">{copy.groups.Leadership}</p>
             </header>
-            {founder && <FounderCard person={founder} seasons={latestSeason.number} />}
+            {profiles.map((p, i) => (
+              <FounderCard key={p.slug} person={p} seasons={i === 0 ? latestSeason.number : undefined} flip={i % 2 === 1} />
+            ))}
             {leaders.length > 0 && (
               <ul className="sf-leads" data-n={Math.min(leaders.length, 3)} style={{ "--n": Math.min(leaders.length, 3) } as React.CSSProperties}>
                 {leaders.map((p, i) => (
