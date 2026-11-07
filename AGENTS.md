@@ -49,7 +49,7 @@ Three systems work together. The owner's partner runs the first two; MGL runs th
 | **MGL website** | MGL | Manager accounts and logins, manager display names, all screens. Shows Fantasy Core numbers. Calculates nothing. |
 
 **Ownership rules:**
-- All game logic and game admin (completion, pricing, scoring) belongs to the partner. MGL does **not** build a fantasy admin.
+- All game logic and game administration (completion, pricing, scoring and tournament setup) belongs to the partner. Owner-approved exception (2026-11-05): MGL Admin has a Fantasy section for the current tournament's scoped Go live / Lock market / Close matchday controls through Core's website window API. MGL does not calculate scores or administer Core tournaments.
 - Manager accounts, logins and display names live on MGL. Passwords are stored only on MGL.
 - Managers are shown by their MGL display name everywhere, including leaderboards. Never by raw ID.
 

@@ -7,6 +7,7 @@ import { Ticker } from "@/components/motion/Ticker";
 import { formatDeadline, statusOf, StandingsTable } from "./Chrome";
 import { PlayerTile } from "./PlayerTile";
 import { Countdown } from "./Countdown";
+import { LiveRefresh } from "./LiveRefresh";
 
 const copy = fantasyPage.app;
 const hub = fantasyPage.hub;
@@ -67,6 +68,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
 
   return (
     <div className="fx-dash">
+      <LiveRefresh />
       <section className="fx-score" data-tone={status.tone} aria-labelledby="fx-score-title">
         <div className="fx-score__top">
           <span className="fx-status" data-tone={status.tone}>

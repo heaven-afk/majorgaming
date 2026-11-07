@@ -1,171 +1,116 @@
-# Connecting MGL to Heaven Fantasy Core
+# MGL / Fantasy Core connection and operations
 
-Updated 2026-11-03 after reading the actual fantasy project at
-`C:/Users/USER/Documents/Projects/Heaven_fantasy_codm`. Work stays on
-`feature/fantasy-integration`; nothing has been committed, pushed or deployed.
+Updated 2026-11-05. Work is delivered on `feature/fantasy-integration`.
+MGL consumes one current tournament at a time. There is no manager tournament switcher.
 
-Latest connection state (2026-11-03): MGL is registered in the live Core registry
-as `mgl`, DRAFT. Separate API/PROFILE credentials and the public signing trust are
-configured; raw credentials are stored only in ignored `.env.local`. No tournaments
-have been assigned. `productionEnabled` remains false. The read check returns 403
-while DRAFT. Automatic approval review requires explicit production-activation
-approval before changing that state; hosted MGL configuration is also pending.
+## Responsibilities
 
-## What is ready locally
+- Heaven Index supplies match results to Fantasy Core.
+- Fantasy Core owns tournament assignments, players, pricing, deadlines, market state,
+  scoring, chips, transfer penalties and standings.
+- MGL owns manager accounts, verified sessions, display names and the public screens.
+- MGL administrators can operate their assigned tournament's current market through
+  the scoped Core window API. MGL never needs Core's platform administrator key.
 
-MGL has a server-only API client with website identity and separate API/PROFILE
-credentials; reads for tournaments, matchdays, markets and standings; authoritative
-validation; and private helpers for squad saves, chips, manager points and transfers.
-Public reads cache for 15 seconds (5 seconds for standings); private reads and
-writes are uncached. Transfers require a stable idempotency key and are not
-automatically retried. Core remains authoritative for prices, costs and points.
+The last recorded live read check (2026-11-03) succeeded after MGL was activated,
+with zero assigned tournaments. That is historical evidence, not a verification of
+current hosted configuration. Earlier DRAFT/closed-access instructions are superseded.
+Production credentials, trust and deployment must be checked in the owner's correct
+hosting account. This implementation session does not change hosted accounts.
 
-MGL also has an RS256 signer issuing five-minute manager tokens and a public-key
-route at `/.well-known/jwks.json`. It publishes only public RSA fields. Until a
-signing key is configured, it returns a safe 503. No public token-issuance route
-exists. The signing helper must receive identity from a verified MGL session.
+## Server configuration
 
-The signer was checked directly against the actual Fantasy Core verifier with an
-ephemeral local test key: valid identity accepted and wrong issuer rejected.
-This does not prove the deployed Core has registered MGL's trust settings.
+Configure the following in the intended MGL deployment, without a `NEXT_PUBLIC_` prefix:
 
-## 1. Finish the Core deployment configuration
+- `FANTASY_CORE_URL`: the approved Core HTTPS origin, without `/api/v1`.
+- `FANTASY_SITE_SLUG`: the registered website slug, currently `mgl`.
+- `FANTASY_PARTNER_API_KEY`: the website's API-purpose credential.
+- `FANTASY_PROFILE_API_KEY`: its separate PROFILE-purpose credential.
+- `FANTASY_JWT_ISSUER`: MGL's exact registered public HTTPS issuer.
+- `FANTASY_JWT_PRIVATE_KEY`: its RSA signing private key, server-side only.
 
-The latest `fantasy-core/environments.json` records:
+Register the matching issuer and public JWKS/PEM in Fantasy Core. MGL publishes
+only public RSA fields at `/.well-known/jwks.json`. Private keys must not be shared
+in chat or committed. The existing `fantasy:setup-identity` command refuses to
+replace a signing identity; do not run it to fix a missing hosted environment value.
 
-- Production URL: `https://heavenfantasy-br-codm.vercel.app`.
-- Core database upgrade applied and verified on 2026-11-02.
-- Deployment classification pending, MGL production access CLOSED.
-- Staging NOT_PROVISIONED.
+The admin page shows presence/signing-format checks without displaying values.
+Configured is not a claim that every credential is accepted remotely. An actual
+Core read and acceptance flow establish that.
 
-In the fantasy project's Vercel production environment, configure
-`FANTASY_ENV=production` and redeploy, as its environment record requires. Do not
-label the existing production database as staging. Public health is
-`GET /api/v1/health`; a live health request from this workspace failed to connect,
-so current uptime is unverified. Keep MGL access closed until acceptance.
+`npm run fantasy:check` checks the catalog with the local server credential. A
+passing catalog check proves neither profile syncing nor manager gameplay.
 
-For acceptance testing, provision separate staging hosting/database and use
-staging keys. The source project includes its migration, seed and smoke tools.
+## Prepare the one tournament in Core
 
-## 2. Prepare the MGL signing identity
+The Core operator assigns the intended tournament to MGL and prepares its matchdays,
+players, draft market and a future submission deadline. Mark completed tournaments
+appropriately so the current-tournament selection is unambiguous. Do not assign
+legacy tournaments without reviewing their participants and ownership.
 
-In PowerShell:
+MGL displays the live tournament first, otherwise the next upcoming one. The current
+matchday follows the open market, an unprocessed locked matchday, or the first
+unplayed matchday. No tournament or matchday is fabricated if Core returns none.
 
-```powershell
-Set-Location C:\Users\USER\Documents\Projects\mglwebsite\temp_repo
-git branch --show-current
-```
+## Admin → Fantasy → Go live
 
-Expected: `feature/fantasy-integration`.
+A verified MGL owner/editor opens `/admin/fantasy`. The page displays the current
+Core tournament, matchday, eligible-player count, deadline in Africa/Lagos time,
+market status, scoring status, matchday history and connection readiness.
 
-Set `FANTASY_JWT_ISSUER` in the ignored `.env.local` to the exact public HTTPS
-address for the MGL environment being connected. The setup utility can default
-to `NEXT_PUBLIC_SITE_URL` if the issuer is absent. Then run:
+1. Check the tournament, matchday and deadline.
+2. Select **Go live** and confirm the displayed target.
+3. MGL rechecks the administrator session and reads uncached Core state. A changed
+   tournament, status or deadline requires refreshing instead of submitting stale data.
+4. The server signs a five-minute JWT containing only `fantasy:windows:manage` and
+   calls `POST /api/v1/markets/{tournamentId}/window` with `action: open`.
+5. Core validates ownership, lifecycle, deadline and pricing, then publishes/freezes
+   its official prices. Only Core's confirmed OPEN response is treated as success.
+6. MGL invalidates public fantasy caches so the public screens use the new state.
 
-```powershell
-npm run fantasy:setup-identity
-```
+**Lock market** stops changes; **Close matchday** closes the market. Expired or
+played drafts cannot be opened from MGL. Core remains authoritative and may reject
+transitions. There is no automatic retry of a window mutation. After an unknown
+outcome, refresh and inspect Core's current state before retrying.
 
-This creates a 3072-bit RSA key in the existing ignored `.env.local`, preserves
-other settings and refuses to overwrite an existing signing key. It prints no
-key or token. Restart the local server afterward. Do not send the private key
-through chat or commit it. The utility was run on 2026-11-03: the local signing
-identity is ready with issuer `https://mglwebsite.vercel.app`. The live Core health
-check also returned HTTP 200. Registry access is pending explicit approval to use
-the existing administrator credential with the hosted Core; no remote registry
-configuration has been performed yet.
+Going live opens squad selection and transfers. It does not import results, mark
+matches complete, trigger scoring, create tournaments or change deployment access.
+Those operations remain in Fantasy Core. Automatic dashboard refresh reads Core's
+published points; it does not make an unconfigured results webhook or processing
+job start running.
 
-For the matching hosted MGL environment, add `FANTASY_JWT_ISSUER` and
-`FANTASY_JWT_PRIVATE_KEY` through Vercel's secret settings. The private-key value
-supports actual PEM newlines or literal `\n` sequences. Redeploy this branch to
-make the new JWKS route reachable. Keep staging and production keys separate.
+## Manager flow
 
-## 3. Register MGL in the Core dashboard
+Supabase verifies manager sign-up/login, sessions and password reset. Manager cookies
+are separate from admin cookies; browser input cannot choose the manager identity.
+Display names are stored in MGL and synced using the PROFILE credential before
+squad/transfer writes. Missing profile configuration is an error rather than a
+silent successful sync. Same-name retries can retry a failed profile sync.
 
-Sign in to the fantasy admin dashboard with the existing approved administrator
-account, then open **Website APIs**:
+Managers select four distinct starters with all four roles, a distinct substitute,
+a starting captain and optionally Triple Captain or Bench Boost. Core validates
+prices, eligibility and every save. Replacements use `/transfers`, retaining the
+same Idempotency-Key/body after an unknown outcome. Free Transfer and penalties are
+Core-owned. MGL never submits a score or deducts real manager points itself.
 
-1. Create or select MGL. Confirm its permanent slug (use `mgl` if creating it).
-2. Set its website URL and issuer to the MGL environment's real public address.
-3. Set its JWKS URL to that address plus `/.well-known/jwks.json`.
-   It must be reachable by Core and return the public key matching MGL's signer.
-   Vercel preview protection can block this request; use a reachable test deployment
-   or configure the public PEM fallback through the dashboard.
-4. Register one **API** credential and one separate **PROFILE** credential.
-   Generate/store the values in the approved secret manager and transfer them
-   directly into MGL's server environment. Core stores hashes, so retain the raw
-   values securely when registering them. MGL does not need the platform admin key.
-5. Assign the intended sandbox tournament to MGL. A tournament belongs to exactly
-   one website. Review any legacy participants before assigning existing events.
-6. Activate the staging website once trust and credentials are ready.
+A missing/expired deadline closes selection. The squad UI also disables changes
+when the deadline arrives, without discarding the draft; the server/Core recheck
+on submission. Dashboard and standings refresh every 30 seconds while visible.
+Squad drafts and account forms are not periodically refreshed.
 
-Production has a separate per-website `production_enabled` gate. The dashboard's
-ACTIVE status does not open it. Follow the operator's reviewed production rollout
-after acceptance; do not bypass that gate for a connectivity check.
+## Response validation and verification
 
-## 4. Configure and check MGL's connection
+All responses consumed by the screens are runtime-decoded, reduced to the fields
+MGL needs and scoped to their requested tournament/matchday. This includes current
+and carry-forward squads, points, chips, standings, profile echoes and transfer/window
+receipts. A malformed response produces a safe failure, not invented zero scores
+or a successful action message. Browser squad/transfer payloads are also checked.
 
-Fill these in the existing `temp_repo/.env.local`:
+`npm run test:fantasy` covers transport/auth claims, response contracts, admin window
+authorization, stale-state rejection, deadlines, distinct lineups and retry fields.
+Run TypeScript and the production build as well. These are local checks, not a
+claim of live acceptance. Use the [acceptance checklist](fantasy-acceptance.md).
 
-```dotenv
-FANTASY_CORE_URL=
-FANTASY_SITE_SLUG=
-FANTASY_PARTNER_API_KEY=
-FANTASY_PROFILE_API_KEY=
-```
-
-Use the matching staging Core HTTPS origin without `/api/v1`, the registered
-slug, and the matching API/PROFILE values. Use the same variables in the matching
-MGL Vercel environment; none should use a `NEXT_PUBLIC_` prefix. Restart/redeploy
-after changes, then run locally:
-
-```powershell
-npm run fantasy:check
-```
-
-The command sends the site slug and API key, checks the tournament response, and
-prints only a count. An empty catalog can mean no tournament is assigned. HTTP
-401/403 points to credentials, website status or trust; 503 can mean incomplete
-deployment configuration or closed production access; 429 requires waiting for
-the retry interval. A passing catalog check verifies reads only.
-
-## 5. Finish MGL manager accounts and screens
-
-Core already implements token verification and name syncing. The remaining MGL
-application work is manager registration/login, verified sessions and persistent
-profiles, followed by the fantasy screens. Supabase Auth is a candidate because
-the MGL database is already there; it has not been implemented or configured by
-this change. Never use Core's administrator account as a manager account.
-
-After MGL verifies a manager session, load that user's persistent ID/display name,
-sync the profile using the PROFILE helper, and issue a token with the internal
-signer. Invoke private API helpers on the server; never accept manager identity
-or admin permissions from browser form fields. Browser handlers still need input
-validation, same-origin/CSRF protection and request limits before being exposed.
-The server helper functions alone do not implement authentication.
-
-Use the current [OpenAPI](fantasy-core/openapi.yaml) to add runtime response
-validation and public DTOs when building screens. Show `displayName`, with an
-unnamed state when null, never a raw manager ID. Respect `submissionDeadline`
-and authoritative window state on submission. Scoring chips are `null`,
-`triple_captain` and `bench_boost`; the separate Free Transfer waiver applies to
-one replacement. All replacements go through `/transfers`, preserving the exact
-body and idempotency key on unknown-outcome retries. Read receipts and totals
-from Core; never deduct points or price players on MGL.
-
-Website administrators can eventually manage their tournament windows through
-the scoped [window API](fantasy-core/WEBSITE_TRANSFER_WINDOWS.md), after MGL has
-verified administrator sessions. This preparation deliberately issues only
-ordinary manager tokens, without window-management permissions.
-
-## 6. Accept staging before production
-
-Test profile-name conflicts, valid/expired/bad tokens, cross-manager and cross-site
-isolation, squad validation, market closure, chip usage, transfer penalties,
-idempotent retries, pagination, missing names and rate limits. Run the fantasy
-project's staging smoke/performance scripts with its staging configuration.
-
-After acceptance, register separate production credentials and signing trust,
-enable the production website through the operator's approved rollout, redeploy
-MGL and verify the complete manager flow. Local tests and a catalog connection
-are preparation, not a claim that live gameplay is ready.
+`FANTASY_PREVIEW=1` enables development-only sample gameplay. It is always disabled
+in production. Preview scores/prices/managers and memory-only saves/transfers do
+not establish a real Core connection. Preview cannot invoke live admin controls.

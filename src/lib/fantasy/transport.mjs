@@ -32,7 +32,7 @@ export function createFantasyTransport({ baseUrl, siteSlug, apiKey, profileKey, 
    */
   return async function request(path, { query = {}, body, fresh = false, token, profile = false, idempotencyKey } = {}) {
     // A caller cannot turn this into an arbitrary URL or an admin proxy.
-    if (!/^\/api\/v1\/(tournaments(?:\/[\w-]+\/matchdays)?|markets\/[\w-]+|scoring\/matchday|leaderboards\/[\w-]+|seasons\/[\w-]+\/leaderboard|players(?:\/[\w-]+)?\/history|squads(?:\/(?:me|chips|validate))?|managers\/(?:me\/points|[\w-]+\/profile)|transfers)$/.test(path)) {
+    if (!/^\/api\/v1\/(tournaments(?:\/[\w-]+\/matchdays)?|markets\/[\w-]+(?:\/window)?|scoring\/matchday|leaderboards\/[\w-]+|seasons\/[\w-]+\/leaderboard|players(?:\/[\w-]+)?\/history|squads(?:\/(?:me|chips|validate))?|managers\/(?:me\/points|[\w-]+\/profile)|transfers)$/.test(path)) {
       throw new FantasyCoreError("Unsupported Fantasy Core resource.");
     }
     const isProfile = /^\/api\/v1\/managers\/[\w-]+\/profile$/.test(path);
@@ -41,6 +41,11 @@ export function createFantasyTransport({ baseUrl, siteSlug, apiKey, profileKey, 
     }
     const managerOnly = /^\/api\/v1\/(squads(?:\/(?:me|chips))?|managers\/me\/points|transfers)$/.test(path);
     if (managerOnly && !token) throw new FantasyCoreError("A verified MGL manager token is required.");
+    if (path.endsWith("/window") && (!token || !body || typeof body !== "object" || Array.isArray(body) ||
+        Object.keys(body).some(key => !["action", "matchdayNumber"].includes(key)) ||
+        !["open", "lock", "close"].includes(body.action) || !Number.isSafeInteger(body.matchdayNumber) || body.matchdayNumber < 1)) {
+      throw new FantasyCoreError("Window controls require a verified administrator token and valid action.");
+    }
     if (path === "/api/v1/transfers" && !/^[a-zA-Z0-9._:-]{8,128}$/.test(idempotencyKey || "")) {
       throw new FantasyCoreError("Transfers require a valid Idempotency-Key.");
     }
@@ -66,7 +71,7 @@ export function createFantasyTransport({ baseUrl, siteSlug, apiKey, profileKey, 
         // Never forward the partner key across a redirect.
         redirect: "error",
         signal: AbortSignal.timeout(timeoutMs),
-        ...(uncached ? { cache: "no-store" } : { next: { revalidate } }),
+        ...(uncached ? { cache: "no-store" } : { next: { revalidate, tags: ["fantasy-core"] } }),
       });
     } catch {
       throw new FantasyCoreError("Fantasy Core could not be reached or timed out.");

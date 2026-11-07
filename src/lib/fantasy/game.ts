@@ -31,6 +31,8 @@ import {
 import { fantasyIdentity } from "./identity";
 import { preview, previewLeaderboard, previewMarket, previewMatchdays, previewStore, previewTournaments, PREVIEW_SCORING_POINTS, type PreviewSquad } from "./preview";
 import type { Manager } from "./session";
+import { currentTournament, currentMatchday, marketIsOpen } from "./lifecycle.mjs";
+import { parseFantasyResponse } from "./responses.mjs";
 
 export const ROLES: FantasyRole[] = ["Fragger", "IGL", "Support", "Anchor"];
 export const BUDGET = 100;
@@ -132,11 +134,6 @@ export function tournamentState(t: FantasyTournament): "live" | "soon" | "done" 
   return "live";
 }
 
-function pickCurrent(matchdays: Matchday[]) {
-  const sorted = [...matchdays].sort((a, b) => a.matchdayNumber - b.matchdayNumber);
-  return sorted.find((m) => m.marketStatus === "OPEN") ?? sorted.findLast((m) => m.marketStatus === "LOCKED") ?? sorted.at(-1);
-}
-
 /** The tournament MGL plays now, its matchdays and market. Once per request. */
 export const getGame = cache(async (): Promise<Game> => {
   // Whether the market is open depends on the time now, so this is worked out per request.
@@ -145,10 +142,10 @@ export const getGame = cache(async (): Promise<Game> => {
   try {
     const { tournaments } = preview ? previewTournaments() : await getFantasyTournaments();
     // One in play first, then the next one coming, then the latest.
-    const tournament = tournaments.find((t) => tournamentState(t) === "live") ?? tournaments.find((t) => tournamentState(t) === "soon") ?? tournaments[0];
+    const tournament = currentTournament(tournaments) as FantasyTournament | undefined;
     if (!tournament) return { state: "off" };
     const { matchdays } = preview ? previewMatchdays() : await getFantasyMatchdays(tournament.id);
-    const current = pickCurrent(matchdays);
+    const current = currentMatchday(matchdays) as Matchday | undefined;
     if (!current) return { state: "off" };
 
     let market: FantasyMarket | undefined;
@@ -158,8 +155,7 @@ export const getGame = cache(async (): Promise<Game> => {
       // No published prices yet for this matchday.
       if (!(err instanceof FantasyCoreError && err.status === 404)) throw err;
     }
-    const deadline = current.submissionDeadline ? Date.parse(current.submissionDeadline) : Infinity;
-    const open = market?.status === "OPEN" && deadline > Date.now();
+    const open = marketIsOpen(market, current);
     return {
       state: "ready",
       tournament,
@@ -229,8 +225,12 @@ export async function getMine(manager: Manager, game: Extract<Game, { state: "re
     squad = lineupOf(own.squad);
   } catch (err) {
     if (!(err instanceof FantasyCoreError && err.status === 404)) throw err;
-    const prev = (err.body as { previousSquad?: CoreSquad } | null)?.previousSquad;
-    if (prev) previous = lineupOf(prev);
+    const prev = (err.body as { previousSquad?: unknown } | null)?.previousSquad;
+    if (prev) {
+      const valid = parseFantasyResponse("squad", prev, { tournamentId: id }) as CoreSquad & { matchdayNumber: number };
+      if (valid.matchdayNumber >= md) throw new FantasyCoreError("Fantasy Core returned an invalid carry-forward squad.", 502);
+      previous = lineupOf(valid);
+    }
   }
   const [points, chips] = await Promise.all([
     getFantasyManagerPoints(token, id) as Promise<{ scoringPoints: number; transferAdjustmentPoints: number; totalFantasyPoints: number }>,
@@ -265,6 +265,7 @@ export async function saveLineup(manager: Manager, game: Extract<Game, { state: 
     });
     return;
   }
+  await syncName(manager.id, manager.displayName!);
   await saveFantasySquad(tokenFor(manager), game.tournament.id, md, squad, lineup.chip);
 }
 
@@ -293,6 +294,7 @@ export async function makeTransfer(manager: Manager, game: Extract<Game, { state
     previewStore.receipts.set(key, receipt);
     return receipt;
   }
+  await syncName(manager.id, manager.displayName!);
   const r = (await transferFantasyPlayer(tokenFor(manager), key, { tournamentId: game.tournament.id, matchdayNumber: md, ...input })) as {
     penaltyApplied: number; usedFreeTransferChip: boolean; remainingCredits: number; managerPoints: { totalFantasyPoints: number };
   };
@@ -301,7 +303,7 @@ export async function makeTransfer(manager: Manager, game: Extract<Game, { state
 
 /** Tells Fantasy Core a manager's display name. Throws a FantasyCoreError 409 when it's taken there. */
 export async function syncName(managerId: string, displayName: string) {
-  if (preview || !process.env.FANTASY_PROFILE_API_KEY) return;
+  if (preview) return;
   await syncFantasyProfile(managerId, displayName);
 }
 

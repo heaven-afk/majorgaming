@@ -55,12 +55,14 @@ export default function SquadBuilder({
   squad,
   previous,
   open,
+  deadline,
   chips,
 }: {
   players: Player[];
   squad: Lineup | null;
   previous: Lineup | null;
   open: boolean;
+  deadline: string | null;
   chips: { triple_captain: boolean; bench_boost: boolean; free_transfer: boolean };
 }) {
   const router = useRouter();
@@ -75,7 +77,20 @@ export default function SquadBuilder({
   const [q, setQ] = useState("");
   const [team, setTeam] = useState("");
   const [sort, setSort] = useState<Sort>("price");
+  const [expired, setExpired] = useState(false);
   const marketRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const end = deadline ? Date.parse(deadline) : NaN;
+    if (!Number.isFinite(end)) return;
+    let timer = 0;
+    const check = () => {
+      const remaining = end - Date.now();
+      if (remaining <= 0) setExpired(true);
+      else timer = window.setTimeout(check, Math.min(remaining, 2147483647));
+    };
+    check();
+    return () => window.clearTimeout(timer);
+  }, [deadline]);
 
   // A fresh squad from the server (after a save or transfer) resets the draft.
   const [base, setBase] = useState(saved);
@@ -85,7 +100,7 @@ export default function SquadBuilder({
   }
 
   const editing = Boolean(squad);
-  const readOnly = !open;
+  const readOnly = !open || expired;
   const ids = Object.values(draft.slots).filter(Boolean) as string[];
   const spent = ids.reduce((n, id) => n + (byId.get(id)?.price ?? 0), 0);
   const perTeam = ids.reduce((m, id) => m.set(byId.get(id)?.team.key ?? "", (m.get(byId.get(id)?.team.key ?? "") ?? 0) + 1), new Map<string, number>());
@@ -121,6 +136,7 @@ export default function SquadBuilder({
   }
 
   function add(p: Player) {
+    if (readOnly) return;
     setMessage(null);
     if (replacing) {
       setPending({ out: replacing, in: p.id, useFree: chips.free_transfer, key: newKey(), updatedAt: squad?.updatedAt });
@@ -157,6 +173,7 @@ export default function SquadBuilder({
   }
 
   function save(lineup: Lineup) {
+    if (readOnly) return;
     setMessage(null);
     start(async () => {
       const res = await saveSquad(lineup);
@@ -168,7 +185,7 @@ export default function SquadBuilder({
   }
 
   function confirmTransfer() {
-    if (!pending) return;
+    if (!pending || readOnly) return;
     const p = pending;
     start(async () => {
       const res: PlayResult = await transfer({ playerOutId: p.out, playerInId: p.in, useFreeTransferChip: p.useFree, ...(p.updatedAt ? { expectedSquadUpdatedAt: p.updatedAt } : {}) }, p.key);
@@ -191,7 +208,7 @@ export default function SquadBuilder({
   const captainName = draft.captain ? byId.get(draft.captain)?.name : undefined;
   const hint = readOnly ? copy.closed : editing ? copy.hintEdit : copy.hintNew;
   const saveButton = (className = "") => (
-    <button className={`fx-btn fx-btn--primary ${className}`} disabled={!complete || !dirty || busy} onClick={() => save(lineupOf(draft))}>
+    <button className={`fx-btn fx-btn--primary ${className}`} disabled={!complete || !dirty || busy || readOnly} onClick={() => save(lineupOf(draft))}>
       {busy && !pending ? copy.saving : copy.save}
     </button>
   );
@@ -244,7 +261,7 @@ export default function SquadBuilder({
               <strong>{fantasyPage.hub.carry.title}</strong>
               <p>{fantasyPage.hub.carry.body}</p>
             </div>
-            <button className="fx-btn fx-btn--primary" disabled={busy} onClick={() => save({ ...previous, chip: null })}>
+            <button className="fx-btn fx-btn--primary" disabled={busy || readOnly} onClick={() => save({ ...previous, chip: null })}>
               {busy ? copy.saving : "Carry over"}
             </button>
           </div>
@@ -426,6 +443,7 @@ export default function SquadBuilder({
           credits={BUDGET - spent + (byId.get(pending.out)?.price ?? 0) - (byId.get(pending.in)?.price ?? 0)}
           freeAvailable={chips.free_transfer}
           busy={busy}
+          closed={readOnly}
           onFree={(useFree) => setPending({ ...pending, useFree, key: newKey() })}
           // Closing after a lost answer: refresh, in case the transfer did go through.
           onCancel={() => (pending.retry && router.refresh(), setPending(null))}
@@ -473,6 +491,7 @@ function TransferSheet({
   credits,
   freeAvailable,
   busy,
+  closed,
   onFree,
   onCancel,
   onConfirm,
@@ -483,6 +502,7 @@ function TransferSheet({
   credits: number;
   freeAvailable: boolean;
   busy: boolean;
+  closed: boolean;
   onFree: (v: boolean) => void;
   onCancel: () => void;
   onConfirm: () => void;
@@ -524,7 +544,7 @@ function TransferSheet({
           </div>
         </dl>
         <label className="fx-toggle" data-off={freeAvailable ? undefined : ""}>
-          <input type="checkbox" checked={pending.useFree} disabled={!freeAvailable || busy || pending.retry} onChange={(e) => onFree(e.target.checked)} />
+          <input type="checkbox" checked={pending.useFree} disabled={!freeAvailable || busy || closed || pending.retry} onChange={(e) => onFree(e.target.checked)} />
           <span className="fx-toggle__track" aria-hidden />
           <span>{freeAvailable ? tcopy.useFree : tcopy.freeUsed}</span>
         </label>
@@ -532,7 +552,7 @@ function TransferSheet({
           <button className="fx-btn fx-btn--ghost" onClick={onCancel} disabled={busy}>
             {tcopy.cancel}
           </button>
-          <button className="fx-btn fx-btn--primary" ref={confirmRef} onClick={onConfirm} disabled={busy}>
+          <button className="fx-btn fx-btn--primary" ref={confirmRef} onClick={onConfirm} disabled={busy || closed}>
             {busy ? tcopy.pending : pending.retry ? tcopy.retry : tcopy.confirm}
           </button>
         </div>
