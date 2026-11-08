@@ -5,10 +5,10 @@ export const staffPage = {
   label: "Staff",
   title: { before: "The people behind", accent: "the league." },
   lede: "MGL is run by a small team across the AF region: the people who set the rules, run match days, check every result, cast the games and keep the Discord moving.",
-  facts: { people: "Staff", groups: "Teams", countries: "Countries", leadership: "Leadership" },
+  /** The rest of leadership, as a list under the featured profiles. */
   lead: {
     label: "Leadership",
-    title: { before: "Running", accent: "the league." },
+    title: { before: "Around", accent: "the table." },
   },
   founder: {
     facts: { since: "Started MGL", seasons: "Seasons run", home: "Home" },

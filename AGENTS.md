@@ -201,7 +201,19 @@ Next.js 16 has breaking changes from earlier versions. Read the relevant guide i
   - "More from Tier N" now shows 4 teams.
   - The card and group styles moved from `globals.css` to `src/app/teams/teams.css`, which both Teams pages import.
   - Checked at 1440px and 375px with no horizontal scroll. tsc and eslint pass. Not committed.
-- **Staff redesign — 2026-11-08 (owner: "something much more beautiful"):**
+- **Staff redesign, round 2 — 2026-11-08 (owner: "i need a better design"; replaces the round below):**
+  - **Hero, "the cast":** the title and lede sit above everyone with a photo, stood together like a film poster (`Cast` in `StaffCard.tsx`). The first person is in the middle and largest, and the rest step down on either side. Each portrait fades into a warm floor of light.
+    - Wide screens show each person's role and name under their portrait. With a mouse, the portraits rest in warm black and white and the one under the cursor comes to colour.
+    - On phones they overlap slightly, like a group photo.
+    - Each portrait links to that person further down.
+  - **Featured profiles (`Profile`):** each is its own tile, laid out like a magazine spread.
+    - "01 / 05" and the role chip, then the name very large with the surname in the amber serif.
+    - The portrait opens like an aperture and stays in view (sticky) beside the bio from 900px. Alternate profiles flip sides.
+    - The first bio paragraph is larger and opens with a serif drop cap.
+  - **The rest of leadership (`Portraits`):** "Around *the table.*" Large 4:5 colour portraits with the number on the photo, and the role and name under it. Three across from 900px with the middle one set lower, two from 600px, one on phones. A hover-list version with a floating portrait was tried and dropped (owner: their pictures must be well seen).
+  - Shared bits (`SplitName`, `Socials`, `Home`) moved to `src/components/staff/parts.tsx`. The intro facts row (it only ever showed "5 Staff") is gone.
+  - Checked at 1440px and 375px with no horizontal scroll. tsc and eslint pass.
+- **Staff redesign — 2026-11-08 (owner: "something much more beautiful"; superseded by round 2 above):**
   - **Intro:** the title, lede and facts sit beside a lineup (`Lineup` in `StaffCard.tsx`) of up to seven tall, staggered portraits. On phones they are capsules; from 900px they are rounded columns.
   - **Lineup behaviour with a mouse:**
     - the portraits rest muted;

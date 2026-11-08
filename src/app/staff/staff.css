@@ -1,207 +1,228 @@
 /* ---------- Staff page ---------- */
 /* Mobile first: every query below is min-width. */
 
-/* ---- Intro: the title beside a lineup of tall portraits ---- */
+/* ---- Intro: the title, then the whole team stood together like a film's cast ---- */
 .sf-intro {
+  position: relative;
   display: grid;
-  gap: 34px;
-  padding: 22px 18px 18px;
+  gap: 36px;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 22px 18px 0;
   background:
-    radial-gradient(70% 60% at 85% 100%, rgb(249 140 50 / 0.13), transparent 70%),
-    linear-gradient(180deg, #1e1e1e 0%, #161616 100%);
+    radial-gradient(60% 46% at 50% 100%, rgb(249 140 50 / 0.2), transparent 70%),
+    linear-gradient(180deg, #1c1c1c 0%, #141414 100%);
 }
 @media (min-width: 900px) {
   .sf-intro {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    align-items: stretch;
-    gap: 48px;
-    min-height: 600px;
-    padding: 34px;
+    gap: 56px;
+    padding: 34px 34px 0;
   }
 }
 .sf-intro__head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.sf-intro__head .ev-intro__lede {
-  max-width: 34rem;
-}
-.sf-intro__facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px 32px;
-  margin-top: 28px;
+  display: grid;
+  gap: 18px;
 }
 @media (min-width: 900px) {
-  .sf-intro__facts {
-    margin-top: auto;
-    padding-top: 28px;
+  .sf-intro__head {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    align-items: end;
+    gap: 48px;
   }
 }
-.sf-intro__facts div {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 4px;
-}
-.sf-intro__facts dd {
-  font-size: 40px;
+.sf-intro__title {
+  margin-top: 22px;
+  font-size: clamp(2.6rem, 6.4vw, 6rem);
   font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
+  line-height: 0.96;
+  letter-spacing: -0.05em;
 }
-.sf-intro__facts dt {
-  font-size: 13px;
-  color: rgb(244 242 238 / 0.5);
+.sf-intro__title em {
+  display: block;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.1em;
+  letter-spacing: -0.02em;
+  padding-right: 0.06em;
+  background: linear-gradient(100deg, var(--color-amber), var(--color-orange) 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.sf-intro__lede {
+  max-width: 36rem;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: rgb(244 242 238 / 0.62);
+}
+@media (min-width: 900px) {
+  .sf-intro__lede {
+    justify-self: end;
+    padding-bottom: 10px;
+    font-size: 16.5px;
+  }
 }
 
-/* The lineup: one tall portrait per person, staggered; the hovered one widens and shows who it is */
-.sf-lineup {
+/* The cast: the first person in the middle, the rest stepping down either side, feet in the light */
+.sf-cast {
+  /* Five fit exactly: 36 + 2 × 26 + 2 × 21, less four 7.5% overlaps */
+  --w0: 36%;
+  --w1: 26%;
+  --w2: 21%;
+  --w3: 17%;
   display: flex;
-  gap: 6px;
-  height: 230px;
+  align-items: flex-end;
+  justify-content: center;
 }
-@media (min-width: 600px) {
-  .sf-lineup {
-    gap: 10px;
-    height: 340px;
-  }
-}
-@media (min-width: 900px) {
-  .sf-lineup {
-    height: auto;
-    min-height: 520px;
-  }
-}
-.sf-lineup li {
-  display: flex;
-  flex: 1 1 0;
+.sf-cast li {
+  flex: 0 0 var(--w0);
   min-width: 0;
-  padding-bottom: 26px;
-  transition: flex-grow 0.7s var(--ease-out);
-  animation: sf-rise 1s var(--ease-out) calc(var(--i) * 90ms + 150ms) both;
 }
-/* Every other portrait sits lower */
-.sf-lineup li:nth-child(even) {
-  padding: 26px 0 0;
+.sf-cast li[data-d="1"] {
+  flex-basis: var(--w1);
+}
+.sf-cast li[data-d="2"] {
+  flex-basis: var(--w2);
+}
+.sf-cast li[data-d="3"] {
+  flex-basis: var(--w3);
+}
+/* On phones they overlap a little, like a group photo, the middle one in front */
+.sf-cast li + li {
+  margin-left: -7.5%;
+}
+.sf-cast li[data-d="0"] {
+  z-index: 4;
+}
+.sf-cast li[data-d="1"] {
+  z-index: 3;
+}
+.sf-cast li[data-d="2"] {
+  z-index: 2;
 }
 @media (min-width: 900px) {
-  .sf-lineup li {
-    padding-bottom: 56px;
+  .sf-cast {
+    --w0: 25%;
+    --w1: 19%;
+    --w2: 15.5%;
+    --w3: 12.5%;
+    gap: 14px;
+    margin-inline: 0;
   }
-  .sf-lineup li:nth-child(even) {
-    padding: 56px 0 0;
+  /* No overlap here, so no layers: the names can sit above the floor of light */
+  .sf-cast li + li {
+    margin-left: 0;
+  }
+  .sf-cast li[data-d] {
+    z-index: auto;
   }
 }
-@media (hover: hover) and (min-width: 900px) {
-  .sf-lineup li:hover {
-    flex-grow: 2.4;
-  }
+.sf-cast__item {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  border-radius: 22px;
 }
-.sf-lineup__item {
+.sf-cast__item:focus-visible {
+  outline: 2px solid #f9a940;
+  outline-offset: 4px;
+}
+.sf-cast__photo {
   position: relative;
   display: block;
-  flex: 1;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
-  isolation: isolate;
-  border-radius: 999px;
+  border-radius: 18px 18px 0 0;
   background: radial-gradient(80% 60% at 50% 30%, #2c241e, #161616);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.08),
-    0 30px 60px -30px rgb(0 0 0 / 0.9);
-  transition: box-shadow 0.4s;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  /* The feet fade into the floor */
+  -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 98%);
+  mask-image: linear-gradient(180deg, #000 62%, transparent 98%);
 }
 @media (min-width: 900px) {
-  .sf-lineup__item {
-    border-radius: 28px;
+  .sf-cast__photo {
+    border-radius: 26px 26px 0 0;
   }
 }
-.sf-lineup__item img {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+.sf-cast__photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 18%;
+  object-position: 50% 16%;
   transition:
-    filter 0.7s var(--ease-out),
-    transform 1.2s var(--ease-out);
+    filter 0.8s var(--ease-out),
+    transform 1.4s var(--ease-out);
 }
-.sf-lineup__item::after {
+/* A warm rim of light along the top edge */
+.sf-cast__photo::after {
   content: "";
   position: absolute;
-  inset: 45% 0 0;
-  z-index: -1;
-  background: linear-gradient(180deg, transparent, rgb(12 10 8 / 0.85));
-  opacity: 0;
-  transition: opacity 0.5s;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgb(255 214 160 / 0.1), transparent 30%);
+  box-shadow: inset 0 1px 0 rgb(255 226 190 / 0.25);
+  pointer-events: none;
 }
-/* With a mouse the portraits rest muted and come to colour under it; touch screens show them in colour */
-@media (hover: hover) {
-  .sf-lineup__item img {
-    filter: grayscale(0.55) contrast(1.05) brightness(0.85);
-  }
-}
-.sf-lineup__item:hover img,
-.sf-lineup__item:focus-visible img {
-  filter: none;
-  transform: scale(1.04);
-}
-.sf-lineup__item:hover::after,
-.sf-lineup__item:focus-visible::after {
-  opacity: 1;
-}
-.sf-lineup__item:hover {
-  box-shadow:
-    inset 0 0 0 1px rgb(249 169 64 / 0.35),
-    0 30px 70px -30px rgb(249 140 50 / 0.45);
-}
-.sf-lineup__item:focus-visible {
-  outline: 2px solid #f9a940;
-  outline-offset: 3px;
-}
-.sf-lineup__cap {
-  position: absolute;
-  inset: auto 18px 20px;
+/* The credits sit under the portraits on wide screens; phones meet everyone further down */
+.sf-cast__credit {
   display: none;
-  gap: 4px;
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 0.4s,
-    transform 0.6s var(--ease-out);
 }
-@media (hover: hover) and (min-width: 900px) {
-  .sf-lineup__cap {
+@media (min-width: 900px) {
+  .sf-cast__credit {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 30;
     display: grid;
+    gap: 3px;
+    padding: 0 6px 26px;
+    text-align: center;
   }
-  .sf-lineup li:hover .sf-lineup__cap {
-    opacity: 1;
-    transform: none;
-    transition-delay: 0.15s;
+  .sf-cast__credit small {
+    overflow: hidden;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffcf8a;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .sf-cast__credit strong {
+    overflow: hidden;
+    font-size: clamp(15px, 1.35vw, 20px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .sf-cast li[data-d="0"] .sf-cast__credit strong {
+    font-size: clamp(18px, 1.7vw, 26px);
+  }
+  /* A dark wash under the credits so they read on any photo */
+  .sf-cast__photo::before {
+    content: "";
+    position: absolute;
+    inset: 55% 0 0;
+    z-index: 1;
+    background: linear-gradient(180deg, transparent, rgb(12 10 8 / 0.82));
+    pointer-events: none;
   }
 }
-.sf-lineup__cap strong {
-  overflow: hidden;
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.sf-lineup__cap small {
-  overflow: hidden;
-  font-size: 12.5px;
-  color: #ffcf8a;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-@keyframes sf-rise {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
+/* With a mouse: the portraits rest in warm black and white; the one under it comes to colour */
+@media (hover: hover) {
+  .sf-cast__photo img {
+    filter: grayscale(1) sepia(0.18) contrast(1.06) brightness(0.88);
+  }
+  .sf-cast__item:hover .sf-cast__photo img,
+  .sf-cast__item:focus-visible .sf-cast__photo img {
+    filter: none;
+    transform: scale(1.035);
+  }
+  .sf-cast:has(.sf-cast__item:hover) .sf-cast__item:not(:hover) {
+    opacity: 0.55;
+  }
+  .sf-cast__item {
+    transition: opacity 0.6s var(--ease-out);
   }
 }
 
@@ -277,321 +298,350 @@
   outline-offset: 2px;
 }
 
-/* ---- Featured profiles: a framed portrait beside a numbered, editorial biography ---- */
-.sf-founder {
+/* ---- Featured profiles: a magazine spread each ---- */
+.sf-chapter {
   position: relative;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
+  overflow: clip;
   isolation: isolate;
   scroll-margin-top: 24px;
-  border-radius: 26px;
-  background: linear-gradient(160deg, rgb(249 169 64 / 0.08), #191919 40%, #161616);
-  box-shadow:
-    inset 0 0 0 1px rgb(249 169 64 / 0.14),
-    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  padding: 22px 18px 18px;
+  background:
+    radial-gradient(50% 40% at 0% 0%, rgb(249 169 64 / 0.08), transparent 70%),
+    linear-gradient(180deg, #1b1b1b, #151515);
 }
 @media (min-width: 900px) {
-  .sf-founder {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    gap: 12px;
-    padding: 12px;
-    border-radius: 30px;
+  .sf-chapter {
+    padding: 34px;
+  }
+  .sf-chapter:has([data-flip]) {
+    background:
+      radial-gradient(50% 40% at 100% 0%, rgb(249 169 64 / 0.08), transparent 70%),
+      linear-gradient(180deg, #1b1b1b, #151515);
   }
 }
-.sf-founder__photo {
+.sf-chapter__head {
+  display: grid;
+  gap: 18px;
+  padding-bottom: 26px;
+}
+@media (min-width: 900px) {
+  .sf-chapter__head {
+    padding-bottom: 44px;
+  }
+}
+.sf-chapter__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.sf-chapter__no {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #f9a940;
+}
+.sf-chapter__no i {
+  font-style: normal;
+  color: rgb(244 242 238 / 0.35);
+}
+.sf-chapter__name {
+  font-size: clamp(3rem, 9vw, 8.4rem);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+  overflow-wrap: anywhere;
+}
+.sf-chapter__name em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.06em;
+  letter-spacing: -0.02em;
+  padding-right: 0.05em;
+  color: #f9a940;
+}
+/* Long names come down a size so they hold to two lines */
+.sf-chapter__name:has(span:not(:only-child)) {
+  max-width: 14ch;
+}
+@media (min-width: 900px) {
+  .sf-chapter [data-flip] .sf-chapter__head {
+    justify-items: end;
+    text-align: right;
+  }
+  .sf-chapter [data-flip] .sf-chapter__name {
+    justify-self: end;
+  }
+}
+.sf-chapter__body {
+  display: grid;
+  gap: 26px;
+}
+@media (min-width: 900px) {
+  .sf-chapter__body {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: start;
+    gap: 56px;
+  }
+  .sf-chapter [data-flip] .sf-chapter__body {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  }
+  .sf-chapter [data-flip] .sf-chapter__photo {
+    order: 2;
+  }
+}
+.sf-chapter__photo {
+  --radius: 22px;
   position: relative;
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: var(--radius);
   background: radial-gradient(80% 80% at 50% 30%, #2c241e, #161616);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
 }
+/* On wide screens the portrait stays in view while the biography scrolls past it */
 @media (min-width: 900px) {
-  .sf-founder__photo {
-    align-self: start;
-    border-radius: 22px;
+  .sf-chapter__photo {
+    --radius: 26px;
+    position: sticky;
+    top: 24px;
   }
 }
-.sf-founder__photo img {
+.sf-chapter__img {
+  position: absolute;
+  inset: 0;
+}
+.sf-chapter__img img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 18%;
-  transition: transform 1.4s var(--ease-out);
+  object-position: 50% 16%;
 }
-.sf-founder:hover .sf-founder__photo img {
-  transform: scale(1.025);
-}
-.sf-founder__photo::after {
+.sf-chapter__photo::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, transparent 70%, rgb(12 10 8 / 0.45));
+  background: linear-gradient(180deg, transparent 72%, rgb(12 10 8 / 0.4));
+  box-shadow: inset 0 1px 0 rgb(255 226 190 / 0.18);
   pointer-events: none;
 }
-.sf-founder__body {
-  position: relative;
+.sf-chapter__text {
   display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: 16px;
-  padding: 22px 12px 16px;
+  gap: 22px;
+  max-width: 60ch;
 }
 @media (min-width: 900px) {
-  .sf-founder__body {
-    align-content: center;
-    gap: 22px;
-    padding: 44px 40px 40px 28px;
-  }
-  .sf-founder[data-flip] {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  }
-  .sf-founder[data-flip] .sf-founder__photo {
-    order: 2;
-  }
-  .sf-founder[data-flip] .sf-founder__body {
-    padding: 44px 28px 40px 40px;
+  .sf-chapter__text {
+    gap: 28px;
+    padding-top: 6px;
   }
 }
-/* The big outlined number in the body's corner */
-.sf-founder__no {
-  position: absolute;
-  top: 14px;
-  right: 12px;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 64px;
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1px rgb(249 169 64 / 0.4);
-  pointer-events: none;
-}
-@media (min-width: 900px) {
-  .sf-founder__no {
-    top: 30px;
-    right: 36px;
-    font-size: 104px;
-  }
-}
-.sf-founder__name {
-  font-size: clamp(2.6rem, 6.2vw, 5rem);
-  font-weight: 500;
-  line-height: 0.95;
-  letter-spacing: -0.045em;
-  overflow-wrap: anywhere;
-}
-.sf-founder__name span {
-  display: block;
-}
-.sf-founder__name em,
-.sf-lead__info em {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: #f9a940;
-}
-.sf-founder__name em {
-  font-size: 1.08em;
-}
-.sf-founder__quote {
-  max-width: 30ch;
+.sf-chapter__quote {
   padding-left: 18px;
   border-left: 2px solid rgb(249 169 64 / 0.5);
 }
-.sf-founder__quote p {
+.sf-chapter__quote p {
   font-family: var(--font-serif);
-  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
   font-style: italic;
   line-height: 1.2;
-  letter-spacing: -0.01em;
   color: #f4f2ee;
 }
-.sf-founder__bio {
-  display: grid;
-  gap: 14px;
-  max-width: 56ch;
-  font-size: 15px;
-  line-height: 1.65;
-  color: rgb(244 242 238 / 0.6);
-}
-/* The first paragraph opens the profile: larger and brighter, with a hairline under it */
-.sf-founder__bio .sf-founder__lead {
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgb(255 255 255 / 0.08);
-  font-size: 17px;
-  line-height: 1.55;
-  letter-spacing: -0.01em;
-  color: rgb(244 242 238 / 0.88);
+/* The opening paragraph: large, bright, with a serif drop cap */
+.sf-chapter__lead {
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: -0.012em;
+  color: rgb(244 242 238 / 0.92);
 }
 @media (min-width: 900px) {
-  .sf-founder__bio .sf-founder__lead {
-    font-size: 19px;
+  .sf-chapter__lead {
+    font-size: 22px;
+    line-height: 1.45;
   }
 }
-.sf-founder__facts {
+.sf-chapter__lead::first-letter {
+  float: left;
+  margin: 0.06em 0.12em 0 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 3.6em;
+  line-height: 0.82;
+  color: #f9a940;
+}
+.sf-chapter__bio {
+  display: grid;
+  gap: 16px;
+  padding-top: 22px;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgb(244 242 238 / 0.6);
+}
+@media (min-width: 900px) {
+  .sf-chapter__bio {
+    font-size: 16px;
+  }
+}
+.sf-chapter__foot {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 28px;
-  justify-self: stretch;
-  padding-top: 18px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
   border-top: 1px solid rgb(255 255 255 / 0.08);
 }
-.sf-founder__facts div {
+.sf-chapter__foot:not(:has(*)) {
+  display: none;
+}
+.sf-chapter__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+}
+.sf-chapter__facts div {
   display: grid;
   gap: 4px;
 }
-.sf-founder__facts dt {
+.sf-chapter__facts dt {
   font-size: 12px;
   color: rgb(244 242 238 / 0.45);
 }
-.sf-founder__facts dd {
-  font-size: 20px;
+.sf-chapter__facts dd {
+  font-size: 30px;
   font-weight: 500;
-  letter-spacing: -0.02em;
+  line-height: 1;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
-.sf-founder__facts dd .sf-home {
+.sf-chapter__facts dd .sf-home {
   font-size: 15px;
+  letter-spacing: 0;
   color: #f4f2ee;
 }
 
-/* ---- Leadership: tall portraits with the number and role on top, the name over the foot ---- */
-.sf-leads {
+/* ---- The rest of leadership: large colour portraits, the name set under each ---- */
+.sf-portraits {
   display: grid;
-  gap: var(--gap);
+  gap: 28px;
 }
 @media (min-width: 600px) {
-  .sf-leads {
+  .sf-portraits {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 14px;
   }
 }
 @media (min-width: 900px) {
-  .sf-leads {
-    grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+  .sf-portraits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 18px;
+  }
+  /* The middle one sits lower, so the row reads like a spread */
+  .sf-portraits:has(> :nth-child(3):last-child) > :nth-child(2) {
+    margin-top: 64px;
   }
 }
-.sf-lead {
-  position: relative;
+.sf-portrait {
   display: grid;
-  overflow: hidden;
-  isolation: isolate;
+  gap: 16px;
+  min-width: 0;
   scroll-margin-top: 24px;
-  border-radius: 24px;
-  background: #1a1a1a;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07);
-  transition:
-    box-shadow 0.4s,
-    transform 0.6s var(--ease-out);
 }
-.sf-lead:hover {
-  box-shadow:
-    inset 0 0 0 1px rgb(249 169 64 / 0.3),
-    0 30px 70px -36px rgb(249 140 50 / 0.5);
-  transform: translateY(-3px);
-}
-.sf-lead > * {
-  grid-area: 1 / 1;
-}
-.sf-lead__photo {
+.sf-portrait__photo {
   position: relative;
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 5;
   overflow: hidden;
+  isolation: isolate;
+  border-radius: 24px;
   background: radial-gradient(80% 80% at 50% 30%, #2c241e, #161616);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 40px 80px -50px rgb(0 0 0 / 0.9);
+  transition: box-shadow 0.5s var(--ease-out);
 }
-.sf-lead__photo img {
+.sf-portrait__photo img {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 18%;
-  transition: transform 1.2s var(--ease-out);
+  object-position: 50% 16%;
+  transition: transform 1.4s var(--ease-out);
 }
-.sf-lead:hover .sf-lead__photo img {
-  transform: scale(1.05);
-}
-.sf-lead__photo::after {
+.sf-portrait__photo::after {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(180deg, rgb(12 10 8 / 0.45), transparent 22%),
-    linear-gradient(180deg, transparent 50%, rgb(12 10 8 / 0.92));
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgb(12 10 8 / 0.35), transparent 22%);
+  box-shadow: inset 0 1px 0 rgb(255 226 190 / 0.2);
+  pointer-events: none;
 }
-.sf-lead__top {
-  position: relative;
+.sf-portrait:hover .sf-portrait__photo {
+  box-shadow:
+    inset 0 0 0 1px rgb(249 169 64 / 0.35),
+    0 40px 90px -40px rgb(249 140 50 / 0.45);
+}
+.sf-portrait:hover .sf-portrait__photo img {
+  transform: scale(1.04);
+}
+.sf-portrait__no {
+  position: absolute;
+  top: 14px;
+  left: 16px;
   z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  align-self: start;
-  gap: 10px;
-  padding: 16px;
-}
-.sf-lead__top .sf-role {
-  order: -1;
-  background: rgb(18 16 14 / 0.55);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-.sf-lead__no {
   font-family: var(--font-serif);
   font-style: italic;
   font-size: 34px;
-  line-height: 0.9;
-  color: rgb(255 222 182 / 0.92);
-  text-shadow: 0 2px 14px rgb(0 0 0 / 0.55);
+  line-height: 1;
+  color: #fff3e2;
+  text-shadow: 0 2px 16px rgb(0 0 0 / 0.5);
 }
-.sf-lead__info {
-  position: relative;
-  z-index: 1;
+.sf-portrait__info {
   display: grid;
-  align-self: end;
-  gap: 12px;
-  padding: 18px;
+  gap: 8px;
+  padding-inline: 4px;
 }
-.sf-lead__info strong {
-  font-size: 34px;
+.sf-portrait__role {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffcf8a;
+}
+.sf-portrait__name {
+  overflow-wrap: anywhere;
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
   font-weight: 500;
   line-height: 0.95;
-  letter-spacing: -0.04em;
-  overflow-wrap: anywhere;
+  letter-spacing: -0.05em;
 }
-.sf-lead__info strong span {
-  display: block;
-}
-@media (min-width: 1100px) {
-  .sf-lead__info {
-    padding: 22px;
-  }
-  .sf-lead__info strong {
-    font-size: 42px;
-  }
-}
-.sf-lead__foot {
+.sf-portrait__foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-top: 6px;
   padding-top: 12px;
-  border-top: 1px solid rgb(255 255 255 / 0.12);
+  border-top: 1px solid rgb(255 255 255 / 0.09);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sf-lineup li {
-    animation: none;
-    transition: none;
-  }
-  .sf-lineup__item img,
-  .sf-founder__photo img,
-  .sf-lead,
-  .sf-lead__photo img {
+  .sf-cast__photo img,
+  .sf-cast__item,
+  .sf-portrait__photo,
+  .sf-portrait__photo img {
     transition: none;
   }
 }
