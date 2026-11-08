@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import AdminShell, { AdminLoading } from "@/components/admin/AdminShell";
+import AdminShell, { AdminLoading, OwnerOnly } from "@/components/admin/AdminShell";
+import { isOwner, requireAdmin } from "@/lib/admin/session";
 import SettingsForm from "@/components/admin/SettingsForm";
 import { Icon } from "@/components/Icons";
 import { settingsCopy as copy } from "@/content/settings";
@@ -7,6 +8,7 @@ import { savedSettings, saveSettings } from "@/lib/admin/actions/settings";
 import { settingsFrom } from "@/lib/settings";
 
 async function Editor() {
+  if (!isOwner(await requireAdmin())) return <OwnerOnly />;
   const saved = await savedSettings();
   return (
     <>

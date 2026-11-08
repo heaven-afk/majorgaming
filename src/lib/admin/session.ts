@@ -56,3 +56,16 @@ export async function requireAdmin() {
   if (!admin) redirect("/admin/login");
   return admin;
 }
+
+/**
+ * Owners manage the admin list, site Settings and the Fantasy controls; editors manage content.
+ * The database enforces the same split (`is_owner()`), so this is the friendly first check.
+ */
+export const isOwner = (admin: Admin) => admin.role === "owner";
+
+/** For owner-only actions: the owner, or an error whose message the form shows. */
+export async function requireOwner() {
+  const admin = await requireAdmin();
+  if (!isOwner(admin)) throw new Error("Only an owner can do this. Ask an owner to change it, or to make you an owner.");
+  return admin;
+}

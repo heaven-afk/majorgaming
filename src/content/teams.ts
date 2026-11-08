@@ -16,6 +16,8 @@ export const teamsPage = {
     all: "All",
   },
   tier: (tier?: number) => (tier ? `Tier ${tier}` : "Open"),
+  /** The word before a tier's number in the directory's group headings ("Tier 1", the number in the serif accent). */
+  tierWord: "Tier",
   count: (n: number) => `${n} ${n === 1 ? "squad" : "squads"}`,
   players: (n: number) => `${n} players`,
   empty: {

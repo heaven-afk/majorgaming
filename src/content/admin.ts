@@ -47,14 +47,17 @@ export const adminCopy = {
   nav: [
     { href: "/admin", label: "Dashboard", icon: "home" },
     { href: "/admin/events", label: "Events", icon: "calendar" },
-    { href: "/admin/fantasy", label: "Fantasy", icon: "fantasy" },
+    { href: "/admin/fantasy", label: "Fantasy", icon: "fantasy", owner: true },
     { href: "/admin/teams", label: "Teams", icon: "squad" },
     { href: "/admin/people", label: "Players", icon: "crosshair" },
     { href: "/admin/news", label: "News", icon: "news" },
     { href: "/admin/staff", label: "Staff", icon: "people" },
     { href: "/admin/media", label: "Media", icon: "image" },
-    { href: "/admin/settings", label: "Settings", icon: "settings" },
+    { href: "/admin/settings", label: "Settings", icon: "settings", owner: true },
+    { href: "/admin/admins", label: "Admins", icon: "lock", owner: true },
   ],
+  /** Shown next to the signed-in email. */
+  role: { owner: "Owner", editor: "Admin" },
   viewSite: "View site",
   failed: {
     title: "This page didn't load",

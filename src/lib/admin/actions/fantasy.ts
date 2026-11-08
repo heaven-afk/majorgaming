@@ -2,7 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
-import { requireAdmin } from "../session";
+import { requireOwner } from "../session";
 import { readCurrentFantasy } from "@/lib/fantasy/admin";
 import { fantasyIdentity } from "@/lib/fantasy/identity";
 import { setFantasyWindow, FantasyCoreError } from "@/lib/fantasy/client";
@@ -21,7 +21,8 @@ export async function manageFantasyWindow(_: WindowActionState, form: FormData):
       expectedDeadline: form.get("expectedDeadline") ? String(form.get("expectedDeadline")) : null,
       confirm: form.get("confirm") === "yes",
     }, {
-      requireAdmin,
+      // Going live, locking the market and closing a matchday are owner-only.
+      requireAdmin: requireOwner,
       readCurrent: readCurrentFantasy,
       signAdmin: (userId: string) => fantasyIdentity().signWindowAdmin({ userId }),
       sendWindow: setFantasyWindow,

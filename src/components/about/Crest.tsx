@@ -14,9 +14,14 @@ export function initials(name: string) {
   return (words.length > 1 ? words.map((w) => w[0]).join("") : name.slice(0, 2)).slice(0, 2).toUpperCase();
 }
 
-export function Crest({ name, size = 24, tone }: { name: string; size?: number; tone?: number }) {
+/** The crest's three colours for a name (light, deep, ink), so a card can carry the team's own tint. */
+export function toneOf(name: string, tone?: number) {
   const hash = [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
-  const [a, b, c] = TONES[tone ?? hash % TONES.length];
+  return TONES[tone ?? hash % TONES.length];
+}
+
+export function Crest({ name, size = 24, tone }: { name: string; size?: number; tone?: number }) {
+  const [a, b, c] = toneOf(name, tone);
   return (
     <span className="crest" style={{ "--a": a, "--b": b, "--c": c, "--s": `${size}px` } as React.CSSProperties}>
       {initials(name)}

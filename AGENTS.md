@@ -167,6 +167,55 @@ Next.js 16 has breaking changes from earlier versions. Read the relevant guide i
 - **News — 2026-10-28:** `/news` (category filter, lead story, grid) and `/news/[slug]` (byline, cover, prose blocks, sticky share/copy-link, "Keep *reading.*"). Six draft stories in `src/data/news.ts`, covers in `public/images/news/`, copy in `src/content/news.ts`. All story text is SAMPLE for the owner to replace or approve.
 - **Kill tables — 2026-10-28:** Every event page shows "The top *fraggers.*" under its standings: the event's top 20 players by kills (owner, 2026-10-28). Top three as cards (photo, medal-tinted rank, name, flag, team link, kills in large serif), places 4 to 20 as a list, two columns from 900px. Kill tables are **per tier**: a tab per tier (same switch as the standings), top 20 each, a player counting in the tier their squad registered in. Players without photos show their initials (large serif monogram on the podium cards). Data: `KillRecord` (event, player, team, kills, matches) in `src/data/types.ts`, rows in `src/data/kills.ts` (Season 10 real; other events PLACEHOLDER), read through `killTablesOf(event)` in `src/lib/league.ts`; client component `src/components/events/KillTable.tsx`, styles `.kt*` at the end of `globals.css`, copy `eventsPage.event.kills`.
 - **Home honours — 2026-10-28:** "Season 10’s *finest.*" now shows Season 10 Tier 1's real top three fraggers (from `killTablesOf`, in `honours` in `site.ts`): name, team, kills, matches, kills per match; no flag until players have countries. Portraits are still decorative operator renders. The Home standings are Season 10 Tier 1's real top ten. The Fantasy board, How MGL works illustrations and news stories still use SAMPLE players (Sable, Havoc, Juno…).
+- **Admin management and roles — 2026-11-08 (owner asked for it):**
+  - **Admins page:** `/admin/admins`, owners only.
+    - It lists every admin with their email, date added and last sign-in.
+    - **Add admin** takes an email, a password and a role (owner request 2026-11-08: "add them with their email and pass").
+      - With a password, the login is created through Supabase sign-up (email confirmation is off, so it works at once), the session it returns is ended, and then `admin_add` runs. So the secret key is not needed on Vercel.
+      - If the email already has an account, it's added with its own password, and the message says the typed one wasn't used.
+      - Leave the password empty to add an existing account.
+      - Minimum 8 characters. The form clears after a successful add.
+      - Not exercised for real: it would create a live account.
+    - Each admin row has an Owner / Editor switch and a Remove button that asks for confirmation. Removing takes away admin rights only; the account stays.
+    - Nobody can change their own access, and the last owner can't be removed or demoted.
+  - **Roles now differ:**
+    - Owners: everything, plus Settings, the Fantasy controls and the admin list.
+    - Editors: content only. On screen this role is labelled **"Admin"** (owner, 2026-11-08: "editor is too basic"); the database value stays `editor`, so no migration was needed.
+    - Owner-only items are hidden from editors' sidebars; opening one shows an "Owners only" notice.
+    - Saving settings and the Fantasy window action check for an owner (`requireOwner` / `isOwner` in `src/lib/admin/session.ts`).
+  - **Enforced in the database too:** migration `supabase/migrations/20261108120000_admin_management.sql` adds `is_owner()` and the owner-checked security-definer functions `admin_list`, `admin_add`, `admin_set_role` and `admin_remove`. It also makes `site_settings` writes owner-only.
+  - **Migration applied 2026-11-08** by the agent at the owner's request (through `DATABASE_URL`). Verified: all 5 functions exist; `site_settings` has the policies "Anyone can read", "Owners can insert" and "Owners can update"; the owner's row is still `owner`; and a signed-out call to `admin_list` is refused (401, permission denied).
+  - Files: `src/lib/admin/actions/admins.ts`, `src/components/admin/AdminsManager.tsx`, `src/app/admin/admins/`, copy in `src/content/admins.ts`.
+  - Layout checked on a throwaway page with sample rows (deleted) at 1280px and 375px. Not tested signed in. tsc and eslint pass.
+- **Teams redesign — 2026-11-08 (owner: "redesign the teams page to be better"):**
+  - Directory cards now show:
+    - the team's logo when it has one (`TeamMark.tsx`), else the crest;
+    - the name;
+    - the tag and player count;
+    - a row of four roster faces with a "+N" count;
+    - a faint light in the team's own crest colour (`toneOf` in `Crest.tsx`).
+  - Tier groups have headings ("Tier 1" with an amber number, a hairline, then "20 squads").
+  - The search and filter tile stays visible while scrolling, from 900px only (on phones it would cover too much).
+  - The team page header is lit in the team's colour, with its tag (or initials) as a faint outlined serif watermark behind it. It uses the team's logo when set.
+  - On phones, an odd last fact spans the full row.
+  - "More from Tier N" now shows 4 teams.
+  - The card and group styles moved from `globals.css` to `src/app/teams/teams.css`, which both Teams pages import.
+  - Checked at 1440px and 375px with no horizontal scroll. tsc and eslint pass. Not committed.
+- **Staff redesign — 2026-11-08 (owner: "something much more beautiful"):**
+  - **Intro:** the title, lede and facts sit beside a lineup (`Lineup` in `StaffCard.tsx`) of up to seven tall, staggered portraits. On phones they are capsules; from 900px they are rounded columns.
+  - **Lineup behaviour with a mouse:**
+    - the portraits rest muted;
+    - the hovered one widens, comes to colour and shows the person's name and role;
+    - touch screens show them in colour.
+  - Each portrait links to that person's profile or card (`id` = slug).
+  - **Profiles (`FounderCard`):**
+    - the portrait is framed at 4:5;
+    - a large outlined serif number ("01", "02") sits in the corner;
+    - the name runs over two lines with the surname in the amber serif;
+    - the first bio paragraph is set larger as the opening. Bio words are unchanged.
+  - **Leadership cards (`LeadCard`):** a 4:5 portrait with the role chip and number on top and the name over the foot. They show 2 across from 600px and in one row from 900px. The footer line only appears when the person has a country or a social link.
+  - Copy (`lineup`, `open`) is in `src/content/staff.ts`.
+  - Checked at 1440px and 375px with no horizontal scroll. tsc and eslint pass. Not committed.
 - **Real staff — 2026-11-07 (owner):** Live records: Grace Kelly (Founder & Chief Executive Officer) and Idowu Samuel Olaoluwa (Director), each a featured profile with the owner's bio word for word; Damian and Ace (Head Staff) and Heaven (Consultant), portrait cards. All in Leadership; portraits in Cloudinary (`mgl/staff/<slug>`, 1200px JPG URLs, kind `staff` in `media`). The page now shows every Leadership record with `spotlight` as a full profile, alternating sides on desktop (`profiles` in `src/lib/staff.ts`). The 13 invented staff were archived, not deleted, and the invented founder quote, start year and countries are gone. Do not re-run the staff part of `scripts/import-league.mjs` without replacing `src/data/staff.ts`: it upserts those placeholders by slug. Written straight to the database, so the cached public page (`cacheLife("max")`) only updates on a redeploy or an admin save. Local `next/image` requests to Cloudinary can time out (504) on a slow connection; direct Cloudinary loads work.
 - **Staff page — 2026-10-28:** `/staff`, in the nav and footer after News. Intro tile ("The people behind *the league.*", faces, facts), "Running *the league.*" opens with the founder's spotlight (owner, 2026-10-28: the founder gets more, with a bio): large portrait beside role chip, big name, a serif pull-quote, a short bio, facts (started MGL, seasons run from the data, home) and socials, on a warm amber-edged card; any staff record with `spotlight` {quote, bio[], since} gets this treatment. Then the other leaders as portrait cards (wider crop when there are one or two), then "Match day, *every day.*" with Operations, Media and Community groups as compact cards (photo or initials, name, role, flag, social buttons). Data `src/data/staff.ts` (13 PLACEHOLDER staff with invented handles, and an invented founder quote, bio and start year; `StaffRecord` type lives there), access `src/lib/staff.ts`, copy `src/content/staff.ts`, components `src/components/staff/`, styles in `src/app/staff/staff.css` (`sf-` prefix, imported by the page). Needs the real staff list (names or handles, roles, groups, photos, socials) from the owner; managed in the admin later.
 - **Stats:** not started. Waits for the partner's stats API docs (owner chose Teams and News first). Nav link stays `#`.

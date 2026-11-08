@@ -63,3 +63,385 @@
     font-size: 20px;
   }
 }
+
+/* ---------- Directory: tools, tier groups and team cards (imported by both Teams pages) ---------- */
+
+/* From tablets up the search and tier filter stay in reach while the list scrolls
+   (on phones the two rows would cover too much of the screen) */
+@media (min-width: 900px) {
+  .tm-dir .tm-tools {
+    position: sticky;
+    top: 10px;
+    z-index: 5;
+    background: rgb(26 26 26 / 0.86);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    backdrop-filter: blur(18px) saturate(1.2);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.08),
+      0 18px 40px -22px rgb(0 0 0 / 0.9);
+  }
+}
+
+.tm-count {
+  padding: 14px 6px 0;
+  font-size: 13px;
+  color: rgb(244 242 238 / 0.5);
+}
+
+/* "Tier 1" with the number in the serif accent, a hairline, then the count */
+.tm-group {
+  scroll-margin-top: 96px;
+}
+.tm-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 30px 6px 14px;
+}
+.tm-group:first-of-type .tm-group__head {
+  padding-top: 18px;
+}
+.tm-group__head h2 {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+.tm-group__head h2 em {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: #f9a940;
+}
+.tm-group__head i {
+  flex: 1;
+  align-self: center;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.02));
+}
+.tm-group__head span {
+  font-size: 13px;
+  color: rgb(244 242 238 / 0.5);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (min-width: 900px) {
+  .tm-group__head {
+    padding: 44px 6px 18px;
+  }
+  .tm-group__head h2 {
+    font-size: 34px;
+  }
+}
+
+.tm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+}
+@media (min-width: 900px) {
+  .tm-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  .tm-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* A tile per squad: mark and arrow on top, the name, then the roster's faces at the foot.
+   --ta/--tb are the team's crest colours, used for a faint light of its own. */
+.tm-card {
+  --ta: #ffd58a;
+  --tb: #f39b2f;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  padding: 14px;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #1e1e1e, #161616);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.05);
+  transition:
+    box-shadow 0.35s,
+    transform 0.5s var(--ease-out);
+}
+@media (min-width: 900px) {
+  .tm-card {
+    gap: 20px;
+    padding: 20px;
+  }
+}
+.tm-card::before {
+  content: "";
+  position: absolute;
+  inset: -60% -20% auto -40%;
+  z-index: -1;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--tb) 22%, transparent), transparent);
+  opacity: 0.55;
+  transition: opacity 0.5s;
+}
+.tm-card:hover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ta) 22%, rgb(255 255 255 / 0.08)),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+  transform: translateY(-3px);
+}
+.tm-card:hover::before {
+  opacity: 1;
+}
+.tm-card:focus-visible {
+  outline: 2px solid #f9a940;
+  outline-offset: 3px;
+}
+.tm-dir .tm-card {
+  animation: ladder-in 0.55s var(--ease-out) calc(min(var(--i), 14) * 22ms) both;
+}
+.tm-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tm-card__top .crest,
+.tm-card__top .tm-mark {
+  --s: 44px !important;
+}
+@media (min-width: 900px) {
+  .tm-card__top .crest,
+  .tm-card__top .tm-mark {
+    --s: 52px !important;
+  }
+}
+.tm-card__go {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(244 242 238 / 0.7);
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    transform 0.5s var(--ease-out);
+}
+.tm-card:hover .tm-card__go {
+  background: #f4f2ee;
+  color: #121212;
+  transform: rotate(-45deg);
+}
+.tm-card__body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin-top: auto;
+}
+.tm-card__body strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 900px) {
+  .tm-card__body strong {
+    font-size: 23px;
+  }
+}
+.tm-card__body small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: rgb(244 242 238 / 0.5);
+  white-space: nowrap;
+}
+.tm-card__body small b,
+.tm-hero__tag {
+  overflow: hidden;
+  max-width: 100%;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.07);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgb(244 242 238 / 0.75);
+  text-overflow: ellipsis;
+}
+
+/* The roster's faces, overlapping, with a count of the rest */
+.tm-card__faces {
+  display: flex;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+}
+.tm-card__faces > * {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #222;
+  box-shadow: 0 0 0 2px #181818;
+  transition: transform 0.45s var(--ease-out);
+}
+.tm-card__faces .crest {
+  --s: 32px !important;
+  font-size: 11px;
+}
+.tm-card__faces > * + * {
+  margin-left: -9px;
+}
+.tm-card__more {
+  display: inline-grid;
+  place-items: center;
+  background: #262626 !important;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgb(244 242 238 / 0.7);
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 900px) {
+  .tm-card__faces {
+    padding-top: 16px;
+  }
+  .tm-card__faces > * {
+    width: 40px;
+    height: 40px;
+  }
+  .tm-card__faces .crest {
+    --s: 40px !important;
+    font-size: 13px;
+  }
+  .tm-card__faces > * + * {
+    margin-left: -10px;
+  }
+  .tm-card__more {
+    font-size: 12.5px;
+  }
+}
+@media (hover: hover) {
+  .tm-card:hover .tm-card__faces > :nth-child(2) {
+    transform: translateX(3px);
+  }
+  .tm-card:hover .tm-card__faces > :nth-child(3) {
+    transform: translateX(6px);
+  }
+  .tm-card:hover .tm-card__faces > :nth-child(4) {
+    transform: translateX(9px);
+  }
+  .tm-card:hover .tm-card__faces > :nth-child(5) {
+    transform: translateX(12px);
+  }
+}
+
+/* A logo in place of the generated crest */
+.tm-mark {
+  display: inline-block;
+  flex: none;
+  overflow: hidden;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: #f4f2ee;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+.tm-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-dir .tm-card {
+    animation: none;
+  }
+  .tm-card,
+  .tm-card__go,
+  .tm-card__faces > * {
+    transition: none;
+  }
+}
+
+/* ---------- Team page header ---------- */
+
+/* The team's own crest colours light the header from the top left; its tag sits behind, very faint */
+.tile.tm-hero {
+  --ta: #ffd58a;
+  --tb: #f39b2f;
+  min-height: 340px;
+  justify-content: space-between;
+  background:
+    radial-gradient(80% 100% at 0% 0%, color-mix(in srgb, var(--tb) 16%, transparent), transparent 62%),
+    radial-gradient(60% 80% at 100% 100%, color-mix(in srgb, var(--ta) 6%, transparent), transparent 70%),
+    linear-gradient(180deg, #1e1e1e 0%, #171717 100%);
+}
+@media (min-width: 900px) {
+  .tile.tm-hero {
+    min-height: 460px;
+  }
+}
+.tm-hero > :not(.tm-hero__mark) {
+  position: relative;
+}
+.tm-hero__mark {
+  position: absolute;
+  right: -0.04em;
+  top: 0.08em;
+  z-index: 0;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(7rem, 30vw, 19rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(255 255 255 / 0.07);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ta) 10%, transparent), transparent 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  pointer-events: none;
+  user-select: none;
+}
+.tm-hero__crest .tm-mark {
+  --s: 68px !important;
+}
+.tm-hero__crest {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 24px 60px -24px color-mix(in srgb, var(--tb) 70%, transparent);
+}
+@media (min-width: 900px) {
+  .tm-hero__crest .tm-mark {
+    --s: 104px !important;
+  }
+}
+
+/* Phones: an odd last fact takes the whole row rather than leaving an empty cell */
+.tm-facts > div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+@media (min-width: 700px) {
+  .tm-facts > div:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+}

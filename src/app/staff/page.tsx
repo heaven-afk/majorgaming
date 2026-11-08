@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Footer from "@/components/footer/Footer";
 import Scene from "@/components/motion/Scene";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import Nav from "@/components/Nav";
-import { CrewCard, FounderCard, LeadCard } from "@/components/staff/StaffCard";
+import { CrewCard, FounderCard, LeadCard, Lineup } from "@/components/staff/StaffCard";
 import { staffPage } from "@/content/staff";
 import { getLeague } from "@/lib/league";
 import { getStaff } from "@/lib/staff";
@@ -19,7 +18,8 @@ export const metadata: Metadata = {
 export default async function StaffPage() {
   const [{ latestSeason }, { profiles, leaders, leadership, otherGroups, staff, staffCountries, staffGroups }] = await Promise.all([getLeague(), getStaff()]);
   const copy = staffPage;
-  const faces = staff.filter((s) => s.photo).slice(0, 5);
+  // The lineup: leadership first (the page's order), up to seven portraits.
+  const faces = staff.filter((s) => s.photo).slice(0, 7);
   // Only numbers that say something: no "0 countries", no leadership count equal to the whole staff.
   const facts = [
     { label: copy.facts.people, value: staff.length, show: true },
@@ -34,33 +34,27 @@ export default async function StaffPage() {
       <Nav />
       <main>
         <Scene className="tile sf-intro" aria-labelledby="staff-title">
-          <div className="sf-intro__head" data-rise>
-            <span className="label">
+          <div className="sf-intro__head">
+            <span className="label" data-rise>
               <i />
               {copy.label}
             </span>
-            <h1 className="ev-intro__title" id="staff-title">
+            <h1 className="ev-intro__title" id="staff-title" data-rise="0.5">
               {copy.title.before} <em>{copy.title.accent}</em>
             </h1>
-            <p className="ev-intro__lede">{copy.lede}</p>
-          </div>
-          {faces.length > 0 && (
-            <ul className="sf-intro__faces" aria-hidden data-rise="1">
-              {faces.map((s) => (
-                <li key={s.slug}>
-                  <Image src={s.photo!} alt="" width={160} height={160} sizes="72px" />
-                </li>
+            <p className="ev-intro__lede" data-rise="1">
+              {copy.lede}
+            </p>
+            <dl className="sf-intro__facts" data-rise="1.5">
+              {facts.map((f) => (
+                <div key={f.label}>
+                  <dt>{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
               ))}
-            </ul>
-          )}
-          <dl className="ev-facts" data-rise="2">
-            {facts.map((f) => (
-              <div key={f.label}>
-                <dt>{f.label}</dt>
-                <dd>{f.value}</dd>
-              </div>
-            ))}
-          </dl>
+            </dl>
+          </div>
+          {faces.length > 0 && <Lineup people={faces} />}
         </Scene>
 
         {leadership.length > 0 && (
@@ -76,12 +70,12 @@ export default async function StaffPage() {
               <p className="sf-section__note">{copy.groups.Leadership}</p>
             </header>
             {profiles.map((p, i) => (
-              <FounderCard key={p.slug} person={p} seasons={i === 0 ? latestSeason.number : undefined} flip={i % 2 === 1} />
+              <FounderCard key={p.slug} person={p} index={i + 1} seasons={i === 0 ? latestSeason.number : undefined} flip={i % 2 === 1} />
             ))}
             {leaders.length > 0 && (
               <ul className="sf-leads" data-n={Math.min(leaders.length, 3)} style={{ "--n": Math.min(leaders.length, 3) } as React.CSSProperties}>
                 {leaders.map((p, i) => (
-                  <LeadCard key={p.slug} person={p} index={i} />
+                  <LeadCard key={p.slug} person={p} index={i} number={profiles.length + i + 1} />
                 ))}
               </ul>
             )}

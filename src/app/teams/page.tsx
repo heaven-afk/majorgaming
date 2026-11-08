@@ -5,6 +5,7 @@ import Nav from "@/components/Nav";
 import TeamDirectory from "@/components/teams/TeamDirectory";
 import TeamsIntro from "@/components/teams/TeamsIntro";
 import { getLeague } from "@/lib/league";
+import "./teams.css";
 
 export const metadata: Metadata = {
   title: "Teams · MGL",

@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import type { FormState } from "@/components/admin/Form";
 import { NETWORKS, type Settings } from "@/content/settings";
 import { TAGS } from "@/lib/db";
-import { requireAdmin } from "../session";
+import { isOwner, requireAdmin } from "../session";
 import { db } from "../supabase";
 
 const LINK = /^https:\/\/\S+\.\S+$/;
@@ -12,6 +12,7 @@ const LINK = /^https:\/\/\S+\.\S+$/;
 /** Saves the Settings page. Every field is checked first; nothing saves while one is wrong. */
 export async function saveSettings(_: FormState, form: FormData): Promise<FormState> {
   const admin = await requireAdmin();
+  if (!isOwner(admin)) return { error: "Only an owner can change the site settings." };
   const fields: Record<string, string> = {};
   const text = (key: string) => String(form.get(key) ?? "").trim();
 

@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Crest, initials } from "@/components/about/Crest";
+import { Crest, initials, toneOf } from "@/components/about/Crest";
+import { TeamMark } from "@/components/teams/TeamMark";
 import { Flag } from "@/components/Flag";
 import Footer from "@/components/footer/Footer";
 import { Icon } from "@/components/Icons";
@@ -110,11 +111,15 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
   const profile = profileOf(team.slug)!;
   const { ranked, tier, manager, roster } = profile;
   const size = roster.length;
-  const others = ranked ? activeTeams.filter((t) => t.slug !== team.slug && t.tier === tier).slice(0, 6) : [];
+  const others = ranked ? activeTeams.filter((t) => t.slug !== team.slug && t.tier === tier).slice(0, 4) : [];
+  const [light, deep] = toneOf(team.name);
 
   return (
     <>
-      <Scene className="tile tm-hero" aria-labelledby="team-title">
+      <Scene className="tile tm-hero" aria-labelledby="team-title" style={{ "--ta": light, "--tb": deep } as React.CSSProperties}>
+        <span className="tm-hero__mark" aria-hidden>
+          {team.tag ?? initials(team.name)}
+        </span>
         <div className="tm-hero__top" data-rise>
           <Link className="ev-season__back" href="/teams">
             <Icon name="arrow" size={16} className="ev-season__back-icon" />
@@ -123,7 +128,7 @@ async function TeamContent({ params }: { params: PageProps<"/teams/[team]">["par
         </div>
         <div className="tm-hero__id" data-rise="1">
           <span className="tm-hero__crest">
-            <Crest name={team.name} size={96} />
+            <TeamMark name={team.name} logo={team.logo} size={96} />
           </span>
           <div>
             <h1 className="tm-hero__name" id="team-title">

@@ -58,6 +58,8 @@ export type DirectoryTeam = {
   name: string;
   tag?: string;
   tier?: number;
+  /** The team's logo once the admin has one; a generated crest until then. */
+  logo?: string;
   players: number;
   /** The first few players on the roster, for the card's face row: a portrait, or initials. */
   faces: { name: string; photo?: string }[];
@@ -227,7 +229,7 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
         const person = personBySlug(l.player);
         return { name: person?.name ?? l.player, photo: person?.photo };
       });
-      return { slug: t.slug, name: t.name, tag: t.tag, tier: seasonTier.get(t.slug) ?? undefined, players: t.roster?.length ?? 0, faces };
+      return { slug: t.slug, name: t.name, tag: t.tag, tier: seasonTier.get(t.slug) ?? undefined, logo: t.logo, players: t.roster?.length ?? 0, faces };
     })
     .sort((a, b) => (a.tier ?? 99) - (b.tier ?? 99) || a.name.localeCompare(b.name));
 

@@ -25,6 +25,9 @@ export const staffPage = {
     Community: "The Discord and every squad in it",
   } satisfies Record<StaffGroup, string>,
   count: (n: number) => `${n} ${n === 1 ? "person" : "people"}`,
+  /** The portrait lineup at the top of the page. */
+  lineup: "The team",
+  open: (name: string) => `Read about ${name}`,
   social: { x: "X", instagram: "Instagram", discord: "Discord" },
   on: (name: string, network: string) => `${name} on ${network}`,
   empty: "The staff list is on its way.",

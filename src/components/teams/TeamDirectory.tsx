@@ -60,8 +60,17 @@ export default function TeamDirectory({ teams }: { teams: DirectoryTeam[] }) {
         groups.map((g) => (
           <section className="tm-group" key={`${g.tier}-${q}`} aria-labelledby={`tm-tier-${g.tier ?? "open"}`}>
             <header className="tm-group__head">
-              <h2 id={`tm-tier-${g.tier ?? "open"}`}>{copy.tier(g.tier)}</h2>
-              <span>{g.teams.length}</span>
+              <h2 id={`tm-tier-${g.tier ?? "open"}`}>
+                {g.tier ? (
+                  <>
+                    {copy.tierWord} <em>{g.tier}</em>
+                  </>
+                ) : (
+                  copy.tier(g.tier)
+                )}
+              </h2>
+              <i aria-hidden />
+              <span>{copy.count(g.teams.length)}</span>
             </header>
             <ul className="tm-grid">
               {g.teams.map((t, i) => (

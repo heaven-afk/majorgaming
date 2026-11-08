@@ -3,7 +3,8 @@ import { signOut } from "@/app/admin/actions";
 import { Mark } from "@/components/brand/Mark";
 import { Icon } from "@/components/Icons";
 import { adminCopy as copy } from "@/content/admin";
-import { requireAdmin } from "@/lib/admin/session";
+import { adminsCopy } from "@/content/admins";
+import { isOwner, requireAdmin } from "@/lib/admin/session";
 
 /**
  * The frame of every signed-in admin page: a sidebar on wide screens, a top bar with a
@@ -19,7 +20,7 @@ export default async function AdminShell({ active, children }: { active?: string
           <span>{copy.brand}</span>
         </Link>
         <nav className="ad-bar__nav" aria-label="Admin">
-          {copy.nav.map((item) => (
+          {copy.nav.filter((item) => !("owner" in item) || isOwner(admin)).map((item) => (
             <Link key={item.label} href={item.href} className="ad-bar__link" aria-current={active === item.label ? "page" : undefined}>
               <Icon name={item.icon} size={18} />
               {item.label}
@@ -27,7 +28,9 @@ export default async function AdminShell({ active, children }: { active?: string
           ))}
         </nav>
         <div className="ad-bar__me">
-          <span className="ad-bar__email">{admin.email}</span>
+          <span className="ad-bar__email">
+            {admin.email} · {copy.role[admin.role]}
+          </span>
           <a href="/" target="_blank" rel="noreferrer" className="ad-btn ad-btn--quiet">
             {copy.viewSite}
           </a>
@@ -39,6 +42,18 @@ export default async function AdminShell({ active, children }: { active?: string
         </div>
       </header>
       <main className="ad-main">{children}</main>
+    </div>
+  );
+}
+
+/** In place of an owner-only page's content when an editor opens it. */
+export function OwnerOnly() {
+  return (
+    <div className="ad-alert ad-alert--warn" role="status">
+      <Icon name="lock" size={14} />
+      <span>
+        <strong>{adminsCopy.ownerOnly.title}.</strong> {adminsCopy.ownerOnly.body}
+      </span>
     </div>
   );
 }

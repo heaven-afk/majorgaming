@@ -8,6 +8,21 @@ import { Icon } from "../Icons";
 const regions = new Intl.DisplayNames(["en"], { type: "region" });
 const NETWORKS = ["x", "instagram", "discord"] as const;
 
+/** "01", "02"… for the numbered leadership profiles. */
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** The name on two lines: the given names, then the surname in the serif accent. One-word names stay whole. */
+function SplitName({ name }: { name: string }) {
+  const words = name.trim().split(/\s+/);
+  if (words.length < 2) return <>{name}</>;
+  const last = words.pop();
+  return (
+    <>
+      <span>{words.join(" ")}</span> <em>{last}</em>
+    </>
+  );
+}
+
 function Socials({ person }: { person: StaffMember }) {
   const links = NETWORKS.flatMap((n) => (person.socials?.[n] ? [{ network: n, href: person.socials[n]! }] : []));
   if (!links.length) return null;
@@ -32,58 +47,90 @@ function Home({ country }: { country?: string }) {
   );
 }
 
-/** A featured profile: a large portrait beside their quote, bio and a few facts. `flip` puts the portrait on the right on wide screens. */
-export function FounderCard({ person, seasons, flip }: { person: StaffMember; seasons?: number; flip?: boolean }) {
+/** The top of the page: everyone with a portrait, side by side like a lineup. Each opens their profile below. */
+export function Lineup({ people }: { people: StaffMember[] }) {
+  return (
+    <ul className="sf-lineup" aria-label={staffPage.lineup} style={{ "--n": people.length } as React.CSSProperties}>
+      {people.map((p, i) => (
+        <li key={p.slug} style={{ "--i": i } as React.CSSProperties}>
+          <a href={`#${p.slug}`} className="sf-lineup__item">
+            <Image src={p.photo!} alt="" width={480} height={640} sizes="(min-width: 900px) 14vw, 20vw" priority={i < 3} />
+            <span className="sf-lineup__cap">
+              <strong>{p.name}</strong>
+              <small>{p.role}</small>
+            </span>
+            <span className="sr-only">{staffPage.open(p.name)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * A featured profile: a framed portrait beside the numbered name, role and bio (the first paragraph set larger).
+ * `flip` puts the portrait on the right on wide screens.
+ */
+export function FounderCard({ person, index, seasons, flip }: { person: StaffMember; index: number; seasons?: number; flip?: boolean }) {
   const spot = person.spotlight!;
   const copy = staffPage.founder;
+  const [lead, ...rest] = spot.bio;
   return (
-    <article className="sf-founder" data-flip={flip ? "" : undefined} aria-labelledby={`founder-${person.slug}`}>
+    <article className="sf-founder" id={person.slug} data-flip={flip ? "" : undefined} aria-labelledby={`founder-${person.slug}`}>
       <span className="sf-founder__photo" data-rise>
         {person.photo ? (
-          <Image src={person.photo} alt="" width={960} height={960} sizes="(min-width: 900px) 40vw, 92vw" />
+          <Image src={person.photo} alt="" width={960} height={1200} sizes="(min-width: 900px) 40vw, 92vw" />
         ) : (
           <Crest name={person.name} size={160} />
         )}
       </span>
       <div className="sf-founder__body">
+        <span className="sf-founder__no" aria-hidden data-rise="1">
+          {pad(index)}
+        </span>
         <span className="sf-role" data-rise="1">
           {person.role}
         </span>
         <h3 className="sf-founder__name" id={`founder-${person.slug}`} data-rise="1">
-          {person.name}
+          <SplitName name={person.name} />
         </h3>
         {spot.quote && (
           <blockquote className="sf-founder__quote" data-rise="2">
             <p>{spot.quote}</p>
           </blockquote>
         )}
-        <div className="sf-founder__bio" data-rise="2.5">
-          {spot.bio.map((p) => (
-            <p key={p}>{p}</p>
-          ))}
-        </div>
-        {(spot.since || seasons !== undefined || person.country) && <dl className="sf-founder__facts" data-rise="3">
-          {spot.since && (
-            <div>
-              <dt>{copy.facts.since}</dt>
-              <dd>{spot.since}</dd>
-            </div>
-          )}
-          {seasons !== undefined && (
-            <div>
-              <dt>{copy.facts.seasons}</dt>
-              <dd>{seasons}</dd>
-            </div>
-          )}
-          {person.country && (
-            <div>
-              <dt>{copy.facts.home}</dt>
-              <dd>
-                <Home country={person.country} />
-              </dd>
-            </div>
-          )}
-        </dl>}
+        {lead && (
+          <div className="sf-founder__bio" data-rise="2.5">
+            <p className="sf-founder__lead">{lead}</p>
+            {rest.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+          </div>
+        )}
+        {(spot.since || seasons !== undefined || person.country) && (
+          <dl className="sf-founder__facts" data-rise="3">
+            {spot.since && (
+              <div>
+                <dt>{copy.facts.since}</dt>
+                <dd>{spot.since}</dd>
+              </div>
+            )}
+            {seasons !== undefined && (
+              <div>
+                <dt>{copy.facts.seasons}</dt>
+                <dd>{seasons}</dd>
+              </div>
+            )}
+            {person.country && (
+              <div>
+                <dt>{copy.facts.home}</dt>
+                <dd>
+                  <Home country={person.country} />
+                </dd>
+              </div>
+            )}
+          </dl>
+        )}
         <div data-rise="3.5">
           <Socials person={person} />
         </div>
@@ -92,24 +139,34 @@ export function FounderCard({ person, seasons, flip }: { person: StaffMember; se
   );
 }
 
-/** Leadership: a tall portrait with the name and role set over its foot. */
-export function LeadCard({ person, index }: { person: StaffMember; index: number }) {
+/** Leadership: a tall portrait with the number and role on top and the name set over its foot. */
+export function LeadCard({ person, index, number }: { person: StaffMember; index: number; number: number }) {
+  const foot = person.country || NETWORKS.some((n) => person.socials?.[n]);
   return (
-    <li className="sf-lead" data-rise={index * 0.5}>
+    <li className="sf-lead" id={person.slug} data-rise={index * 0.5}>
       <span className="sf-lead__photo">
         {person.photo ? (
-          <Image src={person.photo} alt="" width={720} height={720} sizes="(min-width: 760px) 30vw, 92vw" />
+          <Image src={person.photo} alt="" width={720} height={900} sizes="(min-width: 760px) 30vw, 92vw" />
         ) : (
           <Crest name={person.name} size={120} />
         )}
       </span>
-      <span className="sf-lead__info">
-        <span className="sf-role">{person.role}</span>
-        <strong>{person.name}</strong>
-        <span className="sf-lead__foot">
-          <Home country={person.country} />
-          <Socials person={person} />
+      <span className="sf-lead__top">
+        <span className="sf-lead__no" aria-hidden>
+          {pad(number)}
         </span>
+        <span className="sf-role">{person.role}</span>
+      </span>
+      <span className="sf-lead__info">
+        <strong>
+          <SplitName name={person.name} />
+        </strong>
+        {foot && (
+          <span className="sf-lead__foot">
+            <Home country={person.country} />
+            <Socials person={person} />
+          </span>
+        )}
       </span>
     </li>
   );
@@ -118,7 +175,7 @@ export function LeadCard({ person, index }: { person: StaffMember; index: number
 /** Everyone else: a compact card with a round portrait or initials. */
 export function CrewCard({ person, index }: { person: StaffMember; index: number }) {
   return (
-    <li className="sf-card" data-rise={Math.min(index, 5) * 0.3}>
+    <li className="sf-card" id={person.slug} data-rise={Math.min(index, 5) * 0.3}>
       <span className="sf-card__top">
         <span className="sf-card__face">
           {person.photo ? <Image src={person.photo} alt="" width={128} height={128} sizes="56px" /> : <Crest name={person.name} size={56} />}

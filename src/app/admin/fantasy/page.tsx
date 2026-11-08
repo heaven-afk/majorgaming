@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { unstable_rethrow } from "next/navigation";
-import AdminShell, { AdminLoading } from "@/components/admin/AdminShell";
+import AdminShell, { AdminLoading, OwnerOnly } from "@/components/admin/AdminShell";
+import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { Section } from "@/components/admin/Form";
 import { FantasyControls } from "@/components/admin/FantasyControls";
 import { fantasyAdminCopy as copy } from "@/content/fantasy-admin";
@@ -13,6 +14,7 @@ import "./fantasy-admin.css";
 const date = (iso: string | null) => iso ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Lagos" }).format(new Date(iso)) : copy.missingDeadline;
 
 async function Overview() {
+  if (!isOwner(await requireAdmin())) return <OwnerOnly />;
   let state;
   try { state = await getFantasyAdminOverview(); }
   catch (err) { unstable_rethrow(err); return <p className="ad-alert ad-alert--error" role="alert">{copy.unavailable}</p>; }

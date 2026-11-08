@@ -1,0 +1,138 @@
+/* Admins page: the list of everyone with access. Mobile first. */
+
+.ad-adm {
+  display: grid;
+}
+.ad-adm__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--ad-line);
+}
+.ad-adm__row:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+@media (min-width: 760px) {
+  .ad-adm__row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+.ad-adm__face {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ffd58a, #f39b2f);
+  color: #4a2800;
+  font-size: 15px;
+  font-weight: 700;
+}
+.ad-adm__who {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.ad-adm__who strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ad-adm__who small {
+  font-size: 12.5px;
+  color: rgb(244 242 238 / 0.5);
+}
+.ad-adm__you {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgb(244 242 238 / 0.7);
+}
+/* On phones the role and actions drop under the email */
+.ad-adm__role,
+.ad-adm__actions {
+  grid-column: 2;
+  justify-self: start;
+}
+@media (min-width: 760px) {
+  .ad-adm__role,
+  .ad-adm__actions {
+    grid-column: auto;
+    justify-self: end;
+  }
+}
+.ad-adm__role {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.07);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.ad-adm__role[data-role="owner"] {
+  background: rgb(249 169 64 / 0.14);
+  color: #ffcf8a;
+}
+.ad-adm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+/* Owner / Editor as one two-part switch: the current role is lit and can't be pressed */
+.ad-adm__switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-adm__switch button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(244 242 238 / 0.65);
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.ad-adm__switch button:not(:disabled):hover {
+  background: rgb(255 255 255 / 0.07);
+  color: #f4f2ee;
+}
+.ad-adm__switch button[aria-pressed="true"] {
+  background: #f4f2ee;
+  color: #121212;
+  cursor: default;
+}
+.ad-adm__switch button:disabled:not([aria-pressed="true"]) {
+  opacity: 0.5;
+  cursor: wait;
+}
+.ad-adm__msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  font-size: 13.5px;
+}
+.ad-adm__msg:empty {
+  display: none;
+}
+.ad-adm__msg[data-tone="ok"] {
+  color: #9be3b0;
+}
+.ad-adm__msg[data-tone="error"] {
+  color: #ffb4a1;
+}
