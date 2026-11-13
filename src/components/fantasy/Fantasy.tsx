@@ -1,9 +1,19 @@
 import { fantasy } from "@/content/site";
 import Link from "next/link";
+import { Suspense } from "react";
+import { getGame, getShowcase } from "@/lib/fantasy/game";
 import MeshGradient from "../hero/MeshGradient";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 import SquadBoard from "./SquadBoard";
+
+async function CurrentSquadBoard() {
+  const game = await getGame();
+  if (game.state !== "ready" || !game.market.players.length) return <SquadBoard />;
+  const cards = await getShowcase(game);
+  const priced = cards.flatMap(p => typeof p.price === "number" ? [{ ...p, price: p.price }] : []);
+  return <SquadBoard marketSquad={priced.length === 5 ? priced : undefined} />;
+}
 
 /** Fantasy teaser: the pitch on a light mesh panel, with a live squad board to play with. */
 export default function Fantasy() {
@@ -43,7 +53,7 @@ export default function Fantasy() {
       </div>
 
       <div className="fantasy__board" data-rise={2}>
-        <SquadBoard />
+        <Suspense fallback={<SquadBoard />}><CurrentSquadBoard /></Suspense>
       </div>
     </Scene>
   );

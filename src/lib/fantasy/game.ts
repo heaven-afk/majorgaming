@@ -1,6 +1,6 @@
 /**
  * What the fantasy screens read and do, on top of the Fantasy Core client: the current
- * tournament and matchday, the market with MGL's names and photos, a manager's squad, points and
+ * tournament and matchday, the market with Heaven Index profiles, a manager's squad, points and
  * chips, the standings, and saving a lineup or making a transfer. Fantasy Core decides every
  * price, rule and point; MGL only shows them. Server only.
  */
@@ -33,6 +33,8 @@ import { preview, previewLeaderboard, previewMarket, previewMatchdays, previewSt
 import type { Manager } from "./session";
 import { currentTournament, currentMatchday, marketIsOpen } from "./lifecycle.mjs";
 import { parseFantasyResponse } from "./responses.mjs";
+import { loadIndexMedia } from "./index-media.mjs";
+import { fantasy } from "@/content/site";
 
 export const ROLES: FantasyRole[] = ["Fragger", "IGL", "Support", "Anchor"];
 export const BUDGET = 100;
@@ -45,8 +47,8 @@ export type Player = {
   price: number;
   eligible: boolean;
   /** `key` is Fantasy Core's team id, which the two-per-team rule counts by. */
-  team: { key: string; name: string; slug?: string; logo?: string };
-  /** A real photo only (from the admin, later maybe the API); screens show a dark headshot otherwise. */
+  team: { key: string; name: string; logo?: string };
+  /** An exact-ID Heaven Index portrait; absent when none can be verified. */
   photo?: string;
 };
 
@@ -88,34 +90,17 @@ export function coreMessage(err: unknown) {
   return reason ?? "That didn't go through. Check your squad and try again.";
 }
 
-const norm = (s: string | null | undefined) => (s ?? "").normalize("NFKD").toLowerCase().replace(/[^a-z0-9]/g, "");
-// The character renders players get on the rest of the site are art, not photos.
-const realPhoto = (photo?: string) => (photo && !photo.startsWith("/images/") ? photo : undefined);
-
-/** MGL's players by name and in-game name, with their current team. */
-async function mglPlayers() {
-  const { teams, personBySlug } = await getLeague();
-  const byName = new Map<string, { slug: string; name: string; ign?: string; photo?: string; team: { slug: string; name: string; logo?: string } }>();
-  for (const team of teams) {
-    if (team.archived) continue;
-    for (const l of team.roster ?? []) {
-      const p = personBySlug(l.player);
-      if (!p) continue;
-      const entry = { slug: p.slug, name: p.name, ign: p.ign, photo: realPhoto(p.photo), team: { slug: team.slug, name: team.name, logo: team.logo } };
-      for (const key of [norm(p.name), norm(p.ign)]) if (key && !byName.has(key)) byName.set(key, entry);
-    }
-  }
-  return { byName, teamName: new Map(teams.map((t) => [t.slug, t.name])), teamLogo: new Map(teams.map((t) => [t.slug, t.logo])) };
-}
-
 async function enrich(market: FantasyMarket): Promise<Player[]> {
-  const { byName, teamName, teamLogo } = await mglPlayers();
+  const sampleTeams = preview ? (await getLeague()).teamBySlug : undefined;
+  const index = preview ? undefined : await loadIndexMedia(market.players, {
+    baseUrl: process.env.HSE_BASE_URL,
+    apiKey: process.env.HSE_API_SECRET,
+  });
   return market.players.map((p) => {
-    const mgl = byName.get(norm(p.playerName)) ?? byName.get(norm(p.ign));
     const key = p.teamIdAtLock ?? `solo:${p.playerId}`;
-    const name = (p.teamIdAtLock && teamName.get(p.teamIdAtLock)) ?? mgl?.team.name ?? p.teamIdAtLock ?? "No team";
-    const logo = teamLogo.get(key) ?? (norm(name) === norm(mgl?.team.name) ? mgl?.team.logo : undefined);
-    return { id: p.playerId, name: p.playerName, ign: p.ign, price: p.price, eligible: p.isEligible, team: { key, name, slug: mgl?.team.slug, logo }, photo: mgl?.photo };
+    const team = p.teamIdAtLock ? (index?.teams.get(key) ?? sampleTeams?.(key)) : undefined;
+    const profile = index?.players.get(p.playerId);
+    return { id: p.playerId, name: profile?.name || p.playerName, ign: profile?.ign || p.ign, price: p.price, eligible: p.isEligible, team: { key, name: team?.name || p.teamIdAtLock || "No team", logo: team?.logo }, photo: profile?.photo };
   });
 }
 
@@ -333,7 +318,7 @@ export async function getStandings(game: Extract<Game, { state: "ready" }>, opts
 
 /**
  * Five players for the landing page's cards: the market's priciest when there is one, otherwise
- * players from the top tier's rosters (no prices yet). Roles are only for show.
+ * the explicitly illustrative squad. Roles are only for show.
  */
 export async function getShowcase(game: Game) {
   const roles = [...ROLES, "Sub"] as const;
@@ -352,12 +337,5 @@ export async function getShowcase(game: Game) {
     }
     return picks.map((p, i) => ({ name: p.name, ign: p.ign, team: p.team.name, logo: p.team.logo, photo: p.photo, price: p.price, role: roles[i] }));
   }
-  const { activeTeams, profileOf, teamBySlug } = await getLeague();
-  return activeTeams
-    .filter((t) => t.tier === 1)
-    .slice(0, 5)
-    .flatMap((t, i) => {
-      const l = profileOf(t.slug)?.roster[0];
-      return l ? [{ name: l.person.name, ign: l.person.ign, team: t.name, logo: teamBySlug(t.slug)?.logo, photo: realPhoto(l.person.photo), role: roles[i] }] : [];
-    });
+  return [...fantasy.board.players, { ...fantasy.board.sub, name: fantasy.board.sub.ign }].map((p, i) => ({ ...p, role: roles[i] }));
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { fantasy } from "@/content/site";
-import { fantasyCards } from "@/content/fantasy-cards";
+import { fantasyCards, type FantasyCardPlayer } from "@/content/fantasy-cards";
 import PlayerCard from "./PlayerCard";
 import { Icon } from "../Icons";
 import { Ticker } from "../motion/Ticker";
@@ -19,19 +19,21 @@ const RESET = b.events.length + 1;
  * in, the captain's count double, and the total and rank tick along. Tapping a player makes
  * them captain, so visitors feel the core decision of the game.
  */
-export default function SquadBoard() {
+export default function SquadBoard({ marketSquad }: { marketSquad?: (FantasyCardPlayer & { price: number })[] }) {
   const { ref, stage } = useStages<HTMLDivElement>(HOLDS, DONE);
   const [captain, setCaptain] = useState(0);
+  const players = marketSquad?.slice(0, 4) ?? b.players;
+  const sub = marketSquad?.[4] ?? b.sub;
 
   const reset = stage === RESET;
   const applied = reset ? 0 : Math.min(stage, DONE);
-  const base = b.players.map((_, i) => b.events.slice(0, applied).reduce((n, e) => n + (e.player === i ? e.pts : 0), 0));
+  const base = players.map((_, i) => b.events.slice(0, applied).reduce((n, e) => n + (e.player === i ? e.pts : 0), 0));
   const scored = base.map((pts, i) => pts * (i === captain ? 2 : 1));
   const total = scored.reduce((a, c) => a + c, 0);
   const rank = b.startRank - total * 9;
   const last = applied > 0 && stage <= DONE ? b.events[applied - 1] : null;
 
-  const spent = b.players.reduce((n, p) => n + p.price, 0) + b.sub.price;
+  const spent = players.reduce((n, p) => n + p.price, 0) + sub.price;
 
   return (
     <div className="squad" ref={ref} data-reset={reset ? "" : undefined}>
@@ -65,10 +67,10 @@ export default function SquadBoard() {
       </div>
 
       <ul className="squad__grid">
-        {b.players.map((p, i) => {
+        {players.map((p, i) => {
           const isCaptain = i === captain;
           return (
-            <li key={p.ign}>
+            <li key={i}>
               <PlayerCard
                 player={p}
                 captain={isCaptain}
@@ -85,9 +87,9 @@ export default function SquadBoard() {
       <div className="squad__sub">
         <span className="squad__sub-tag">Sub</span>
         <span className="squad__sub-name">
-          {b.sub.ign} · {b.sub.role}
+          {"name" in sub ? sub.name : sub.ign} · {sub.role}
         </span>
-        <span className="squad__sub-price">{b.sub.price.toFixed(1)} cr</span>
+        <span className="squad__sub-price">{sub.price.toFixed(1)} cr</span>
       </div>
 
       <div className="squad__budget">
@@ -102,7 +104,7 @@ export default function SquadBoard() {
         <Icon name="crown" size={14} />
         {b.hint}
       </p>
-      <p className="squad__sample">{fantasyCards.labels.sample}</p>
+      <p className="squad__sample">{marketSquad ? fantasyCards.labels.sampleScoring : fantasyCards.labels.sample}</p>
     </div>
   );
 }
