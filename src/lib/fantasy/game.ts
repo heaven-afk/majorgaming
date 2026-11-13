@@ -337,5 +337,5 @@ export async function getShowcase(game: Game) {
     }
     return picks.map((p, i) => ({ name: p.name, ign: p.ign, team: p.team.name, logo: p.team.logo, photo: p.photo, price: p.price, role: roles[i] }));
   }
-  return [...fantasy.board.players, { ...fantasy.board.sub, name: fantasy.board.sub.ign }].map((p, i) => ({ ...p, role: roles[i] }));
+  return [...fantasy.board.players, fantasy.board.sub].map((p, i) => ({ ...p, role: roles[i] }));
 }
