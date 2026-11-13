@@ -12,6 +12,7 @@ export const fantasyCards = {
     bringIn: "Bring in",
     chooseReplacement: "Select outgoing player first",
     sample: "Sample squad · Players, prices and points are illustrative",
+    sampleScoring: "Example squad · Points and rank are illustrative",
   },
   /** Example team themes; replace with each team's confirmed branding. */
   themes: {
