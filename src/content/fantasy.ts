@@ -21,7 +21,7 @@ export const fantasyPage = {
       offStatus: "Opens with the next tournament",
       facts: { deadline: "Deadline", managers: "Managers", tournaments: "Tournaments" },
     },
-    sheet: { title: "Your squad", total: "Matchday points", captain: "Captain", sub: "Sub", bench: "Bench" },
+    sheet: { title: "Example squad", total: "Example matchday points", captain: "Captain", sub: "Sub", bench: "Bench" },
     host: {
       label: "For rankings",
       title: { before: "Run your fantasy", accent: "on MGL." },

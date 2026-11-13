@@ -175,8 +175,9 @@ export const fantasy = {
     startRank: 1204,
     hint: "Tap a player to make them captain",
     players: [
-      { name: "Sable", ign: "KYZ.Sable", team: "Kyzon Esport", role: "Fragger", price: 26.5, theme: fantasyCards.themes.gold },
-      { name: "Havoc", ign: "VTX.Havoc", team: "Vortex One", role: "IGL", price: 21.0, theme: fantasyCards.themes.blue },
+      // Heaven Index sample assets from the approved Developers card preview.
+      { name: "JOZZY", ign: "JOZZY.DXV", team: "Developers", role: "Fragger", price: 26.5, theme: fantasyCards.themes.stone, photo: "/images/fantasy/jozzy-portrait.webp", logo: "/images/fantasy/developers-crest.webp" },
+      { name: "ALBOLBOZ", ign: "ALBOBOZ.DXV", team: "Developers", role: "IGL", price: 21.0, theme: fantasyCards.themes.stone, logo: "/images/fantasy/developers-crest.webp" },
       { name: "Juno", ign: "GOAT.Juno", team: "Goat Esport", role: "Anchor", price: 18.0, theme: fantasyCards.themes.plum },
       { name: "Nova", ign: "DEV.Nova", team: "Developers", role: "Support", price: 17.5, theme: fantasyCards.themes.stone },
     ],

@@ -41,7 +41,7 @@ export default function SquadBoard({ marketSquad }: { marketSquad?: (FantasyCard
         <div>
           <span className="squad__md">
             <i />
-            {b.matchday} · Live
+            {b.matchday} · Preview
           </span>
           <strong>{b.squadName}</strong>
         </div>
