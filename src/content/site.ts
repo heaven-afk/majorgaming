@@ -177,11 +177,11 @@ export const fantasy = {
     players: [
       // Heaven Index sample assets from the approved Developers card preview.
       { name: "JOZZY", ign: "JOZZY.DXV", team: "Developers", role: "Fragger", price: 26.5, theme: fantasyCards.themes.stone, photo: "/images/fantasy/jozzy-portrait.webp", logo: "/images/fantasy/developers-crest.webp" },
-      { name: "ALBOLBOZ", ign: "ALBOBOZ.DXV", team: "Developers", role: "IGL", price: 21.0, theme: fantasyCards.themes.stone, logo: "/images/fantasy/developers-crest.webp" },
-      { name: "Juno", ign: "GOAT.Juno", team: "Goat Esport", role: "Anchor", price: 18.0, theme: fantasyCards.themes.plum },
-      { name: "Nova", ign: "DEV.Nova", team: "Developers", role: "Support", price: 17.5, theme: fantasyCards.themes.stone },
+      { name: "FATHER ALI", ign: "QTR • ALI.VRX", team: "Vortex One", role: "IGL", price: 21.0, theme: fantasyCards.themes.blue, photo: "/images/fantasy/father-ali-portrait.webp", logo: "/images/fantasy/father-ali-crest.webp" },
+      { name: "LAZY", ign: "水RDM・LAZYYT", team: "Remedium Invictus", role: "Support", price: 18.0, theme: fantasyCards.themes.plum, photo: "/images/fantasy/lazy-portrait.webp", logo: "/images/fantasy/lazy-crest.webp" },
+      { name: "MAUS", ign: "IOCHE.ҠZ", team: "Kyzon XIII", role: "Anchor", price: 17.5, theme: fantasyCards.themes.gold, photo: "/images/fantasy/maus-portrait.webp" },
     ],
-    sub: { ign: "Rook", team: "Main Characters OG", role: "Support", price: 14.0 },
+    sub: { name: "ALBOLBOZ", ign: "ALBOBOZ.DXV", team: "Developers", role: "Support", price: 14.0, logo: "/images/fantasy/developers-crest.webp" },
     /** Points events played on a loop: which player (index) scores how much, and why. */
     events: [
       { player: 0, pts: 6, label: "3 kills" },
