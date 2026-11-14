@@ -9,6 +9,8 @@ import { COOKIES, DbError, signInWithPassword, signOutSession } from "@/lib/admi
 import { cookies } from "next/headers";
 import { TAGS } from "@/lib/db";
 import { checkIds } from "@/lib/admin/ids";
+import { indexSnapshot } from "@/lib/index-results/client";
+import { getAdminLink, saveIndexRefresh } from "@/lib/index-results/store";
 
 export type FormState = { error?: string; fields?: Record<string, string>; saved?: number };
 
@@ -153,6 +155,22 @@ export async function saveEvent(id: string | null, _: FormState, form: FormData)
 
     // The poster: keep it, swap in one just uploaded (already in the library), or remove it.
     const current = id ? await getEvent(admin.token, String(form.get("current_slug") ?? input.slug)) : undefined;
+    if (current && current.id === id && current.status !== "final" && input.status === "final") {
+      // Save the last available Index result before the public live refresh stops.
+      const link = await getAdminLink(admin.token, current.id).catch(error => {
+        if (error instanceof DbError && error.status === 404) return undefined;
+        throw error;
+      });
+      if (link?.enabled && !link.snapshot?.completed) {
+        try {
+          const snapshot = await indexSnapshot(link.tournament_id);
+          const saved = await saveIndexRefresh(link, snapshot, link.attempt_at);
+          if (!saved) return { error: "The Heaven Index results changed while saving. Please try again." };
+        } catch {
+          return { error: "Could not save the final Heaven Index results. Try again, or switch to manual results in the Results tab." };
+        }
+      }
+    }
     const poster = await imageFrom(form, "poster", admin);
     const { poster_alt, ...rest } = input;
     const posterFields: Pick<EventInput, "poster_url" | "poster_alt" | "poster_width" | "poster_height"> =

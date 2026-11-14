@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import EventArchive, { UpcomingEvents } from "@/components/events/EventArchive";
 import EventStandings from "@/components/events/EventStandings";
+import IndexResults from "@/components/events/IndexResults";
 import EventsIntro from "@/components/events/EventsIntro";
 import Footer from "@/components/footer/Footer";
 import SmoothScroll from "@/components/motion/SmoothScroll";
@@ -22,7 +23,9 @@ export default async function EventsPage() {
       <main>
         <EventsIntro />
         <UpcomingEvents />
-        <EventStandings event={featuredEvent} link />
+        <IndexResults slug={featuredEvent.slug} live={featuredEvent.status === "live"} compact>
+          <EventStandings event={featuredEvent} link />
+        </IndexResults>
         <EventArchive />
       </main>
       <Footer />
