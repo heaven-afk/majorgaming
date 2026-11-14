@@ -23,7 +23,7 @@ export default async function EventsPage() {
       <main>
         <EventsIntro />
         <UpcomingEvents />
-        <IndexResults slug={featuredEvent.slug} live={featuredEvent.status === "live"} compact>
+        <IndexResults slug={featuredEvent.slug} name={featuredEvent.name} live={featuredEvent.status === "live"} compact>
           <EventStandings event={featuredEvent} link />
         </IndexResults>
         <EventArchive />

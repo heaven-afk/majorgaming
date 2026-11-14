@@ -135,9 +135,9 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
    * standings table, a player counting in the tier their squad registered in. Empty until the event
    * has a kill sheet.
    */
-  function killTablesOf(event: LeagueEvent): KillTable[] {
-    const all = killRecords.filter((k) => k.event === event.slug);
+  function killTablesOf(event: LeagueEvent, onlyTier?: number): KillTable[] {
     const tierOf = new Map(entries.filter((r) => r.event === event.slug).map((r) => [r.team, r.tier]));
+    const all = killRecords.filter((k) => k.event === event.slug && (onlyTier === undefined || tierOf.get(k.team) === onlyTier));
     const groups = [...new Set(all.flatMap((k) => k.group ?? []))];
     const splits = groups.length
       ? groups.map((g) => ({ name: g, short: g, keep: (k: KillRecord) => k.group === g }))

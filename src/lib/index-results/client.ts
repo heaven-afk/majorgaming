@@ -29,9 +29,11 @@ async function request(id?: string) {
   if (!response.ok) {
     const rejected = response.status === 404 &&
       (await response.json().catch(() => null))?.code === "MGL_TOURNAMENT_NOT_FOUND";
-    throw new IndexResultsError(rejected
-      ? "This tournament is no longer available to MGL in Heaven Index."
-      : "The Heaven Index results feed could not be read.", rejected ? 404 : undefined);
+    if (rejected) throw new IndexResultsError("This tournament is no longer available to MGL in Heaven Index.", 404);
+    if (response.status === 401 || response.status === 403) throw new IndexResultsError("Heaven Index rejected the request. Check that both projects use the same results key.");
+    if (response.status === 404) throw new IndexResultsError("The Heaven Index results endpoint is missing. Check that HSE_BASE_URL points to the deployment with the results API.");
+    if (response.status === 503 && id === undefined) throw new IndexResultsError("The Heaven Index results feed is unavailable. Check that MGL_RESULTS_API_KEY is set in Heaven Index’s deployed environment.");
+    throw new IndexResultsError("The Heaven Index results feed could not be read.");
   }
   return response.json();
 }

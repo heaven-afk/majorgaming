@@ -151,7 +151,10 @@ async function EventContent({ params }: { params: PageProps<"/events/[event]">["
         )
       )}
 
-      <IndexResults key={event.slug} slug={event.slug} live={live}>
+      <IndexResults key={event.slug} slug={event.slug} live={live} manualEvent={event} manualKills={event.tables.map(table => ({
+        table: table.name,
+        results: killTablesOf({ ...event, tables: [table] }, table.tier).map(result => ({ ...result, name: result.name === table.name ? result.name : table.name + " · " + result.name })),
+      }))}>
         {event.tables.length > 0 && (
           <>
             <EventStandings event={event} expanded heading={many ? copy.tables.many : copy.tables.one} />
