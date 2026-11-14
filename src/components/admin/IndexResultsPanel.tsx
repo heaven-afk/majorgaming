@@ -3,7 +3,7 @@ import IndexResultsForm from "./IndexResultsForm";
 import { getAdminLinks } from "@/lib/index-results/store";
 import { indexCatalog, indexConfigured, IndexResultsError } from "@/lib/index-results/client";
 
-export default async function IndexResultsPanel({ event, table, token }: { event: { id: string; slug: string }; table: { id: string; name: string }; token: string }) {
+export default async function IndexResultsPanel({ event, table, token }: { event: { id: string; slug: string; status: string }; table: { id: string; name: string }; token: string }) {
   const links = await getAdminLinks(token, event.id).catch(() => null);
   const title = "Heaven Index · " + table.name;
   if (links === null) {
@@ -24,11 +24,14 @@ export default async function IndexResultsPanel({ event, table, token }: { event
     }
   }
   return (
-    <Section title={title} lede={legacy ? "Choosing this tier’s tournament switches the event to per-tier links. Other tiers will show their saved manual sheets until linked." : "Choose the Heaven Index tournament for this table. You can switch back to the saved spreadsheet at any time."}>
+    <Section title={title} lede={legacy ? "Choosing this tier’s tournament switches the event to per-tier links. Other tiers will show their saved manual sheets until linked." : "Choose the Heaven Index tournament for this table’s live results. You can switch back to the saved spreadsheet at any time."}>
       <IndexResultsForm
         key={table.id + (link?.synced_at ?? "")}
         slug={event.slug}
         tableId={table.id}
+        tableName={table.name}
+        live={event.status === "live"}
+        upcoming={event.status === "upcoming"}
         events={events}
         current={link?.tournament_id}
         enabled={link?.enabled ?? false}

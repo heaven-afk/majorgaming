@@ -25,18 +25,45 @@ team name uniquely matches a record in that registry.
    Index tournament, and click **Link and import**. Repeat for each tier.
    Confirm the public table matches the Heaven Index standings and that an
    event from a different organizer does not appear in the picker.
-4. Mark the MGL event Live. Visitors' pages check every 30 seconds. All visitors
-   share a database refresh limit of one upstream request per linked table per minute.
-   For refreshes even when nobody is watching, configure a scheduler to call
+4. Mark the MGL event Live. Enable push delivery using the steps below. As a
+   fallback, open public and admin pages check every 30 seconds and share a
+   limit of one upstream polling request per linked table per minute.
+   For fallback refreshes even when nobody is watching, configure a scheduler to call
    `GET /api/cron/index-results` with `Authorization: Bearer <CRON_SECRET>` at
    the desired interval supported by your hosting plan.
-5. Finish the event in Heaven Index and mark the MGL event Final. MGL refreshes
-   the linked results before saving the status if it has no completed snapshot. The
-   saved table remains visible in the archive. **Sync now** can import a later
-   correction. A temporary outage keeps the last good results. A response from
-   the feed explicitly reporting that the tournament is no longer available
-   to MGL pauses the link and shows manual results instead.
+5. When the MGL event leaves Live, the public page shows its official manual
+   tables. Imported snapshots remain saved. Publishing a snapshot as official
+   results is deferred. During a live event, a temporary outage keeps the last
+   good results. If the feed explicitly reports that the tournament is no
+   longer available to MGL, the link pauses and the manual results appear.
 
 Existing event-wide links remain visible until the first tier is linked.
 An existing link for an event with one table is assigned to that table by the
 migration. Previous imports and manual uploads are retained.
+
+## Push delivery
+
+1. In **MGL Supabase**, apply `20261114160000_index_results_realtime.sql` after
+   the tier migration. It adds a public Realtime table containing only event
+   slugs and revision IDs. Imported snapshots remain in the protected results table.
+2. Set a new random `MGL_RESULTS_WEBHOOK_SECRET` in MGL’s server environment.
+   Use at least 32 characters and keep the existing results API key separate.
+   Deploy the updated MGL app and the updated Heaven Index results endpoint.
+3. In **Heaven Index Supabase → Vault**, create a secret named
+   `mgl_results_webhook_url` with the full HTTPS URL of MGL’s
+   `/api/index-results/webhook` endpoint. Create another Vault secret named
+   `mgl_results_webhook_secret` with the same value as MGL’s
+   `MGL_RESULTS_WEBHOOK_SECRET`. Apply `supabase-mgl-results-push.sql` from
+   the Heaven Index repository in that project's SQL Editor.
+4. Open the public event standings and the linked tier in MGL Admin. Save a
+   score change in a linked live tournament in Heaven Index and check both
+   screens. A new revision should arrive without reloading either page.
+
+Heaven Index queues a signed notification after a committed score change.
+MGL checks the timestamp and signature, rejects duplicate notifications, and
+fetches the latest standings using the organizer-scoped API. The saved
+snapshot then triggers a Realtime notification to both screens for MGL events
+marked Live. Publishing those live results as official results is a separate
+workflow. Delivery can
+take several seconds. Disconnected browsers catch up on reconnect or through
+the fallback refresh.

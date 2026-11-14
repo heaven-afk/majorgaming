@@ -1,60 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
-import type { PublicIndexResults } from "@/lib/index-results/contract";
+import type { ReactNode } from "react";
+import { useIndexResults } from "@/lib/index-results/use-index-results";
 import { StandingsMark } from "../standings/StandingsMark";
 import type { KillTable as KillTableData, LeagueEvent } from "@/lib/league";
 import EventTables from "./EventTables";
 import KillTable from "./KillTable";
 import "./index-results.css";
 
-export default function IndexResults({ slug, name, children, compact = false, live, manualEvent, manualKills = [] }: {
+export default function IndexResults({ slug, name, children, compact = false, live, manualEvent, manualKills = [], adminTable, refreshKey }: {
   slug: string; name?: string; children?: ReactNode; compact?: boolean; live: boolean;
   manualEvent?: LeagueEvent; manualKills?: { table: string; results: KillTableData[] }[];
+  adminTable?: string; refreshKey?: number;
 }) {
-  const [shown, setShown] = useState<{ slug: string; data: PublicIndexResults | null }>();
-  const data = shown?.slug === slug ? shown.data : null;
-  useEffect(() => {
-    const controller = new AbortController();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let poll = true;
-    let busy = false;
-    async function load() {
-      if (busy || !poll || controller.signal.aborted || document.hidden) return;
-      busy = true;
-      if (timer !== undefined) clearTimeout(timer);
-      try {
-        const response = await fetch("/api/events/" + encodeURIComponent(slug) + "/index-results", { signal: controller.signal, cache: "no-store" });
-        if (response.ok) {
-          const result = await response.json() as PublicIndexResults | null;
-          if (controller.signal.aborted) return;
-          setShown({ slug, data: result });
-          // Live pages also check when an admin changes the source while the page is open.
-          if (result?.sources?.length && !live) poll = false;
-        }
-      } catch { /* Keep the table already on screen. */ }
-      finally {
-        busy = false;
-        if (live && poll && !controller.signal.aborted) timer = setTimeout(load, 30_000);
-      }
-    }
-    function visible() { if (!document.hidden) void load(); }
-    void load();
-    document.addEventListener("visibilitychange", visible);
-    return () => {
-      controller.abort();
-      if (timer !== undefined) clearTimeout(timer);
-      document.removeEventListener("visibilitychange", visible);
-    };
-  }, [slug, live]);
-  if (!data?.sources?.length) return children;
-  const scoped = !data.sources.some(source => source.table === null);
-  const imported = new Set(data.sources.map(source => source.table));
+  const data = useIndexResults(slug, live, refreshKey);
+  const sources = data?.sources.filter(source => adminTable === undefined || source.table === adminTable || source.table === null);
+  if (!data || !sources?.length) return children;
+  const scoped = !sources.some(source => source.table === null);
+  const imported = new Set(sources.map(source => source.table));
   const manualTables = scoped ? manualEvent?.tables.filter(table => !imported.has(table.name)) : undefined;
   const manual = manualEvent && manualTables?.length ? { ...manualEvent, tables: manualTables } : undefined;
   const manualPlayerResults = manualKills.filter(item => !imported.has(item.table)).flatMap(item => item.results);
-  const tables = data.sources.flatMap(source => {
+  const tables = sources.flatMap(source => {
     const populated = source.snapshot.tables.filter(table => table.teams.length || (!compact && table.players.length));
     return (populated.length ? populated : [{ id: null, name: "Overall", teams: [], players: [] }]).map(table => ({
       ...table,
@@ -66,10 +34,10 @@ export default function IndexResults({ slug, name, children, compact = false, li
   });
   return (
     <>
-    <section className="tile standings ev-standings index-results" id="standings" aria-label="Heaven Index results">
+    <section className={adminTable === undefined ? "tile standings ev-standings index-results" : "index-results"} id={adminTable === undefined ? "standings" : undefined} aria-label="Heaven Index results">
       <header className="standings__head">
         <div>
-          <h2 className="sec-title">{name ?? manualEvent?.name ?? data.sources[0].snapshot.event.name} <em>results</em></h2>
+          {adminTable === undefined && <h2 className="sec-title">{name ?? manualEvent?.name ?? sources[0].snapshot.event.name} <em>results</em></h2>}
         </div>
         {compact && <Link href={"/events/" + slug} className="btn-ghost">Full results</Link>}
       </header>

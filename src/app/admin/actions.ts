@@ -9,8 +9,6 @@ import { COOKIES, DbError, signInWithPassword, signOutSession } from "@/lib/admi
 import { cookies } from "next/headers";
 import { TAGS } from "@/lib/db";
 import { checkIds } from "@/lib/admin/ids";
-import { indexSnapshot } from "@/lib/index-results/client";
-import { activeIndexLinks, getAdminLinks, saveIndexRefresh } from "@/lib/index-results/store";
 
 export type FormState = { error?: string; fields?: Record<string, string>; saved?: number };
 
@@ -155,22 +153,6 @@ export async function saveEvent(id: string | null, _: FormState, form: FormData)
 
     // The poster: keep it, swap in one just uploaded (already in the library), or remove it.
     const current = id ? await getEvent(admin.token, String(form.get("current_slug") ?? input.slug)) : undefined;
-    if (current && current.id === id && current.status !== "final" && input.status === "final") {
-      // Save the last available Index result before the public live refresh stops.
-      const links = await getAdminLinks(admin.token, current.id).catch(error => {
-        if (error instanceof DbError && (error.status === 404 || error.status === 400)) return [];
-        throw error;
-      });
-      try {
-        await Promise.all(activeIndexLinks(links).filter(link => !link.snapshot?.completed).map(async link => {
-          const snapshot = await indexSnapshot(link.tournament_id);
-          const saved = await saveIndexRefresh(link, snapshot, link.attempt_at);
-          if (!saved) throw new Error("Results changed during sync.");
-        }));
-      } catch {
-        return { error: "Could not save all final Heaven Index results. Try again, or switch the affected tables to manual results." };
-      }
-    }
     const poster = await imageFrom(form, "poster", admin);
     const { poster_alt, ...rest } = input;
     const posterFields: Pick<EventInput, "poster_url" | "poster_alt" | "poster_width" | "poster_height"> =

@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { updateIndexResults } from "@/lib/admin/actions/index-results";
 import type { IndexEvent } from "@/lib/index-results/contract";
 import { Field, type FormState } from "./Form";
+import IndexResults from "../events/IndexResults";
 
-export default function IndexResultsForm({ slug, tableId, events, current, enabled, legacy, savedName, syncedAt, completed, message }: {
+export default function IndexResultsForm({ slug, tableId, tableName, live, upcoming, events, current, enabled, legacy, savedName, syncedAt, completed, message }: {
   slug: string; tableId: string; events: IndexEvent[]; current?: string; enabled: boolean; legacy: boolean; savedName?: string;
+  tableName: string; live: boolean; upcoming: boolean;
   syncedAt?: string | null; completed: boolean; message?: string;
 }) {
   const [state, action, busy] = useActionState(updateIndexResults.bind(null, slug, tableId), {} as FormState);
@@ -16,11 +18,12 @@ export default function IndexResultsForm({ slug, tableId, events, current, enabl
   const syncTime = syncedAt && new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Lagos" }).format(new Date(syncedAt));
 
   return (
+    <>
     <form action={action}>
       <p><strong>{legacy ? "Using the previous event-wide link" : enabled ? "Heaven Index selected" : "Manual results selected"}</strong>
         {savedName && <> · {savedName}{completed && " · Final in Heaven Index"}</>}
       </p>
-      {syncTime && <p>Last saved {syncTime} WAT</p>}
+      {syncTime && (upcoming || !live) && <p>Last saved {syncTime} WAT</p>}
       {message && <p>{message}</p>}
       {events.length > 0 && (
         <Field name="index-tournament" label="Heaven Index tournament">
@@ -39,5 +42,7 @@ export default function IndexResultsForm({ slug, tableId, events, current, enabl
       {state.error && <p className="ad-alert ad-alert--error" role="alert">{state.error}</p>}
       {state.notice && <p role="status">{state.notice}</p>}
     </form>
+    {live && <IndexResults slug={slug} live adminTable={tableName} refreshKey={state.saved} />}
+    </>
   );
 }

@@ -65,6 +65,47 @@ export async function useManualResults(link: ResultLink) {
   });
 }
 
+export async function acceptIndexNotification(id: string) {
+  const rows = await service<{ id: string }[]>("index_results_notifications?on_conflict=id", {
+    method: "POST", prefer: "resolution=ignore-duplicates,return=representation", body: { id },
+  });
+  return rows.length > 0;
+}
+
+export async function releaseIndexNotification(id: string) {
+  await service("index_results_notifications?id=eq." + id, { method: "DELETE" });
+}
+
+async function liveLinks() {
+  return service<(ResultLink & { events: EventRef })[]>(
+    "event_index_results?select=*,events!inner(id,slug,status)&events.status=eq.live"
+  );
+}
+
+export async function syncIndexTournament(tournamentId: string) {
+  // Re-read after a competing write and fetch fresh source data before trying again.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const links = await liveLinks();
+    const scoped = new Set(links.filter(link => link.table_id !== null).map(link => link.event_id));
+    const targets = links.filter(link => link.enabled && link.tournament_id === tournamentId &&
+      (link.table_id !== null || !scoped.has(link.event_id)));
+    if (!targets.length) return;
+
+    let snapshot: IndexSnapshot;
+    try {
+      snapshot = await indexSnapshot(tournamentId);
+    } catch (error) {
+      if (!(error instanceof IndexResultsError && error.status === 404)) throw error;
+      const paused = await Promise.all(targets.map(link => pauseIndexLink(link, link.attempt_at)));
+      if (paused.every(Boolean)) return;
+      continue;
+    }
+    const saved = await Promise.all(targets.map(link => saveIndexRefresh(link, snapshot, link.attempt_at)));
+    if (saved.every(Boolean)) return;
+  }
+  throw new Error("The results changed during sync.");
+}
+
 export async function saveIndexRefresh(link: ResultLink, snapshot: IndexSnapshot, attempt: string | null) {
   const condition = new URLSearchParams({
     id: "eq." + link.id, tournament_id: "eq." + link.tournament_id,
@@ -76,6 +117,18 @@ export async function saveIndexRefresh(link: ResultLink, snapshot: IndexSnapshot
     body: { snapshot, synced_at: new Date().toISOString() },
   });
   return saved;
+}
+
+async function pauseIndexLink(link: ResultLink, attempt: string | null) {
+  const condition = new URLSearchParams({
+    id: "eq." + link.id, tournament_id: "eq." + link.tournament_id,
+    enabled: "eq.true", attempt_at: attempt ? "eq." + attempt : "is.null",
+    synced_at: link.synced_at ? "eq." + link.synced_at : "is.null",
+  });
+  const [paused] = await service<ResultLink[]>("event_index_results?" + condition, {
+    method: "PATCH", prefer: "return=representation", body: { enabled: false },
+  });
+  return paused;
 }
 
 const canRefresh = (event: EventRef, link: ResultLink) => event.status === "live" && link.enabled && !link.snapshot?.completed;
@@ -112,14 +165,7 @@ export async function refreshIndexLink(event: EventRef, link: ResultLink) {
     return (await saveIndexRefresh(link, snapshot, claim.attempt_at)) ?? link;
   } catch (error) {
     if (error instanceof IndexResultsError && error.status === 404) {
-      const condition = new URLSearchParams({
-        id: "eq." + link.id, tournament_id: "eq." + link.tournament_id,
-        enabled: "eq.true", attempt_at: "eq." + claim.attempt_at,
-        synced_at: link.synced_at ? "eq." + link.synced_at : "is.null",
-      });
-      const [paused] = await service<ResultLink[]>("event_index_results?" + condition, {
-        method: "PATCH", prefer: "return=representation", body: { enabled: false },
-      });
+      const paused = await pauseIndexLink(link, claim.attempt_at);
       return paused ?? link;
     }
     // The public read keeps its last good snapshot; the scheduler reports the failure.
@@ -130,7 +176,7 @@ export async function refreshIndexLink(event: EventRef, link: ResultLink) {
 export async function getPublicIndexResults(slug: string): Promise<PublicIndexResults | null> {
   if (!eventSlug.test(slug) || slug.length > 180 || !process.env.SUPABASE_SECRET_KEY) return null;
   const [event] = await service<EventRef[]>("events?select=id,slug,status&slug=eq." + slug);
-  if (!event || event.status === "upcoming") return null;
+  if (!event || event.status !== "live") return null;
   const links = activeIndexLinks(await service<ResultLink[]>("event_index_results?select=id,event_id,table_id,tournament_id,enabled,snapshot,synced_at,attempt_at&event_id=eq." + event.id));
   if (!links.length) return null;
   const [tables, refreshed] = await Promise.all([
@@ -150,9 +196,9 @@ export async function getPublicIndexResults(slug: string): Promise<PublicIndexRe
 }
 
 export async function syncLiveIndexResults() {
-  const links = await service<(ResultLink & { events: EventRef })[]>(
-    "event_index_results?select=*,events!inner(id,slug,status)&events.status=eq.live"
-  );
+  const links = await liveLinks();
+  const expiry = encodeURIComponent(new Date(Date.now() - 86_400_000).toISOString());
+  await service("index_results_notifications?received_at=lt." + expiry, { method: "DELETE" }).catch(() => {});
   const scoped = new Set(links.filter(link => link.table_id !== null).map(link => link.event_id));
   const eligible = links.filter(link => link.enabled && !link.snapshot?.completed && (link.table_id !== null || !scoped.has(link.event_id)));
   const results = await Promise.allSettled(eligible.map(link => refreshIndexLink(link.events, link)));
