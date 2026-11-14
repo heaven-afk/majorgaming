@@ -3,6 +3,7 @@ import { getLeague } from "@/lib/league";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 import { Ladder } from "./Ladder";
+import IndexResults from "../events/IndexResults";
 
 /**
  * Home's Tier 1 top ten. Shows the live event while one is running, otherwise the newest
@@ -14,7 +15,8 @@ export default async function Standings() {
   const title = live ? standings.title.live : standings.title.final;
 
   return (
-    <Scene className="tile standings" id="standings" aria-labelledby="standings-title">
+    <IndexResults slug={featuredEvent.slug} live={live} compact>
+      <Scene className="tile standings" id="standings" aria-labelledby="standings-title">
       <header className="standings__head" data-rise>
         <div>
           <div className="standings__labels">
@@ -42,7 +44,8 @@ export default async function Standings() {
         </div>
       </header>
 
-      <Ladder rows={featuredEvent.tables[0].rows} live={live} limit={10} label={`${standings.label}, ${standings.season}`} />
-    </Scene>
+        <Ladder rows={featuredEvent.tables[0]?.rows ?? []} live={live} limit={10} label={`${standings.label}, ${standings.season}`} />
+      </Scene>
+    </IndexResults>
   );
 }

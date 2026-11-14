@@ -1,6 +1,6 @@
 import type { Row } from "@/lib/league";
 import { ladder } from "@/content/site";
-import { Crest } from "../about/Crest";
+import { StandingsMark } from "./StandingsMark";
 import { Odometer } from "../about/Odometer";
 
 function Move({ by }: { by?: number }) {
@@ -48,7 +48,7 @@ export function Ladder({ rows, live = false, limit, label, motion = "scroll" }: 
         {live && <Move by={r.move} />}
       </span>
       <span role="cell" className="ladder__team">
-        <Crest name={r.name} size={32} tone={i < 3 ? [0, 2, 5][i] : 4} />
+        <StandingsMark name={r.name} logo={r.logo} size={32} tone={i < 3 ? [0, 2, 5][i] : 4} />
         <span className="ladder__name">
           <span className="ladder__line">
             <a className="ladder__link" href={`/teams/${r.slug}`}>

@@ -83,6 +83,10 @@ Next.js 16 has breaking changes from earlier versions. Read the relevant guide i
 
 ## Status
 
+- **Live results branding:** Heaven Index exports team names and scores. Live standings use MGL Admin team logos for unique name matches and initials otherwise. Manual standings use the MGL logo associated with the team record. Fantasy keeps its existing Heaven Index media integration.
+
+- **Heaven Index event results — 2026-11-14:** Added a dedicated organizer-scoped API in Heaven Index and MGL event linking under Results. Saved snapshots power the linked public event tables, live homepage and Events spotlight. Manual sheets remain independent. Live visitors and the authenticated scheduler endpoint refresh the saved tables; completed snapshots stay in the archive. Deployment requires the MGL migration and matching server-only results key, documented in `docs/integrations/heaven-index-results.md`.
+
 - **Fantasy showcase portraits:** Added Father Ali, Lazy, and Maus alongside JOZZY in the example starting squad, using Heaven Index portraits and the latest tournament registrations available for their team labels. ALBOLBOZ moves to the bench. Kyzon XIII uses initials because its exact team record did not supply a usable crest.
 
 - **Fantasy showcase before launch — 2026-11-13:** The homepage and signed-out Fantasy landing use the approved Heaven Index sample assets for JOZZY and ALBOLBOZ when no market is available. The Developers crest appears on both cards, and ALBOLBOZ retains the silhouette. The example squad and its points are labelled as a preview. Media is bundled for these sample cards so they render before a Core tournament is assigned.

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import AdminShell, { AdminLoading } from "@/components/admin/AdminShell";
 import EventTabs from "@/components/admin/EventTabs";
 import ResultsPanel, { AllTiersUpload } from "@/components/admin/ResultsPanel";
+import IndexResultsPanel from "@/components/admin/IndexResultsPanel";
 import { key } from "@/lib/admin/columns";
 import { getEvent } from "@/lib/admin/events";
 import { aliasesOf, historyOf, killsOf, listEntries, peopleIndex, standingsOf, teamsIndex } from "@/lib/admin/league";
@@ -36,6 +37,9 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
     return (
       <>
         <EventTabs event={event} active="Results" />
+        <Suspense fallback={<p>Loading Heaven Index connection…</p>}>
+          <IndexResultsPanel event={event} token={admin.token} />
+        </Suspense>
         <p className="ad-empty">
           This event has no tables yet. Set its format under{" "}
           <Link className="ad-link" href={`/admin/events/${slug}`}>
@@ -83,6 +87,9 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
   return (
     <>
       <EventTabs event={event} active="Results" />
+      <Suspense fallback={<p>Loading Heaven Index connection…</p>}>
+        <IndexResultsPanel event={event} token={admin.token} />
+      </Suspense>
       <p className="ad-lede">
         Upload the standings (collation) sheet and the kill sheet {tables.length > 1 ? "for each tier " : ""}as they come in. You check every row before it saves; each upload replaces only what it covers, goes live within seconds, and can be undone.
       </p>

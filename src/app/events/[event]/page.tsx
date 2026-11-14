@@ -7,6 +7,7 @@ import EventAbout, { hasAbout } from "@/components/events/EventAbout";
 import { EventCard } from "@/components/events/EventArchive";
 import EventStandings from "@/components/events/EventStandings";
 import KillTable from "@/components/events/KillTable";
+import IndexResults from "@/components/events/IndexResults";
 import Footer from "@/components/footer/Footer";
 import { Icon } from "@/components/Icons";
 import Scene from "@/components/motion/Scene";
@@ -150,12 +151,14 @@ async function EventContent({ params }: { params: PageProps<"/events/[event]">["
         )
       )}
 
-      {event.tables.length > 0 && (
-        <>
-          <EventStandings event={event} expanded heading={many ? copy.tables.many : copy.tables.one} />
-          <KillTable event={event.name} tables={killTablesOf(event)} />
-        </>
-      )}
+      <IndexResults key={event.slug} slug={event.slug} live={live}>
+        {event.tables.length > 0 && (
+          <>
+            <EventStandings event={event} expanded heading={many ? copy.tables.many : copy.tables.one} />
+            <KillTable event={event.name} tables={killTablesOf(event)} />
+          </>
+        )}
+      </IndexResults>
 
       {(newer || older) && (
         <Scene className="ev-pager" aria-labelledby="more-events">

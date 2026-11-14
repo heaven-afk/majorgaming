@@ -46,7 +46,7 @@ export const getHome = cache(async () => {
    */
   const standings = {
     live: featuredEvent.status === "live",
-    label: `${featuredEvent.tables[0].name} standings`,
+    label: featuredEvent.tables[0] ? `${featuredEvent.tables[0].name} standings` : "Standings",
     season: featuredEvent.name,
     title: {
       final: { before: `${featuredEvent.name}’s`, accent: "top ten." },
@@ -73,7 +73,7 @@ export const getHome = cache(async () => {
   const honours = {
     label: `${latestSeason.name} honours`,
     title: { before: `${latestSeason.name}’s`, accent: "finest." },
-    lede: `The three deadliest players in ${latestSeason.tables[0].name}, by kills across the season.`,
+    lede: `The three deadliest players in ${latestSeason.tables[0]?.name ?? latestSeason.name}, by kills across the season.`,
     players: fraggers.map((p, i) => ({
       rank: i + 1,
       name: p.name,
