@@ -1,28 +1,41 @@
 import { Section } from "./Form";
 import IndexResultsForm from "./IndexResultsForm";
-import { getAdminLink } from "@/lib/index-results/store";
-import { indexCatalog, indexConfigured } from "@/lib/index-results/client";
+import { getAdminLinks } from "@/lib/index-results/store";
+import { indexCatalog, indexConfigured, IndexResultsError } from "@/lib/index-results/client";
 
-export default async function IndexResultsPanel({ event, token }: { event: { id: string; slug: string }; token: string }) {
-  const link = await getAdminLink(token, event.id).catch(() => null);
-  if (link === null) {
-    return <Section title="Heaven Index results"><p>The results link is unavailable. Check the database migration and try again.</p></Section>;
+export default async function IndexResultsPanel({ event, table, token }: { event: { id: string; slug: string }; table: { id: string; name: string }; token: string }) {
+  const links = await getAdminLinks(token, event.id).catch(() => null);
+  const title = "Heaven Index · " + table.name;
+  if (links === null) {
+    return <Section title={title}><p>The results link is unavailable. Check that the tier results migration is applied in MGL Supabase.</p></Section>;
   }
-  const events = indexConfigured() ? await indexCatalog().catch(() => null) : null;
-  const message = !indexConfigured() ? "Configure the Heaven Index connection to link a tournament."
-    : events === null ? "The Heaven Index tournament list is unavailable."
-    : events.length === 0 ? "Heaven Index has no tournaments listed under Major Gaming League yet." : undefined;
+  const link = links.find(link => link.table_id === table.id);
+  const legacy = links.some(link => link.table_id !== null) ? undefined : links.find(link => link.table_id === null && link.enabled);
+  let events: Awaited<ReturnType<typeof indexCatalog>> = [];
+  let message: string | undefined;
+  if (!indexConfigured()) {
+    message = "Set HSE_BASE_URL and MGL_RESULTS_API_KEY in MGL’s server environment.";
+  } else {
+    try {
+      events = await indexCatalog();
+      if (!events.length) message = "Heaven Index has no tournaments listed under Major Gaming League yet.";
+    } catch (error) {
+      message = error instanceof IndexResultsError ? error.message : "Heaven Index returned an invalid tournament list.";
+    }
+  }
   return (
-    <Section title="Heaven Index results" lede="Link the matching tournament to display its results. Manual spreadsheets stay saved and can be displayed again at any time.">
+    <Section title={title} lede={legacy ? "Choosing this tier’s tournament switches the event to per-tier links. Other tiers will show their saved manual sheets until linked." : "Choose the Heaven Index tournament for this table. You can switch back to the saved spreadsheet at any time."}>
       <IndexResultsForm
-        key={link?.synced_at ?? "unlinked"}
+        key={table.id + (link?.synced_at ?? "")}
         slug={event.slug}
-        events={events ?? []}
+        tableId={table.id}
+        events={events}
         current={link?.tournament_id}
         enabled={link?.enabled ?? false}
-        savedName={link?.snapshot?.event.name}
-        syncedAt={link?.synced_at}
-        completed={link?.snapshot?.completed ?? false}
+        legacy={Boolean(legacy)}
+        savedName={(link ?? legacy)?.snapshot?.event.name}
+        syncedAt={(link ?? legacy)?.synced_at}
+        completed={(link ?? legacy)?.snapshot?.completed ?? false}
         message={message}
       />
     </Section>

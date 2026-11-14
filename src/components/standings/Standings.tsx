@@ -15,7 +15,7 @@ export default async function Standings() {
   const title = live ? standings.title.live : standings.title.final;
 
   return (
-    <IndexResults slug={featuredEvent.slug} live={live} compact>
+    <IndexResults slug={featuredEvent.slug} name={featuredEvent.name} live={live} compact>
       <Scene className="tile standings" id="standings" aria-labelledby="standings-title">
       <header className="standings__head" data-rise>
         <div>

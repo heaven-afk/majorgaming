@@ -10,7 +10,7 @@ import { cookies } from "next/headers";
 import { TAGS } from "@/lib/db";
 import { checkIds } from "@/lib/admin/ids";
 import { indexSnapshot } from "@/lib/index-results/client";
-import { getAdminLink, saveIndexRefresh } from "@/lib/index-results/store";
+import { activeIndexLinks, getAdminLinks, saveIndexRefresh } from "@/lib/index-results/store";
 
 export type FormState = { error?: string; fields?: Record<string, string>; saved?: number };
 
@@ -157,18 +157,18 @@ export async function saveEvent(id: string | null, _: FormState, form: FormData)
     const current = id ? await getEvent(admin.token, String(form.get("current_slug") ?? input.slug)) : undefined;
     if (current && current.id === id && current.status !== "final" && input.status === "final") {
       // Save the last available Index result before the public live refresh stops.
-      const link = await getAdminLink(admin.token, current.id).catch(error => {
-        if (error instanceof DbError && error.status === 404) return undefined;
+      const links = await getAdminLinks(admin.token, current.id).catch(error => {
+        if (error instanceof DbError && (error.status === 404 || error.status === 400)) return [];
         throw error;
       });
-      if (link?.enabled && !link.snapshot?.completed) {
-        try {
+      try {
+        await Promise.all(activeIndexLinks(links).filter(link => !link.snapshot?.completed).map(async link => {
           const snapshot = await indexSnapshot(link.tournament_id);
           const saved = await saveIndexRefresh(link, snapshot, link.attempt_at);
-          if (!saved) return { error: "The Heaven Index results changed while saving. Please try again." };
-        } catch {
-          return { error: "Could not save the final Heaven Index results. Try again, or switch to manual results in the Results tab." };
-        }
+          if (!saved) throw new Error("Results changed during sync.");
+        }));
+      } catch {
+        return { error: "Could not save all final Heaven Index results. Try again, or switch the affected tables to manual results." };
       }
     }
     const poster = await imageFrom(form, "poster", admin);

@@ -13,9 +13,7 @@ export type PlayerResult = {
 export type ResultTable = { id: string | null; name: string; teams: TeamResult[]; players: PlayerResult[] };
 export type IndexSnapshot = { version: 1; organizer: string; event: IndexEvent; completed: boolean; tables: ResultTable[] };
 export type PublicIndexResults = {
-  snapshot: IndexSnapshot | null;
-  syncedAt: string | null;
-  refresh: boolean;
+  sources: { table: string | null; snapshot: IndexSnapshot; syncedAt: string | null; refresh: boolean }[];
   mglLogos: Record<string, string>;
 };
 

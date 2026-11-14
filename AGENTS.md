@@ -83,6 +83,8 @@ Next.js 16 has breaking changes from earlier versions. Read the relevant guide i
 
 ## Status
 
+- **Heaven Index tier links:** Each MGL results table has its own link, import, live refresh, saved snapshot and manual fallback. Existing single-table links migrate automatically. Existing event-wide links stay visible until an admin starts linking tiers. The picker distinguishes an absent feed from a rejected key. Apply the new tier migration to MGL Supabase before deploying the feature.
+
 - **Live results branding:** Heaven Index exports team names and scores. Live standings use MGL Admin team logos for unique name matches and initials otherwise. Manual standings use the MGL logo associated with the team record. Fantasy keeps its existing Heaven Index media integration.
 
 - **Heaven Index event results — 2026-11-14:** Added a dedicated organizer-scoped API in Heaven Index and MGL event linking under Results. Saved snapshots power the linked public event tables, live homepage and Events spotlight. Manual sheets remain independent. Live visitors and the authenticated scheduler endpoint refresh the saved tables; completed snapshots stay in the archive. Deployment requires the MGL migration and matching server-only results key, documented in `docs/integrations/heaven-index-results.md`.
