@@ -5,10 +5,12 @@ its standings. The picker includes past, current and upcoming tournaments whose
 organizer is Major Gaming League. Linking applies to that MGL event only.
 
 Heaven Index uses its own scoring rules and rank order. MGL displays each
-competition group separately, with team names and logos, matches, events
+competition group separately, with team names, matches, events
 (matchdays), team kills, placement and total points, and player kill rankings.
 The latest saved snapshot is stored in MGL's database. Sheet uploads are kept
 separately and can be restored to the public view with **Show manual results**.
+Team logos come from the MGL team registry. Imported rows use a logo when the
+team name uniquely matches a record in that registry.
 
 1. Deploy Heaven Index's `GET /api/v1/mgl/results` and set a dedicated
    `MGL_RESULTS_API_KEY` server variable there. This key does not grant access

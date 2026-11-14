@@ -21,6 +21,7 @@ export type Row = {
   slug: string;
   name: string;
   tag?: string;
+  logo?: string;
   placement: number;
   kills: number;
   /** Points added or taken off by the admins (penalties are negative). */
@@ -86,7 +87,7 @@ function build({ events: eventRecords, teams: teamRecords, people, entries, kill
         const team = teamMap.get(r.team);
         const bonus = r.bonus ?? 0;
         // Each event shows the name the team had then; only the pro names of players are shared.
-        return { slug: r.team, name: r.teamName ?? team?.name ?? r.team, tag: (r.teamName ? r.teamTag : team?.tag) ?? undefined, placement: r.placement, kills: r.kills, bonus, total: r.placement + r.kills + bonus, move: r.move };
+        return { slug: r.team, name: r.teamName ?? team?.name ?? r.team, tag: (r.teamName ? r.teamTag : team?.tag) ?? undefined, logo: team?.logo, placement: r.placement, kills: r.kills, bonus, total: r.placement + r.kills + bonus, move: r.move };
       })
       // Stable: squads level on points keep the order the results sheet ranked them in.
       .sort((a, b) => b.total - a.total);

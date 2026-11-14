@@ -1,6 +1,7 @@
 import "server-only";
 import { db, DbError } from "@/lib/admin/supabase";
-import { eventSlug, type IndexSnapshot, type PublicIndexResults } from "./contract";
+import { readLeague } from "@/lib/db";
+import { eventSlug, parseIndexSnapshot, type IndexSnapshot, type PublicIndexResults } from "./contract";
 import { indexSnapshot, IndexResultsError } from "./client";
 
 export type ResultLink = {
@@ -72,6 +73,27 @@ export async function saveIndexRefresh(link: ResultLink, snapshot: IndexSnapshot
 }
 
 const canRefresh = (event: EventRef, link: ResultLink) => event.status === "live" && link.enabled && !link.snapshot?.completed;
+
+async function logosFor(snapshot: IndexSnapshot | null): Promise<Record<string, string>> {
+  if (!snapshot?.tables.some(table => table.teams.length)) return {};
+  const league = await readLeague().catch(() => null);
+  if (!league) return {};
+  const normalize = (name: string) => name.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
+  const byName = new Map<string, string | null>();
+  for (const team of league.teams) {
+    const name = normalize(team.name);
+    // A duplicate name is ambiguous, even if only one record has a logo.
+    byName.set(name, byName.has(name) ? null : team.logo ?? null);
+  }
+  const logos = new Map<string, string>();
+  for (const table of snapshot.tables) {
+    for (const team of table.teams) {
+      const logo = byName.get(normalize(team.name));
+      if (logo) logos.set(team.name, logo);
+    }
+  }
+  return Object.fromEntries(logos);
+}
 export async function refreshIndexLink(event: EventRef, link: ResultLink) {
   if (!canRefresh(event, link)) return link;
   if (link.attempt_at && Date.now() - Date.parse(link.attempt_at) < 60_000) return link;
@@ -107,7 +129,8 @@ export async function getPublicIndexResults(slug: string): Promise<PublicIndexRe
   if (!link) return null;
   const current = await refreshIndexLink(event, link).catch(() => link);
   if (!current.enabled) return null;
-  return { snapshot: current.snapshot, syncedAt: current.synced_at, refresh: canRefresh(event, current) };
+  const snapshot = current.snapshot ? parseIndexSnapshot(current.snapshot, current.tournament_id) : null;
+  return { snapshot, syncedAt: current.synced_at, refresh: canRefresh(event, current), mglLogos: await logosFor(snapshot) };
 }
 
 export async function syncLiveIndexResults() {

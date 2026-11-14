@@ -1,18 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
-import type { PublicIndexResults, TeamResult } from "@/lib/index-results/contract";
-import { Crest } from "../about/Crest";
+import type { PublicIndexResults } from "@/lib/index-results/contract";
+import { StandingsMark } from "../standings/StandingsMark";
 import "./index-results.css";
-
-function TeamLogo({ row }: { row: TeamResult }) {
-  const [failed, setFailed] = useState<string>();
-  return row.logo && failed !== row.logo
-    ? <Image src={row.logo} alt="" width={28} height={28} unoptimized onError={() => setFailed(row.logo ?? undefined)} />
-    : <Crest name={row.name} size={28} tone={0} />;
-}
 
 export default function IndexResults({ slug, children, compact = false, live }: { slug: string; children?: ReactNode; compact?: boolean; live: boolean }) {
   const [shown, setShown] = useState<{ slug: string; data: PublicIndexResults | null }>();
@@ -73,7 +65,7 @@ export default function IndexResults({ slug, children, compact = false, live }: 
                 <caption>Team standings</caption>
                 <thead><tr><th scope="col">Rank</th><th scope="col">Team</th><th scope="col">Matches</th><th scope="col">Events</th><th scope="col">Team kills</th><th scope="col">Placement pts</th><th scope="col">Total pts</th></tr></thead>
                 <tbody>{(compact ? table.teams.slice(0, 10) : table.teams).map(team => (
-                  <tr key={team.id}><td>{team.rank}</td><th scope="row"><span><TeamLogo row={team} />{team.name}</span></th><td>{team.matches}</td><td>{team.events}</td><td>{team.kills}</td><td>{team.placementPoints}</td><td><strong>{team.totalPoints}</strong></td></tr>
+                  <tr key={team.id}><td>{team.rank}</td><th scope="row"><span><StandingsMark name={team.name} logo={Object.hasOwn(data.mglLogos, team.name) ? data.mglLogos[team.name] : undefined} size={28} />{team.name}</span></th><td>{team.matches}</td><td>{team.events}</td><td>{team.kills}</td><td>{team.placementPoints}</td><td><strong>{team.totalPoints}</strong></td></tr>
                 ))}</tbody>
               </table>
             </div>

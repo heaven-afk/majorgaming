@@ -4,7 +4,7 @@ export const eventSlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export type IndexEvent = { id: string; name: string; status: string; startDate: string | null };
 export type TeamResult = {
-  id: string; rank: number; name: string; logo: string | null; matches: number; events: number;
+  id: string; rank: number; name: string; matches: number; events: number;
   kills: number; placementPoints: number; totalPoints: number;
 };
 export type PlayerResult = {
@@ -12,7 +12,12 @@ export type PlayerResult = {
 };
 export type ResultTable = { id: string | null; name: string; teams: TeamResult[]; players: PlayerResult[] };
 export type IndexSnapshot = { version: 1; organizer: string; event: IndexEvent; completed: boolean; tables: ResultTable[] };
-export type PublicIndexResults = { snapshot: IndexSnapshot | null; syncedAt: string | null; refresh: boolean };
+export type PublicIndexResults = {
+  snapshot: IndexSnapshot | null;
+  syncedAt: string | null;
+  refresh: boolean;
+  mglLogos: Record<string, string>;
+};
 
 const fail = (): never => { throw new Error("Heaven Index returned invalid results."); };
 function record(value: unknown): Record<string, unknown> {
@@ -34,17 +39,6 @@ function points(value: unknown): number {
 function list<T>(value: unknown, read: (row: unknown, index: number) => T, max = 5000): T[] {
   if (!Array.isArray(value) || value.length > max) return fail();
   return value.map(read);
-}
-function image(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  if (value.startsWith("data:")) {
-    return value.length <= 200_000 && /^data:image\/(?:png|jpe?g|webp|gif|avif);base64,[A-Za-z0-9+/]+={0,2}$/.test(value) ? value : null;
-  }
-  if (value.length > 4096) return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
-  } catch { return null; }
 }
 function envelope(value: unknown) {
   const row = record(value);
@@ -81,7 +75,7 @@ export function parseIndexSnapshot(value: unknown, expectedId: string): IndexSna
         name: label(table.name),
         teams: distinct(list(table.teams, (value, i) => {
           const team = record(value);
-          return { id: id(team.id), ...ranking(team, i), logo: image(team.logo), placementPoints: points(team.placementPoints), totalPoints: points(team.totalPoints) };
+          return { id: id(team.id), ...ranking(team, i), placementPoints: points(team.placementPoints), totalPoints: points(team.totalPoints) };
         })),
         players: distinct(list(table.players, (value, i) => {
           const player = record(value);

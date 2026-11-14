@@ -6,4 +6,3 @@
 .index-results th, .index-results td { padding: .65rem .55rem; border-bottom: 1px solid currentColor; border-color: color-mix(in srgb, currentColor 16%, transparent); text-align: right; }
 .index-results th:nth-child(2) { text-align: left; }
 .index-results th span { display: inline-flex; align-items: center; gap: .55rem; }
-.index-results th img { flex: none; object-fit: contain; }
