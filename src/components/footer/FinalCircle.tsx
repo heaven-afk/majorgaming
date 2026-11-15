@@ -84,7 +84,24 @@ export default function FinalCircle({ image, circle, arrived, children }: Props)
       onUpdate: (self) => paint(self.progress),
     });
 
+    // The pin's start is measured from the page above it. Anything that changes that page's
+    // height after load (an event streaming in, "Show all", a tier tab, live results arriving)
+    // would leave the footer pinning at the old spot, over the content. So re-measure whenever
+    // the main content changes height.
+    const main = el.closest(".page")?.querySelector("main");
+    let timer = 0;
+    let height = main?.offsetHeight ?? 0;
+    const ro = new ResizeObserver(() => {
+      if (!main || main.offsetHeight === height) return;
+      height = main.offsetHeight;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => ScrollTrigger.refresh(), 120);
+    });
+    if (main) ro.observe(main);
+
     return () => {
+      ro.disconnect();
+      window.clearTimeout(timer);
       st.kill();
       delete el.dataset.armed;
       delete el.dataset.open;
