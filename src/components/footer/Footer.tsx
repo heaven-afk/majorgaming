@@ -6,12 +6,12 @@ import { Mark } from "../brand/Mark";
 import { Icon } from "../Icons";
 import Scene from "../motion/Scene";
 import BackToTop from "./BackToTop";
-import FinalCircle from "./FinalCircle";
+import FooterScene from "./FooterScene";
 
 const WORDMARK = site.name.split(" ");
 
 /**
- * The bookend to the hero: a final circle opens over the squad at daybreak with a last call to
+ * The bookend to the hero: the closing artwork with a last call to
  * register, then the links, and the full name rising out of the bottom edge.
  */
 export default async function Footer() {
@@ -21,7 +21,7 @@ export default async function Footer() {
 
   return (
     <Scene as="footer" className="footer" aria-labelledby="footer-title">
-      <FinalCircle image={scene.image} circle={scene.circle} arrived={scene.arrived}>
+      <FooterScene image={scene.image}>
         <div className="zone__top">
           <span className="zone__status" data-open={registration.open || undefined}>
             <i />
@@ -46,7 +46,7 @@ export default async function Footer() {
             )}
           </div>
         </div>
-      </FinalCircle>
+      </FooterScene>
 
       <div className="footer__links">
         {footer.columns.map((col) => (

@@ -27,7 +27,7 @@ export const getHome = cache(async () => {
     ],
     image: {
       src: "/images/about/squad.webp",
-      alt: "A four-person squad standing ready on the airfield at sunset",
+      alt: "A lone operator silhouetted before a giant shattered statue amid falling debris and embers",
       caption: "Ranked by MGL",
       sub: "Every match counts",
     },

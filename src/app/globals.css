@@ -2742,10 +2742,10 @@ body {
     padding: 28px 32px 40px;
   }
 }
-.zone__storm,
 .zone__scene {
   position: absolute;
   inset: 0;
+  z-index: -3;
 }
 /* The artwork covers the panel, cropped (never stretched) */
 .zone__art {
@@ -2755,12 +2755,11 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 43% 40%;
+  object-position: var(--focus-tall, 50% 40%);
 }
 /* Phones: the sharp artwork fills the top and melts into a soft glow of itself under the copy */
 .zone__img {
   height: var(--art);
-  object-position: 40% 100%;
   -webkit-mask-image: linear-gradient(180deg, #000 68%, transparent);
   mask-image: linear-gradient(180deg, #000 68%, transparent);
 }
@@ -2770,38 +2769,21 @@ body {
   overflow: hidden;
 }
 .zone__glow .zone__art {
-  object-position: 40% 100%;
   filter: blur(26px) saturate(1.15) brightness(0.85);
   transform: scale(1.25);
 }
 @media (min-width: 900px) {
   .zone__art {
-    object-position: 25% 50%;
+    object-position: var(--focus-wide, 50% 50%);
   }
   .zone__img {
     height: 100%;
-    object-position: 25% 50%;
     -webkit-mask-image: none;
     mask-image: none;
   }
   .zone__glow {
     display: none;
   }
-}
-.zone__storm {
-  z-index: -4;
-  filter: grayscale(0.7) brightness(0.3) contrast(1.15);
-  transform: scale(1.08);
-}
-.zone__scene {
-  z-index: -3;
-}
-.zone[data-armed] .zone__scene {
-  clip-path: circle(var(--r) at var(--x) var(--y));
-}
-.zone__img {
-  transform: scale(calc(1.14 - var(--p, 1) * 0.14));
-  transform-origin: var(--x, 50%) var(--y, 60%);
 }
 /* A scrim under the copy: the bottom on phones, the bottom right beside the squad on desktop */
 .zone__scrim {
@@ -2821,76 +2803,6 @@ body {
       linear-gradient(180deg, rgb(12 12 12 / 0.4), transparent 18%);
   }
 }
-.zone__ring,
-.zone__chip {
-  display: none;
-}
-.zone[data-armed] .zone__ring {
-  position: absolute;
-  top: var(--y);
-  left: var(--x);
-  z-index: -1;
-  display: block;
-  width: calc(var(--r) * 2);
-  height: calc(var(--r) * 2);
-  border-radius: 50%;
-  translate: -50% -50%;
-  pointer-events: none;
-  box-shadow:
-    0 0 0 1.5px rgb(249 169 64 / 0.9),
-    0 0 60px 10px rgb(239 90 40 / 0.35),
-    inset 0 0 50px 6px rgb(249 140 50 / 0.35);
-  transition: opacity 0.7s;
-}
-.zone[data-open] .zone__ring {
-  opacity: 0;
-}
-.zone[data-armed] .zone__chip {
-  position: absolute;
-  top: max(calc(var(--y) - var(--r)), 64px);
-  left: var(--x);
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 28px;
-  padding: 0 11px;
-  border-radius: 999px;
-  translate: -50% -50%;
-  background: rgb(18 18 18 / 0.72);
-  box-shadow: inset 0 0 0 1px rgb(249 169 64 / 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #ffcf8a;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition:
-    background-color 0.5s,
-    color 0.5s,
-    box-shadow 0.5s;
-}
-.zone__chip i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: pulse 1.4s ease-in-out infinite;
-}
-.zone__chip-b,
-.zone[data-open] .zone__chip-a {
-  display: none;
-}
-.zone[data-open] .zone__chip-b {
-  display: inline;
-  animation: pop 0.5s var(--ease-spring) both;
-}
-.zone[data-open] .zone__chip {
-  background: linear-gradient(180deg, #ffd07e, #f9a940);
-  box-shadow: 0 10px 24px -10px rgb(249 140 50 / 0.8);
-  color: #4a2800;
-}
-
 .zone__content {
   display: flex;
   flex: 1;

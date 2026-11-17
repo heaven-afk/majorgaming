@@ -64,8 +64,8 @@ export const hero = {
   ],
   /** Right panel. The arrival image glitches over to the return image and back. */
   images: {
-    drop: { src: heroImages.arrival.src, alt: heroImages.arrival.alt, focus: [0.62, 0.4] },
-    after: { src: heroImages.return.src, alt: "", focus: [0.5, 0.55] },
+    drop: { src: heroImages.arrival.src, alt: heroImages.arrival.alt, focus: [0.6, 0.35] },
+    after: { src: heroImages.return.src, alt: "", focus: [0.45, 0.5] },
   },
   chips: ["compete", "ranked"],
 };
@@ -236,15 +236,13 @@ export const faq = {
 export const footer = {
   title: { before: "Your squad belongs", accent: "at the top." },
   lede: "Registration runs through the MGL Discord. Join the community, follow every season and be ready when the next one opens.",
-  /** The closing scene: a circle that opens over the artwork as the page ends. */
+  /** The closing scene: full-bleed artwork behind the last call to register. */
   scene: {
     image: {
-      wide: { src: "/images/footer/final-circle-wide.webp", width: 1672, height: 941, focus: [0.24, 0.53] as const },
-      tall: { src: "/images/footer/final-circle-tall.webp", width: 1086, height: 1448, focus: [0.43, 0.67] as const },
-      alt: "Two teammates bump fists on a hilltop above a sunlit island, inside the final circle.",
+      wide: { src: "/images/footer/vault-wide.webp", width: 1700, height: 956, focus: [0.62, 0.52] as const },
+      tall: { src: "/images/footer/vault-tall.webp", width: 1086, height: 1448, focus: [0.54, 0.45] as const },
+      alt: "An operator vaults a concrete barrier as the squad pushes toward a burning stadium at sunset.",
     },
-    circle: "Final circle",
-    arrived: "You made it",
     status: { open: "Registration open", closed: "Next season soon" },
   },
   columns: [

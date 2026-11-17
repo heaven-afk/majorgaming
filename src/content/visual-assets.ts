@@ -1,7 +1,7 @@
 /** Owner-selected artwork. Original PNGs are alongside the web-ready WebP files. */
 export const heroImages = {
-  arrival: { src: "/images/hero/arrival.webp", original: "/images/hero/arrival.png", width: 1086, height: 1448, alt: "A parachutist descending toward a sunlit island, with two teammates far below." },
-  return: { src: "/images/hero/return.webp", original: "/images/hero/return.png", width: 1086, height: 1448, alt: "Four Call of Duty teammates returning together to a waiting transport plane at sunset." },
+  arrival: { src: "/images/hero/arrival.webp", original: "/images/hero/arrival.png", width: 1086, height: 1448, alt: "A parachutist dropping over a green mountain valley with snowy peaks, two teammates gliding below." },
+  return: { src: "/images/hero/return.webp", original: "/images/hero/return.png", width: 1086, height: 1448, alt: "Three operators stepping off a transport helicopter ramp beside green smoke." },
 } as const;
 
 /** Character artwork for the decorative community avatar stack; not member portraits. */
