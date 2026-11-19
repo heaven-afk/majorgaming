@@ -45,7 +45,13 @@ export const registration = { label: "Register your squad" };
 
 export const hero = {
   community: {
-    avatars: communityAvatars,
+    // MGL registry portraits; only the four small hero avatars use this selection.
+    players: [
+      { slug: "charry", zoom: 1.65, origin: "50% 30%" },
+      { slug: "fatherali", zoom: 3, origin: "50% 14%" },
+      { slug: "maisan", zoom: 1.6, origin: "50% 55%" },
+      { slug: "rusty", zoom: 2.8, origin: "50% 23%" },
+    ],
   },
   /** First line ends with the MGL mark and the italic accent; the remaining lines follow. */
   title: { first: "Africa’s", accent: "top", rest: ["CODM BR org."] },

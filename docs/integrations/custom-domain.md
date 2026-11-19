@@ -28,8 +28,10 @@ for `/admin/login`, `/teams/goat-esport`, and
 Hosted Supabase URL Configuration still requires a separate save. The dashboard
 was stuck in its shell loader on 2026-11-19, then timed out on reload. No Supabase
 management credential is connected, so its settings could not be read or changed.
-The owner was asked to save the Site URL and two exact callback URLs below.
-This application change is not proof that those hosted settings are complete.
+The owner subsequently confirmed saving the custom-domain Site URL and callback
+URLs, and removing the previous URL, on 2026-11-19. That is owner-confirmed
+completion; an independent dashboard read and real email-link acceptance have
+not been performed here. Do not ask the owner to repeat the completed save.
 
 ## Production configuration
 
