@@ -1,5 +1,9 @@
 # Heaven Index live results
 
+MGL's production webhook is
+`https://www.majorgamingleague.com/api/index-results/webhook`.
+See [custom-domain configuration](custom-domain.md) when moving existing settings.
+
 Admin → Events → Results lets staff choose a Heaven Index tournament and import
 its standings. The picker includes past, current and upcoming tournaments whose
 organizer is Major Gaming League. Each Results tier or Overall table can link

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { getHome } from "@/content/home";
-import { Crest } from "../about/Crest";
+import { StandingsMark } from "../standings/StandingsMark";
 import { Odometer } from "../about/Odometer";
 import { Mark } from "../brand/Mark";
 import { Flag } from "../Flag";
@@ -56,7 +56,7 @@ export default async function Honours() {
                 <div className="hcard__who">
                   <h3>{p.name}</h3>
                   <span className="hcard__team">
-                    <Crest name={p.team} size={22} tone={[0, 2, 5][p.rank - 1]} />
+                    <StandingsMark name={p.team} logo={p.teamLogo} size={22} tone={[0, 2, 5][p.rank - 1]} />
                     {p.team}
                     {p.country && <Flag code={p.country} className="hcard__flag" />}
                   </span>

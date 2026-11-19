@@ -4,20 +4,20 @@ import { howItWorks } from "@/content/site";
 import { Icon } from "../Icons";
 import { Ticker } from "../motion/Ticker";
 import { useStages } from "../motion/useStages";
-import { Crest } from "./Crest";
+import { StandingsMark } from "../standings/StandingsMark";
 
 /** Starting order, three matches that each lift the squad a place, then a quiet reset. */
 const HOLDS = [1500, 1500, 1500, 2800, 650];
 const d = howItWorks.demo.climb;
 
 /** Step 3 illustration: a squad climbing the standings match by match to first place. */
-export default function StepClimb() {
+export default function StepClimb({ logos = {} }: { logos?: Record<string, string | undefined> }) {
   const { ref, stage } = useStages<HTMLDivElement>(HOLDS, 3);
   const reset = stage === 4;
   const played = reset ? 0 : Math.min(stage, d.gains.length);
   const mine = d.start + d.gains.slice(0, played).reduce((a, b) => a + b, 0);
 
-  const rows = [...d.rivals.map((r) => ({ ...r, me: false })), { name: d.squad, pts: mine, me: true }];
+  const rows = [...d.rivals.map((r) => ({ ...r, me: false })), { name: d.squad, slug: d.squadSlug, pts: mine, me: true }];
   const order = [...rows].sort((a, b) => b.pts - a.pts).map((r) => r.name);
   const gain = !reset && stage > 0 ? d.gains[stage - 1] : 0;
 
@@ -33,7 +33,7 @@ export default function StepClimb() {
           return (
             <li className="board__row" key={r.name} data-me={r.me ? "" : undefined} data-top={rank === 0 ? "" : undefined} style={{ "--rank": rank } as React.CSSProperties}>
               <span className="board__pos">{rank + 1}</span>
-              <Crest name={r.name} size={22} tone={r.me ? 0 : undefined} />
+              <StandingsMark name={r.name} logo={logos[r.slug]} size={22} tone={r.me ? 0 : undefined} />
               <span className="board__name">
                 {r.name}
                 {r.me && rank === 0 && (
