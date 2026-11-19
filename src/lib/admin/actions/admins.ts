@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { siteOrigin } from "@/lib/site-url.mjs";
 import { unstable_rethrow } from "next/navigation";
 import type { FormState } from "@/components/admin/Form";
 import { adminsCopy as copy, ROLES, type AdminRole } from "@/content/admins";
@@ -62,7 +64,7 @@ export async function addAdmin(_: FormState, form: FormData): Promise<FormState>
       unstable_rethrow(err);
       return { error: err instanceof Error ? err.message : copy.results.failed };
     }
-    const made = await signUp(email, password, {}, `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.majorgamingleague.com"}/admin/login`);
+    const made = await signUp(email, password, {}, `${siteOrigin({ requestOrigin: (await headers()).get("origin") })}/admin/login`);
     if ("error" in made) {
       // An account with this email already exists: add it as it is, keeping its own password.
       if (made.status === 422 || /already/i.test(made.error)) existed = true;

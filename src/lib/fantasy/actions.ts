@@ -6,6 +6,7 @@
  */
 
 import { cookies, headers } from "next/headers";
+import { siteOrigin } from "@/lib/site-url.mjs";
 import { redirect } from "next/navigation";
 import { db, DbError, publicRpc, sendPasswordReset, signInWithPassword, signOutSession, signUp, updatePassword, userOf } from "@/lib/admin/supabase";
 import { FantasyCoreError } from "./client";
@@ -25,7 +26,7 @@ const safeNext = (next: string) => (/^\/fantasy(\/[\w-]*)*(\?[\w=&-]*)?$/.test(n
 
 async function origin() {
   const h = await headers();
-  return h.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  return siteOrigin({ requestOrigin: h.get("origin") });
 }
 
 async function nameTaken(name: string) {

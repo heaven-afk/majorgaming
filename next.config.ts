@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
+import { MGL_ORIGIN } from "./src/lib/site-url.mjs";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [{
+      // Keep existing server integrations working while their stored URLs migrate.
+      source: "/:path((?!api/|api$|\\.well-known/|_next/).*)",
+      has: [{ type: "host" as const, value: "mglwebsite\\.vercel\\.app" }],
+      destination: `${MGL_ORIGIN}/:path*`,
+      permanent: true,
+    }];
+  },
   /* config options here */
   // Lets a phone on the same Wi-Fi load the dev server. Update if the laptop's IP changes.
   allowedDevOrigins: ["192.168.0.136", "192.168.1.136"],
