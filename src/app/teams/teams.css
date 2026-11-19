@@ -423,7 +423,12 @@
 .tm-hero__crest .tm-mark {
   --s: 68px !important;
 }
+/* A true circle around the mark: as a plain inline span its box came out taller than wide (an oval) */
 .tm-hero__crest {
+  display: inline-grid;
+  place-items: center;
+  aspect-ratio: 1;
+  line-height: 0;
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.08),
     0 24px 60px -24px color-mix(in srgb, var(--tb) 70%, transparent);

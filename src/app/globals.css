@@ -1075,6 +1075,12 @@ body {
   object-fit: contain;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.24));
 }
+/* Logos that come as a solid square fill the plate instead of sitting in it as a box */
+.logo-plate[data-solid] img {
+  padding: 0;
+  object-fit: cover;
+  filter: none;
+}
 
 /* Crest */
 .crest {
@@ -3118,18 +3124,33 @@ body {
   grid-template-columns: 1fr 1fr;
   border-top: 1px solid rgb(255 255 255 / 0.07);
 }
+/* Each fact: the number on top, its label under it. Every cell has the same inner spacing, so
+   numbers and labels line up across the row and sit evenly between the dividers. */
 .ev-facts > div {
   display: flex;
   flex-direction: column-reverse;
   justify-content: flex-end;
-  gap: 4px;
-  padding: 16px 4px 2px;
+  gap: 8px;
+  min-width: 0;
+  padding: 18px 16px;
+}
+/* Phones: two columns with a divider between them and a line between the rows */
+.ev-facts > div:nth-child(odd) {
+  padding-left: 0;
+}
+.ev-facts > div:nth-child(even) {
+  border-left: 1px solid rgb(255 255 255 / 0.07);
 }
 .ev-facts > div:nth-child(n + 3) {
   border-top: 1px solid rgb(255 255 255 / 0.07);
 }
+.ev-facts > div:nth-last-child(-n + 2):nth-child(odd),
+.ev-facts > div:last-child {
+  padding-bottom: 4px;
+}
 .ev-facts dt {
   font-size: 12.5px;
+  line-height: 1.3;
   color: rgb(244 242 238 / 0.45);
 }
 .ev-facts dd {
@@ -3138,6 +3159,7 @@ body {
   gap: 10px;
   font-size: 26px;
   font-weight: 500;
+  line-height: 1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
@@ -3145,14 +3167,14 @@ body {
   .ev-facts {
     grid-template-columns: repeat(4, 1fr);
   }
-  .ev-facts > div {
-    padding: 18px 16px 2px;
+  /* One row: equal cells, a divider before each but the first */
+  .ev-facts > div,
+  .ev-facts > div:nth-child(n + 3) {
+    padding: 20px 20px 4px;
+    border-top: 0;
   }
   .ev-facts > div:first-child {
     padding-left: 0;
-  }
-  .ev-facts > div:nth-child(n + 3) {
-    border-top: 0;
   }
   .ev-facts > div + div {
     border-left: 1px solid rgb(255 255 255 / 0.07);
@@ -3626,21 +3648,24 @@ body {
 .tm-intro__crests li + li {
   margin-left: -6px;
 }
-.tm-intro__crests .crest {
+.tm-intro__crests .crest,
+.tm-intro__crests .logo-plate {
   --s: 50px !important;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.35),
     0 0 0 4px #1b1b1b;
   transition: transform 0.5s var(--ease-out);
 }
-.tm-intro__crests li:hover .crest {
+.tm-intro__crests li:hover .crest,
+.tm-intro__crests li:hover .logo-plate {
   transform: translateY(-4px);
 }
 @media (min-width: 900px) {
   .tm-intro__crests li + li {
     margin-left: -10px;
   }
-  .tm-intro__crests .crest {
+  .tm-intro__crests .crest,
+  .tm-intro__crests .logo-plate {
     --s: 76px !important;
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.35),

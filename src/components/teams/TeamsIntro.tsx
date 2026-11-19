@@ -1,12 +1,14 @@
 import { teamsPage } from "@/content/teams";
 import { getLeague } from "@/lib/league";
-import { Crest } from "../about/Crest";
+import { TeamMark } from "./TeamMark";
 import Scene from "../motion/Scene";
 
-/** The top of the Teams page: what it holds, and a quiet row of crests from the directory. */
+/** The top of the Teams page: what it holds, and a quiet row of team logos from the directory. */
 export default async function TeamsIntro() {
   const { activeEvent, activeTeams, profileOf, events } = await getLeague();
   const copy = teamsPage;
+  // Teams with a logo lead the row; initials crests only fill in when too few have one.
+  const showcase = [...activeTeams.filter((t) => t.logo), ...activeTeams.filter((t) => !t.logo)].slice(0, 6);
   const countries = new Set(activeTeams.flatMap((t) => profileOf(t.slug)!.roster.flatMap((l) => l.person.country ?? [])));
   const facts = [
     { label: copy.facts.squads, value: activeTeams.length },
@@ -29,9 +31,9 @@ export default async function TeamsIntro() {
         <p className="ev-intro__lede">{copy.lede(activeEvent.name)}</p>
       </div>
       <ul className="tm-intro__crests" aria-hidden data-rise="1">
-        {activeTeams.slice(0, 6).map((t, i) => (
+        {showcase.map((t, i) => (
           <li key={t.slug} style={{ "--i": i } as React.CSSProperties}>
-            <Crest name={t.name} size={72} />
+            <TeamMark name={t.name} logo={t.logo} size={72} />
           </li>
         ))}
       </ul>
