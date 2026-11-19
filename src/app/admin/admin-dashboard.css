@@ -170,15 +170,15 @@
   gap: 4px;
   padding: 16px;
   border-radius: 18px;
-  background: linear-gradient(180deg, #1c1c1c 0%, #181818 100%);
-  box-shadow: inset 0 0 0 1px var(--ad-line);
+  background: radial-gradient(140% 100% at 0 0, rgb(249 169 64 / 0.045), transparent 65%), linear-gradient(160deg, #232323, #191919);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), inset 0 0 0 1px var(--ad-line), 0 8px 22px -16px rgb(0 0 0 / 0.6);
 }
 .ad-stats span {
   font-size: 13px;
   color: var(--ad-muted);
 }
 .ad-stats strong {
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 500;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -292,7 +292,7 @@
   height: 100%;
   padding: 16px;
   border-radius: 18px;
-  background: linear-gradient(180deg, #1c1c1c 0%, #181818 100%);
+  background: linear-gradient(145deg, #222 0%, #191919 100%);
   box-shadow: inset 0 0 0 1px var(--ad-line);
   transition:
     box-shadow 0.2s,
@@ -300,7 +300,11 @@
 }
 .ad-actions a:hover {
   transform: translateY(-1px);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16);
+  box-shadow: inset 0 0 0 1px rgb(249 169 64 / 0.28), 0 10px 24px -18px rgb(0 0 0 / 0.65);
+}
+.ad-actions a:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 3px;
 }
 .ad-actions__icon {
   display: grid;

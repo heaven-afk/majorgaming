@@ -124,22 +124,23 @@ export const howItWorks = {
       seated: [24, 24, 24],
       /** Each loop places one squad in its tier (1-based). */
       squads: [
-        { name: "Vortex One", tier: 1 },
-        { name: "Goat Esport", tier: 2 },
-        { name: "Developers", tier: 3 },
+        { name: "Vortex One", slug: "vortex-one", tier: 1 },
+        { name: "Goat Esport", slug: "goat-esport", tier: 2 },
+        { name: "Developers", slug: "developers", tier: 3 },
       ],
     },
     climb: {
       label: "Tier 1 standings",
       squad: "Vortex One",
+      squadSlug: "vortex-one",
       start: 352,
       /** Points gained per match as the squad climbs. */
       gains: [32, 22, 21],
       rivals: [
-        { name: "Kyzon Esport", pts: 412 },
-        { name: "Goat Esport", pts: 398 },
-        { name: "Developers", pts: 371 },
-        { name: "Main Characters OG", pts: 330 },
+        { name: "Kyzon Esport", slug: "kyzon-esports", pts: 412 },
+        { name: "Goat Esport", slug: "goat-esport", pts: 398 },
+        { name: "Developers", slug: "developers", pts: 371 },
+        { name: "Main Characters OG", slug: "main-characters-og", pts: 330 },
       ],
     },
   },

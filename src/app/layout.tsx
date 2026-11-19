@@ -9,6 +9,7 @@ const sans = localFont({ src: "./fonts/InterTight-Variable.woff2", variable: "--
 const serif = localFont({ src: "./fonts/InstrumentSerif-Italic.woff2", variable: "--font-serif-face", weight: "400", style: "italic", display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.majorgamingleague.com"),
   title: "MGL · Major Gaming League",
   description: "The ranked league for Call of Duty: Mobile Battle Royale.",
   icons: { icon: "/brand/mgl-mark.svg" },

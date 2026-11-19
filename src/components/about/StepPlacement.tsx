@@ -3,7 +3,7 @@
 import { howItWorks } from "@/content/site";
 import { Icon } from "../Icons";
 import { useStages } from "../motion/useStages";
-import { Crest } from "./Crest";
+import { StandingsMark } from "../standings/StandingsMark";
 
 /** Squad waits in the queue, drops into its tier, the tier confirms, the squad clears. */
 const HOLDS = [1400, 850, 2400, 550];
@@ -11,7 +11,7 @@ const STATES = ["queue", "drop", "placed", "leave"] as const;
 const d = howItWorks.demo.placement;
 
 /** Step 2 illustration: each loop places a different squad in its designated tier. */
-export default function StepPlacement() {
+export default function StepPlacement({ logos = {} }: { logos?: Record<string, string | undefined> }) {
   const { ref, stage, cycle } = useStages<HTMLDivElement>(HOLDS, 2);
   const squad = d.squads[cycle % d.squads.length];
   const row = stage === 0 ? 0 : squad.tier;
@@ -46,7 +46,7 @@ export default function StepPlacement() {
       ))}
 
       <div className="tiers__chip" key={cycle} data-state={STATES[stage]} style={{ "--row": row } as React.CSSProperties}>
-        <Crest name={squad.name} size={24} tone={0} />
+        <StandingsMark name={squad.name} logo={logos[squad.slug]} size={24} tone={0} />
         <span className="tiers__chip-name">{squad.name}</span>
         <span className="tiers__chip-status">{stage === 0 ? <i className="tiers__spin" /> : <Icon name="check" size={13} />}</span>
       </div>

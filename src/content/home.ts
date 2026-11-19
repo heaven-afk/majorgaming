@@ -12,7 +12,7 @@ const [mantaRay, , nikto, krueger] = additionalCommunityAvatars;
 
 /** Home's data-built copy for this request. */
 export const getHome = cache(async () => {
-  const [{ events, featuredEvent, killTablesOf, latestSeason }, { stats }] = await Promise.all([getLeague(), getSettings()]);
+  const [{ events, featuredEvent, killTablesOf, latestSeason, teamBySlug }, { stats }] = await Promise.all([getLeague(), getSettings()]);
 
   const about = {
     label: "About MGL",
@@ -78,6 +78,7 @@ export const getHome = cache(async () => {
       rank: i + 1,
       name: p.name,
       team: p.team.name,
+      teamLogo: teamBySlug(p.team.slug)?.logo,
       country: p.country,
       honour: HONOURS[i],
       image: OPERATORS[i],

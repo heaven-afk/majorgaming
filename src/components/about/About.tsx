@@ -44,12 +44,18 @@ function Statement({ statement }: { statement: Awaited<ReturnType<typeof getHome
   );
 }
 
-const visuals = [<StepRegister key="r" />, <StepPlacement key="p" />, <StepClimb key="c" />];
-
 export default async function About() {
   const { about } = await getHome();
   const { image, stats } = about;
-  const [{ registration }, { discord }] = await Promise.all([getLeague(), getSettings()]);
+  const [{ registration, teamBySlug }, { discord }] = await Promise.all([getLeague(), getSettings()]);
+  const demo = howItWorks.demo;
+  const slugs = new Set([
+    ...demo.placement.squads.map(team => team.slug),
+    demo.climb.squadSlug,
+    ...demo.climb.rivals.map(team => team.slug),
+  ]);
+  const logos = Object.fromEntries([...slugs].map(slug => [slug, teamBySlug(slug)?.logo]));
+  const visuals = [<StepRegister key="r" />, <StepPlacement key="p" logos={logos} />, <StepClimb key="c" logos={logos} />];
   const join = registration.open ? registration : { label: "Join the Discord", href: discord };
 
   return (

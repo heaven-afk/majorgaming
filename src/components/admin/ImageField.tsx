@@ -49,7 +49,7 @@ export default function ImageField({ name, label, current, shape = "square", kin
   }
 
   return (
-    <div className="ad-image" data-shape={shape} data-busy={uploading ? "" : undefined}>
+    <div className="ad-image" data-kind={kind} data-shape={shape} data-busy={uploading ? "" : undefined}>
       <span className="ad-image__label">{label}</span>
       <div className="ad-image__row">
         <button type="button" className="ad-image__drop" data-empty={shown ? undefined : ""} disabled={uploading} onClick={() => file.current?.click()} aria-label={shown ? `Replace ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}>
