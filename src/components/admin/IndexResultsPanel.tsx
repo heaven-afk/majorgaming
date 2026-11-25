@@ -1,9 +1,11 @@
 import { Section } from "./Form";
 import IndexResultsForm from "./IndexResultsForm";
 import { getAdminLinks } from "@/lib/index-results/store";
+import { uncheckedTeams } from "@/lib/index-results/match";
+import { parseIndexSnapshot } from "@/lib/index-results/contract";
 import { indexCatalog, indexConfigured, IndexResultsError } from "@/lib/index-results/client";
 
-export default async function IndexResultsPanel({ event, table, token }: { event: { id: string; slug: string; status: string }; table: { id: string; name: string }; token: string }) {
+export default async function IndexResultsPanel({ event, table, token, teamIds }: { event: { id: string; slug: string; status: string }; table: { id: string; name: string }; token: string; teamIds: string[] }) {
   const links = await getAdminLinks(token, event.id).catch(() => null);
   const title = "Heaven Index · " + table.name;
   if (links === null) {
@@ -11,6 +13,12 @@ export default async function IndexResultsPanel({ event, table, token }: { event
   }
   const link = links.find(link => link.table_id === table.id);
   const legacy = links.some(link => link.table_id !== null) ? undefined : links.find(link => link.table_id === null && link.enabled);
+  let unchecked = 0;
+  if (link?.enabled && link.snapshot) {
+    try {
+      unchecked = uncheckedTeams(parseIndexSnapshot(link.snapshot, link.tournament_id), link.team_matches ?? {}, new Set(teamIds)).length;
+    } catch { /* An unreadable snapshot has no teams to check; syncing replaces it. */ }
+  }
   let events: Awaited<ReturnType<typeof indexCatalog>> = [];
   let message: string | undefined;
   if (!indexConfigured()) {
@@ -24,9 +32,9 @@ export default async function IndexResultsPanel({ event, table, token }: { event
     }
   }
   return (
-    <Section title={title} lede={legacy ? "Choosing this tier’s tournament switches the event to per-tier links. Other tiers will show their saved manual sheets until linked." : "Choose the Heaven Index tournament for this table’s live results. You can switch back to the saved spreadsheet at any time."}>
+    <Section title={title} lede={legacy ? "Choosing this tier’s tournament switches the event to per-tier links. Other tiers will show their saved manual sheets until linked." : "Choose the Heaven Index tournament for this table’s live results, then check that its teams match MGL’s before linking. You can switch back to the saved spreadsheet at any time."}>
       <IndexResultsForm
-        key={table.id + (link?.synced_at ?? "")}
+        key={table.id}
         slug={event.slug}
         tableId={table.id}
         tableName={table.name}
@@ -36,6 +44,7 @@ export default async function IndexResultsPanel({ event, table, token }: { event
         current={link?.tournament_id}
         enabled={link?.enabled ?? false}
         legacy={Boolean(legacy)}
+        unchecked={unchecked}
         savedName={(link ?? legacy)?.snapshot?.event.name}
         syncedAt={(link ?? legacy)?.synced_at}
         completed={(link ?? legacy)?.snapshot?.completed ?? false}

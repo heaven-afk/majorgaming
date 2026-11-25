@@ -1,13 +1,16 @@
 import "server-only";
 import { db, DbError } from "@/lib/admin/supabase";
 import { readLeague } from "@/lib/db";
-import { eventSlug, parseIndexSnapshot, type IndexSnapshot, type PublicIndexResults } from "./contract";
+import { eventSlug, parseIndexSnapshot, type IndexSnapshot, type MglTeamRef, type PublicIndexResults } from "./contract";
+import type { TeamMatches } from "./match";
 import { indexSnapshot, IndexResultsError } from "./client";
 
 export type ResultLink = {
   id: string; table_id: string | null;
   event_id: string; tournament_id: string; enabled: boolean;
   snapshot: IndexSnapshot | null; synced_at: string | null; attempt_at: string | null;
+  /** Missing until the team matches migration is applied, so links are read with `select=*`. */
+  team_matches?: TeamMatches;
 };
 type EventRef = { id: string; slug: string; status: "upcoming" | "live" | "final" };
 
@@ -28,6 +31,7 @@ async function service<T>(path: string, init: {method?: string; body?: unknown; 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     // Both PostgREST's missing-table response and old database schemas can occur during rollout.
+    if (body.code === "PGRST204") throw new DbError("Apply the team matches database migration first.", response.status);
     throw new DbError(body.code === "PGRST205" || body.code === "42P01" ? "Apply the live results database migration first." : "The results database request failed.", response.status);
   }
   return (response.status === 204 || response.headers.get("content-length") === "0" ? undefined : await response.json()) as T;
@@ -35,7 +39,7 @@ async function service<T>(path: string, init: {method?: string; body?: unknown; 
 
 export async function getAdminLinks(token: string, eventId: string): Promise<ResultLink[]> {
   try {
-    return await db<ResultLink[]>(token, "event_index_results?select=id,event_id,table_id,tournament_id,enabled,snapshot,synced_at,attempt_at&event_id=eq." + eventId);
+    return await db<ResultLink[]>(token, "event_index_results?select=*&event_id=eq." + eventId);
   } catch (error) {
     if (error instanceof DbError && error.status === 404) {
       throw new DbError("Apply the live results database migration first.", 404);
@@ -44,17 +48,23 @@ export async function getAdminLinks(token: string, eventId: string): Promise<Res
   }
 }
 
+/** Every match confirmed on any link, to suggest again. The newest link wins. */
+export async function confirmedMatches(token: string): Promise<TeamMatches> {
+  const links = await db<ResultLink[]>(token, "event_index_results?select=*&order=synced_at.asc.nullsfirst");
+  return Object.assign({}, ...links.map(link => link.team_matches ?? {}));
+}
+
 /** Explicit table choices take precedence over a legacy event-wide link. */
 export function activeIndexLinks(links: ResultLink[]) {
   const scoped = links.some(link => link.table_id !== null);
   return links.filter(link => link.enabled && (scoped ? link.table_id !== null : link.table_id === null));
 }
 
-export async function setIndexLink(eventId: string, tableId: string, snapshot: IndexSnapshot) {
+export async function setIndexLink(eventId: string, tableId: string, snapshot: IndexSnapshot, matches: TeamMatches) {
   const now = new Date().toISOString();
   await service("event_index_results?on_conflict=event_id,table_id", {
     method: "POST", prefer: "resolution=merge-duplicates,return=minimal",
-    body: { event_id: eventId, table_id: tableId, tournament_id: snapshot.event.id, enabled: true, snapshot, synced_at: now, attempt_at: now },
+    body: { event_id: eventId, table_id: tableId, tournament_id: snapshot.event.id, enabled: true, snapshot, team_matches: matches, synced_at: now, attempt_at: now },
   });
 }
 
@@ -133,26 +143,37 @@ async function pauseIndexLink(link: ResultLink, attempt: string | null) {
 
 const canRefresh = (event: EventRef, link: ResultLink) => event.status === "live" && link.enabled && !link.snapshot?.completed;
 
-async function logosFor(tables: IndexSnapshot["tables"]): Promise<Record<string, string>> {
-  if (!tables.some(table => table.teams.length)) return {};
-  const league = await readLeague().catch(() => null);
-  if (!league) return {};
+/** The MGL team for each Heaven Index team on a link: the confirmed match, else a unique exact name. */
+async function teamsFor(links: ResultLink[]): Promise<Map<string, Record<string, MglTeamRef>>> {
+  const ids = [...new Set(links.flatMap(link => Object.values(link.team_matches ?? {}).filter(id => id !== null)))];
+  const [matched, league] = await Promise.all([
+    ids.length
+      ? service<{ id: string; slug: string; name: string; logo_url: string | null }[]>("teams?select=id,slug,name,logo_url&id=in.(" + ids.join(",") + ")").catch(() => [])
+      : [],
+    readLeague().catch(() => null),
+  ]);
+  const byId = new Map(matched.map(({ id, slug, name, logo_url }) => [id, { slug, name, ...(logo_url ? { logo: logo_url } : {}) }]));
   const normalize = (name: string) => name.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
-  const byName = new Map<string, string | null>();
-  for (const team of league.teams) {
-    const name = normalize(team.name);
+  const byName = new Map<string, MglTeamRef | null>();
+  for (const { slug, name, logo } of league?.teams ?? []) {
+    const label = normalize(name);
     // A duplicate name is ambiguous, even if only one record has a logo.
-    byName.set(name, byName.has(name) ? null : team.logo ?? null);
+    byName.set(label, byName.has(label) ? null : { slug, name, ...(logo ? { logo } : {}) });
   }
-  const logos = new Map<string, string>();
-  for (const table of tables) {
-    for (const team of table.teams) {
-      const logo = byName.get(normalize(team.name));
-      if (logo) logos.set(team.name, logo);
+  return new Map(links.map(link => {
+    const teams: [string, MglTeamRef][] = [];
+    const matches = link.team_matches ?? {};
+    for (const { id, name } of link.snapshot?.tables.flatMap(table => table.teams) ?? []) {
+      const confirmed = Object.hasOwn(matches, id) ? matches[id] : undefined;
+      // An admin said this one has no MGL team: don't guess.
+      if (confirmed === null) continue;
+      const team = (confirmed && byId.get(confirmed)) || byName.get(normalize(name));
+      if (team) teams.push([id, team]);
     }
-  }
-  return Object.fromEntries(logos);
+    return [link.id, Object.fromEntries(teams)];
+  }));
 }
+
 export async function refreshIndexLink(event: EventRef, link: ResultLink) {
   if (!canRefresh(event, link)) return link;
   if (link.attempt_at && Date.now() - Date.parse(link.attempt_at) < 60_000) return link;
@@ -177,7 +198,7 @@ export async function getPublicIndexResults(slug: string): Promise<PublicIndexRe
   if (!eventSlug.test(slug) || slug.length > 180 || !process.env.SUPABASE_SECRET_KEY) return null;
   const [event] = await service<EventRef[]>("events?select=id,slug,status&slug=eq." + slug);
   if (!event || event.status !== "live") return null;
-  const links = activeIndexLinks(await service<ResultLink[]>("event_index_results?select=id,event_id,table_id,tournament_id,enabled,snapshot,synced_at,attempt_at&event_id=eq." + event.id));
+  const links = activeIndexLinks(await service<ResultLink[]>("event_index_results?select=*&event_id=eq." + event.id));
   if (!links.length) return null;
   const [tables, refreshed] = await Promise.all([
     service<{ id: string; name: string }[]>("event_tables?select=id,name&event_id=eq." + event.id + "&order=sort.asc"),
@@ -185,14 +206,20 @@ export async function getPublicIndexResults(slug: string): Promise<PublicIndexRe
   ]);
   const names = new Map(tables.map((table, index) => [table.id, { name: table.name, index }]));
   refreshed.sort((a, b) => (names.get(a.table_id ?? "")?.index ?? 0) - (names.get(b.table_id ?? "")?.index ?? 0));
-  const sources: PublicIndexResults["sources"] = refreshed.flatMap(link => {
+  const shown = refreshed.flatMap(link => {
     const table = link.table_id ? names.get(link.table_id)?.name : null;
     if (!link.enabled || !link.snapshot || table === undefined) return [];
     try {
-      return [{ table, snapshot: parseIndexSnapshot(link.snapshot, link.tournament_id), syncedAt: link.synced_at, refresh: canRefresh(event, link) }];
+      return [{ table, link, snapshot: parseIndexSnapshot(link.snapshot, link.tournament_id) }];
     } catch { return []; }
   });
-  return { sources, mglLogos: await logosFor(sources.flatMap(source => source.snapshot.tables)) };
+  const teams = await teamsFor(shown.map(({ link, snapshot }) => ({ ...link, snapshot })));
+  const sources: PublicIndexResults["sources"] = shown.map(({ table, link, snapshot }) => {
+    // Visitors get the results; the list of entered teams is only for the admin's check.
+    delete snapshot.registeredTeams;
+    return { table, snapshot, syncedAt: link.synced_at, refresh: canRefresh(event, link), teams: teams.get(link.id) };
+  });
+  return { sources, mglLogos: {} };
 }
 
 export async function syncLiveIndexResults() {

@@ -11,9 +11,22 @@ export type PlayerResult = {
   id: string; rank: number; name: string; team: string | null; matches: number; events: number; kills: number;
 };
 export type ResultTable = { id: string | null; name: string; teams: TeamResult[]; players: PlayerResult[] };
-export type IndexSnapshot = { version: 1; organizer: string; event: IndexEvent; completed: boolean; tables: ResultTable[] };
+/** A team entered in the tournament, whether or not it has played. Same id as in the tables. */
+export type IndexTeam = { id: string; name: string };
+export type IndexSnapshot = {
+  version: 1; organizer: string; event: IndexEvent; completed: boolean; tables: ResultTable[];
+  /** Left out by Heaven Index versions that don't send it. */
+  registeredTeams?: IndexTeam[];
+};
+/** The MGL team behind a Heaven Index team. */
+export type MglTeamRef = { slug: string; name: string; logo?: string };
 export type PublicIndexResults = {
-  sources: { table: string | null; snapshot: IndexSnapshot; syncedAt: string | null; refresh: boolean }[];
+  sources: {
+    table: string | null; snapshot: IndexSnapshot; syncedAt: string | null; refresh: boolean;
+    /** By Heaven Index team id. */
+    teams?: Record<string, MglTeamRef>;
+  }[];
+  /** Always empty: pages opened before matches existed read it and would fail without it. */
   mglLogos: Record<string, string>;
 };
 
@@ -60,12 +73,25 @@ export function parseIndexCatalog(value: unknown) {
   return distinct(list(envelope(value).events, event));
 }
 
+/** Optional, and never a reason to drop live results: anything unreadable counts as not sent. */
+function registered(value: unknown): IndexTeam[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  try {
+    return distinct(list(value, row => {
+      const team = record(row);
+      return { id: id(team.id), name: label(team.name) };
+    }));
+  } catch { return undefined; }
+}
+
 export function parseIndexSnapshot(value: unknown, expectedId: string): IndexSnapshot {
   const row = envelope(value);
   const source = event(row.event);
   if (source.id !== expectedId || typeof row.completed !== "boolean") return fail();
+  const registeredTeams = registered(row.registeredTeams);
   return {
     version: 1, organizer, event: source, completed: row.completed,
+    ...(registeredTeams ? { registeredTeams } : {}),
     tables: distinct(list(row.tables, value => {
       const table = record(value);
       return {

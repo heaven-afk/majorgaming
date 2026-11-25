@@ -104,6 +104,13 @@ export function key(s: string) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+/** Every spelling a record answers to: its name, tag or in-game name, and its old names. */
+export function keysOf(id: string, names: (string | null | undefined)[], aliases: Map<string, string>) {
+  const keys = names.filter((n): n is string => Boolean(n)).map(key).filter((k) => k.length > 1);
+  for (const [alias, target] of aliases) if (target === id) keys.push(alias);
+  return [...new Set(keys)];
+}
+
 /** Close spellings ("Ravengers" / "Revengers"): edit distance, for suggestions only. */
 export function distance(a: string, b: string) {
   if (a === b) return 0;

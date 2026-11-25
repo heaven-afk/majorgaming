@@ -4,10 +4,24 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useIndexResults } from "@/lib/index-results/use-index-results";
 import { StandingsMark } from "../standings/StandingsMark";
+import type { MglTeamRef, TeamResult } from "@/lib/index-results/contract";
 import type { KillTable as KillTableData, LeagueEvent } from "@/lib/league";
 import EventTables from "./EventTables";
 import KillTable from "./KillTable";
 import "./index-results.css";
+
+/** A matched team shows its MGL name and logo, and opens its team page. */
+function TeamName({ name, mgl }: { name: string; mgl?: MglTeamRef }) {
+  const mark = <StandingsMark name={mgl?.name ?? name} logo={mgl?.logo} size={28} />;
+  return mgl ? <Link href={"/teams/" + mgl.slug}>{mark}{mgl.name}</Link> : <span>{mark}{name}</span>;
+}
+
+/** Players carry their team's Heaven Index name: show the same name as the standings above. */
+function teamLabel(name: string | null, table: { teams: TeamResult[]; mgl: (team: TeamResult) => MglTeamRef | undefined }) {
+  if (name === null) return "—";
+  const rows = table.teams.filter(team => team.name === name);
+  return (rows.length === 1 && table.mgl(rows[0])?.name) || name;
+}
 
 export default function IndexResults({ slug, name, children, compact = false, live, manualEvent, manualKills = [], adminTable, refreshKey }: {
   slug: string; name?: string; children?: ReactNode; compact?: boolean; live: boolean;
@@ -30,6 +44,7 @@ export default function IndexResults({ slug, name, children, compact = false, li
       title: source.table && populated.length > 1 ? source.table + " · " + table.name : source.table ?? table.name,
       syncedAt: source.syncedAt,
       refresh: source.refresh,
+      mgl: (team: { id: string }) => source.teams && Object.hasOwn(source.teams, team.id) ? source.teams[team.id] : undefined,
     }));
   });
   return (
@@ -54,7 +69,7 @@ export default function IndexResults({ slug, name, children, compact = false, li
                 <caption>Team standings</caption>
                 <thead><tr><th scope="col">Rank</th><th scope="col">Team</th><th scope="col">Matches</th><th scope="col">Events</th><th scope="col">Team kills</th><th scope="col">Placement pts</th><th scope="col">Total pts</th></tr></thead>
                 <tbody>{(compact ? table.teams.slice(0, 10) : table.teams).map(team => (
-                  <tr key={team.id}><td>{team.rank}</td><th scope="row"><span><StandingsMark name={team.name} logo={Object.hasOwn(data.mglLogos, team.name) ? data.mglLogos[team.name] : undefined} size={28} />{team.name}</span></th><td>{team.matches}</td><td>{team.events}</td><td>{team.kills}</td><td>{team.placementPoints}</td><td><strong>{team.totalPoints}</strong></td></tr>
+                  <tr key={team.id}><td>{team.rank}</td><th scope="row"><TeamName name={team.name} mgl={table.mgl(team)} /></th><td>{team.matches}</td><td>{team.events}</td><td>{team.kills}</td><td>{team.placementPoints}</td><td><strong>{team.totalPoints}</strong></td></tr>
                 ))}</tbody>
               </table>
             </div>
@@ -65,7 +80,7 @@ export default function IndexResults({ slug, name, children, compact = false, li
                 <caption>Player kills</caption>
                 <thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Team</th><th scope="col">Matches</th><th scope="col">Events</th><th scope="col">Kills</th></tr></thead>
                 <tbody>{table.players.map(player => (
-                  <tr key={player.id}><td>{player.rank}</td><th scope="row">{player.name}</th><td>{player.team ?? "—"}</td><td>{player.matches}</td><td>{player.events}</td><td><strong>{player.kills}</strong></td></tr>
+                  <tr key={player.id}><td>{player.rank}</td><th scope="row">{player.name}</th><td>{teamLabel(player.team, table)}</td><td>{player.matches}</td><td>{player.events}</td><td><strong>{player.kills}</strong></td></tr>
                 ))}</tbody>
               </table>
             </div>

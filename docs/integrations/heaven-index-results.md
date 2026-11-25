@@ -14,8 +14,28 @@ competition group separately, with team names, matches, events
 (matchdays), team kills, placement and total points, and player kill rankings.
 The latest saved snapshot is stored in MGL's database. Sheet uploads are kept
 separately and can be restored to the public view with **Show manual results**.
-Team logos come from the MGL team registry. Imported rows use a logo when the
-team name uniquely matches a record in that registry.
+Matched teams show their MGL name and logo and open their MGL team page.
+
+## Team check
+
+**Check teams** fetches the chosen tournament and shows each Heaven Index team
+beside its MGL team: confirmed before, same name (or tag, or old name), close
+spelling, or no match. It also lists MGL teams registered for the table that
+the tournament doesn't have. Nothing saves until **Confirm and link**, and an
+MGL team can't be picked twice. Choices are kept by Heaven Index team ID in
+`event_index_results.team_matches` and suggested again for other tournaments.
+Teams that arrive later are counted on the card until someone checks them;
+meanwhile they match only on a unique exact name. Picking "Not an MGL team"
+turns that name match off.
+
+Teams come from `registeredTeams` (optional; request in
+`docs/handover/heaven-index-registered-teams-prompt.md`) and `tables[].teams`.
+A tournament that sends none can still be linked and checked later.
+
+`20261125150000_index_team_matches.sql` (applied 2026-11-25) must be in place before linking.
+Without it existing links keep working, but linking asks for the migration.
+
+## Setup
 
 1. Deploy Heaven Index's `GET /api/v1/mgl/results` and set a dedicated
    `MGL_RESULTS_API_KEY` server variable there. This key does not grant access
@@ -26,7 +46,7 @@ team name uniquely matches a record in that registry.
    with the same `MGL_RESULTS_API_KEY`, its existing `SUPABASE_SECRET_KEY`, and
    `HSE_BASE_URL` pointing to the Heaven Index deployment. Keep the keys server only.
 3. In MGL admin, open an event's Results tab, select a tier, choose its Heaven
-   Index tournament, and click **Link and import**. Repeat for each tier.
+   Index tournament, click **Check teams**, then **Confirm and link**. Repeat for each tier.
    Confirm the public table matches the Heaven Index standings and that an
    event from a different organizer does not appear in the picker.
 4. Mark the MGL event Live. Enable push delivery using the steps below. As a

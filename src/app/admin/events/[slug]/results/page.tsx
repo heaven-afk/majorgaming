@@ -5,17 +5,10 @@ import AdminShell, { AdminLoading } from "@/components/admin/AdminShell";
 import EventTabs from "@/components/admin/EventTabs";
 import ResultsPanel, { AllTiersUpload } from "@/components/admin/ResultsPanel";
 import IndexResultsPanel from "@/components/admin/IndexResultsPanel";
-import { key } from "@/lib/admin/columns";
+import { keysOf } from "@/lib/admin/columns";
 import { getEvent } from "@/lib/admin/events";
 import { aliasesOf, historyOf, killsOf, listEntries, peopleIndex, standingsOf, teamsIndex } from "@/lib/admin/league";
 import { requireAdmin } from "@/lib/admin/session";
-
-/** Every spelling a record answers to: its name, tag or in-game name, and its old names. */
-function keysOf(id: string, names: (string | null | undefined)[], aliases: Map<string, string>) {
-  const keys = names.filter((n): n is string => Boolean(n)).map(key).filter((k) => k.length > 1);
-  for (const [alias, target] of aliases) if (target === id) keys.push(alias);
-  return [...new Set(keys)];
-}
 
 async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]/results">) {
   const [admin, { slug }, query] = await Promise.all([requireAdmin(), params, searchParams]);
@@ -108,7 +101,7 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
 
       {/* Siblings need different keys: sharing one leaves stale copies behind on every tier switch. */}
       <Suspense key={`index-${table.id}`} fallback={<p>Loading Heaven Index connection…</p>}>
-        <IndexResultsPanel event={event} table={table} token={admin.token} />
+        <IndexResultsPanel event={event} table={table} token={admin.token} teamIds={uploadTeams.map((t) => t.id)} />
       </Suspense>
       <ResultsPanel
         key={`sheets-${table.id}`}
