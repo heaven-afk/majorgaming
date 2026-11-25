@@ -106,11 +106,12 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
         </nav>
       )}
 
-      <Suspense key={table.id} fallback={<p>Loading Heaven Index connection…</p>}>
+      {/* Siblings need different keys: sharing one leaves stale copies behind on every tier switch. */}
+      <Suspense key={`index-${table.id}`} fallback={<p>Loading Heaven Index connection…</p>}>
         <IndexResultsPanel event={event} table={table} token={admin.token} />
       </Suspense>
       <ResultsPanel
-        key={table.id}
+        key={`sheets-${table.id}`}
         eventId={event.id}
         tables={tables}
         table={table}

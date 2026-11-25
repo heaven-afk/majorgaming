@@ -3,7 +3,7 @@ import { fantasyCards } from "./fantasy-cards";
 
 // Each section shows its own characters, so the same four faces don't repeat down the page.
 const [farah, ghost] = communityAvatars;
-const [mantaRay, urbanTracker, nikto, krueger] = additionalCommunityAvatars;
+const [, urbanTracker, nikto] = additionalCommunityAvatars;
 
 /**
  * All copy, links and images for the site. SAMPLE content: replace with real MGL details.

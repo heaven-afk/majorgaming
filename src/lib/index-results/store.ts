@@ -58,7 +58,7 @@ export async function setIndexLink(eventId: string, tableId: string, snapshot: I
   });
 }
 
-export async function useManualResults(link: ResultLink) {
+export async function switchToManualResults(link: ResultLink) {
   await service("event_index_results?id=eq." + link.id, {
     method: "PATCH", prefer: "return=minimal",
     body: { enabled: false, attempt_at: null },

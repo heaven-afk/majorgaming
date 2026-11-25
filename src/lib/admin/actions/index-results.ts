@@ -5,7 +5,7 @@ import { requireAdmin } from "../session";
 import { getEvent } from "../events";
 import { indexSnapshot, IndexResultsError } from "@/lib/index-results/client";
 import { eventSlug, indexId } from "@/lib/index-results/contract";
-import { getAdminLinks, saveIndexRefresh, setIndexLink, useManualResults } from "@/lib/index-results/store";
+import { getAdminLinks, saveIndexRefresh, setIndexLink, switchToManualResults } from "@/lib/index-results/store";
 import { DbError } from "../supabase";
 import type { FormState } from "@/components/admin/Form";
 
@@ -20,12 +20,12 @@ export async function updateIndexResults(slug: string, tableId: string, _previou
     const links = await getAdminLinks(admin.token, event.id);
     const existing = links.find(link => link.table_id === tableId);
     if (action === "manual") {
-      if (existing?.enabled) await useManualResults(existing);
+      if (existing?.enabled) await switchToManualResults(existing);
       return { saved: Date.now(), notice: "Manual results are now displayed for this table." };
     }
     if (action === "manual-legacy") {
       const legacy = links.find(link => link.table_id === null);
-      if (legacy?.enabled) await useManualResults(legacy);
+      if (legacy?.enabled) await switchToManualResults(legacy);
       return { saved: Date.now(), notice: "Manual results are now displayed." };
     }
     if (action !== "link" && action !== "sync") return { error: "Choose a results action." };
