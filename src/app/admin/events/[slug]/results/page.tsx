@@ -3,18 +3,20 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import AdminShell, { AdminLoading } from "@/components/admin/AdminShell";
 import EventTabs from "@/components/admin/EventTabs";
+import ResultsSource from "@/components/admin/ResultsSource";
 import ResultsPanel, { AllTiersUpload } from "@/components/admin/ResultsPanel";
 import IndexResultsPanel from "@/components/admin/IndexResultsPanel";
 import { keysOf } from "@/lib/admin/columns";
 import { getEvent } from "@/lib/admin/events";
 import { aliasesOf, historyOf, killsOf, listEntries, peopleIndex, standingsOf, teamsIndex } from "@/lib/admin/league";
 import { requireAdmin } from "@/lib/admin/session";
+import { activeIndexLinks, getAdminLinks } from "@/lib/index-results/store";
 
 async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]/results">) {
   const [admin, { slug }, query] = await Promise.all([requireAdmin(), params, searchParams]);
   const event = await getEvent(admin.token, slug);
   if (!event) notFound();
-  const [entries, teams, people, teamAliases, personAliases, standings, kills, history] = await Promise.all([
+  const [entries, teams, people, teamAliases, personAliases, standings, kills, history, links] = await Promise.all([
     listEntries(admin.token, event.id),
     teamsIndex(admin.token),
     peopleIndex(admin.token),
@@ -23,6 +25,7 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
     standingsOf(admin.token, event.id),
     killsOf(admin.token, event.id),
     historyOf(admin.token, event.id),
+    getAdminLinks(admin.token, event.id).catch(() => null),
   ]);
 
   const tables = event.event_tables.map((t) => ({ id: t.id, name: t.name, tier: t.tier }));
@@ -72,26 +75,26 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
   // Kill versions from an all-tiers upload (no tier) show on every tab: putting one back restores every tier.
   const versions = history.rows.filter((v) => (v.kind === "standings" ? v.table_id === table.id : v.tier === table.tier || v.tier === null)).slice(0, 10);
 
+  // The site uses live results only while the event is live; a finished event shows its sheets.
+  const active = activeIndexLinks(links ?? []);
+  const linkOf = (id: string) => active.find((l) => l.table_id === id || l.table_id === null);
+  const link = linkOf(table.id);
+  const used = link && event.status !== "final" ? "live" : "sheets";
+  const uploaded = (id: string) => standings.some((s) => s.table_id === id);
   const squadsIn = (tier: number | null) => (tier === null ? entries.length : entries.filter((e) => e.tier === tier).length);
 
   return (
     <>
       <EventTabs event={event} active="Results" />
-      <p className="ad-lede">
-        Upload the standings (collation) sheet and the kill sheet {tables.length > 1 ? "for each tier " : ""}as they come in. You check every row before it saves; each upload replaces only what it covers, goes live within seconds, and can be undone.
-      </p>
-
-      {tables.length > 1 && <AllTiersUpload eventId={event.id} tables={tables} entries={uploadEntries} teams={uploadTeams} people={uploadPeople} />}
-
       {tables.length > 1 && (
         <nav className="ad-tiers" aria-label="Tables">
           {tables.map((t, i) => {
-            const done = standings.some((s) => s.table_id === t.id);
+            const state = event.status !== "final" && linkOf(t.id) ? "Live results" : uploaded(t.id) ? "Sheet uploaded" : "No results yet";
             return (
               <Link key={t.id} href={`/admin/events/${slug}/results?tab=${i + 1}`} aria-current={i === index ? "page" : undefined} scroll={false}>
                 <strong>{t.name}</strong>
                 <small>
-                  {squadsIn(t.tier)} teams · {done ? "uploaded" : "no results yet"}
+                  {squadsIn(t.tier)} teams · {state}
                 </small>
               </Link>
             );
@@ -99,22 +102,37 @@ async function Results({ params, searchParams }: PageProps<"/admin/events/[slug]
         </nav>
       )}
 
-      {/* Siblings need different keys: sharing one leaves stale copies behind on every tier switch. */}
-      <Suspense key={`index-${table.id}`} fallback={<p>Loading Heaven Index connection…</p>}>
-        <IndexResultsPanel event={event} table={table} token={admin.token} teamIds={uploadTeams.map((t) => t.id)} />
-      </Suspense>
-      <ResultsPanel
-        key={`sheets-${table.id}`}
-        eventId={event.id}
-        tables={tables}
-        table={table}
-        entries={uploadEntries}
-        teams={uploadTeams}
-        people={uploadPeople}
-        standings={tableRows}
-        kills={killRows}
-        versions={versions}
-        undoReady={history.ready}
+      <ResultsSource
+        key={table.id}
+        id={`source-${table.id}`}
+        used={used}
+        badge={event.status === "upcoming" ? "Chosen" : "On the site"}
+        notes={{
+          live: link ? link.snapshot?.event.name ?? "Connected" : "Not connected",
+          sheets: tableRows.length ? `${tableRows.length} teams uploaded` : killRows.length ? `${killRows.length} players uploaded` : "Nothing uploaded",
+        }}
+        live={
+          <Suspense fallback={<div className="ad-card ad-feed__loading" aria-busy="true">Loading live results…</div>}>
+            <IndexResultsPanel event={event} table={table} links={links} teamIds={uploadTeams.map((t) => t.id)} />
+          </Suspense>
+        }
+        sheets={
+          <>
+            <ResultsPanel
+              eventId={event.id}
+              tables={tables}
+              table={table}
+              entries={uploadEntries}
+              teams={uploadTeams}
+              people={uploadPeople}
+              standings={tableRows}
+              kills={killRows}
+              versions={versions}
+              undoReady={history.ready}
+            />
+            {tables.length > 1 && <AllTiersUpload eventId={event.id} tables={tables} entries={uploadEntries} teams={uploadTeams} people={uploadPeople} />}
+          </>
+        }
       />
     </>
   );

@@ -313,6 +313,23 @@ export const eventsPage = {
     showAll: (n: number) => `Show all ${n} squads`,
     showLess: "Show top ten",
   },
+  /** Standings that fill in by themselves while an event is running. */
+  live: {
+    label: "Standings",
+    status: "Live",
+    title: "standings",
+    full: "Full results",
+    teams: (n: number) => `${n} ${n === 1 ? "team" : "teams"}`,
+    /** Before the first result: the entered teams show with no points. */
+    waiting: "No matches played yet",
+    empty: "Teams and points will show here once the event begins.",
+    others: "Other standings",
+    /** Read out in place of the dash. */
+    none: "None yet",
+    small: (placement: number, kills: number) => `${placement} place · ${kills} ${kills === 1 ? "kill" : "kills"}`,
+    columns: { team: "Team", matches: "Matches", events: "Events", kills: "Kills", placement: "Placement pts", total: "Total" },
+    players: "Player kills",
+  },
   archive: {
     label: "Archive",
     title: { before: "Past", accent: "events." },

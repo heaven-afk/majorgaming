@@ -2,7 +2,7 @@ import "server-only";
 import { db, DbError } from "@/lib/admin/supabase";
 import { readLeague } from "@/lib/db";
 import { eventSlug, parseIndexSnapshot, type IndexSnapshot, type MglTeamRef, type PublicIndexResults } from "./contract";
-import type { TeamMatches } from "./match";
+import { teamsIn, type TeamMatches } from "./match";
 import { indexSnapshot, IndexResultsError } from "./client";
 
 export type ResultLink = {
@@ -163,7 +163,7 @@ async function teamsFor(links: ResultLink[]): Promise<Map<string, Record<string,
   return new Map(links.map(link => {
     const teams: [string, MglTeamRef][] = [];
     const matches = link.team_matches ?? {};
-    for (const { id, name } of link.snapshot?.tables.flatMap(table => table.teams) ?? []) {
+    for (const { id, name } of link.snapshot ? teamsIn(link.snapshot) : []) {
       const confirmed = Object.hasOwn(matches, id) ? matches[id] : undefined;
       // An admin said this one has no MGL team: don't guess.
       if (confirmed === null) continue;
@@ -215,8 +215,8 @@ export async function getPublicIndexResults(slug: string): Promise<PublicIndexRe
   });
   const teams = await teamsFor(shown.map(({ link, snapshot }) => ({ ...link, snapshot })));
   const sources: PublicIndexResults["sources"] = shown.map(({ table, link, snapshot }) => {
-    // Visitors get the results; the list of entered teams is only for the admin's check.
-    delete snapshot.registeredTeams;
+    // Entered teams fill the table until they have results; a finished event only needs the results.
+    if (snapshot.completed) delete snapshot.registeredTeams;
     return { table, snapshot, syncedAt: link.synced_at, refresh: canRefresh(event, link), teams: teams.get(link.id) };
   });
   return { sources, mglLogos: {} };

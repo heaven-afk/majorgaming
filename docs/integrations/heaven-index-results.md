@@ -13,8 +13,17 @@ Heaven Index uses its own scoring rules and rank order. MGL displays each
 competition group separately, with team names, matches, events
 (matchdays), team kills, placement and total points, and player kill rankings.
 The latest saved snapshot is stored in MGL's database. Sheet uploads are kept
-separately and can be restored to the public view with **Show manual results**.
+separately and can be restored to the public view with **Use spreadsheets**.
 Matched teams show their MGL name and logo and open their MGL team page.
+
+## Public standings
+
+Visitors see the site's own standings table (`LiveLadder`). Before any results it
+lists the entered teams (`registeredTeams`) with dashes and "No matches played
+yet"; in an overall table, teams still to play stay below the ranked ones. Groups
+are never guessed, and completed events show results only. The Live tag appears
+once a table has results. The feed's name and update time show only in the admin.
+Which teams show is decided in `src/lib/index-results/standings.ts`.
 
 ## Team check
 

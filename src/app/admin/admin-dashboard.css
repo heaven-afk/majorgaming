@@ -495,7 +495,7 @@
 .ad-results {
   display: grid;
 }
-.ad-results > .ad-card:first-of-type {
+.ad-results > .ad-card:first-child {
   margin-top: 0;
 }
 .ad-standings {

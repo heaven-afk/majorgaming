@@ -14,6 +14,7 @@ registerHooks({
 });
 const { checkTeams, parseMatches, teamsIn, uncheckedTeams } = await import("../src/lib/index-results/match.ts");
 const { parseIndexSnapshot } = await import("../src/lib/index-results/contract.ts");
+const { liveTables } = await import("../src/lib/index-results/standings.ts");
 
 const key = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 const mgl = (id, name, { here = true, also = [] } = {}) => ({ id, name, here, keys: [key(name), ...also.map(key)] });
@@ -85,4 +86,22 @@ test("only usable matches are accepted from the browser", () => {
 test("teams nobody has checked, or whose MGL team is gone, are counted", () => {
   const s = parseIndexSnapshot(payload({ registeredTeams: ["a", "b", "c", "d"].map((id) => ({ id, name: id })) }), "t1");
   assert.deepEqual(uncheckedTeams(s, { a: A, b: null, c: B }, new Set([A])).map((t) => t.id), ["c", "d"]);
+});
+const entered = [{ id: "a", name: "Alpha" }, { id: "b", name: "Beta" }, { id: "c", name: "Gamma" }];
+const table = (id, teams, players = []) => ({ id, name: "Group " + id, teams, players });
+const show = (extra, players) => liveTables(parseIndexSnapshot(payload({ registeredTeams: entered, ...extra }), "t1"), players)
+  .map((t) => [t.teams.map((x) => x.id), t.waiting.map((x) => x.id)]);
+test("shows the entered teams before any results, even if empty tables are sent", () => {
+  assert.deepEqual(show({}), [[[], ["a", "b", "c"]]]);
+  assert.deepEqual(show({ tables: [table("g1", []), table("g2", [])] }), [[[], ["a", "b", "c"]]]);
+  assert.deepEqual(show({ registeredTeams: undefined }), [[[], []]]);
+});
+test("teams still to play follow the ranked ones in an overall table, once each", () => {
+  assert.deepEqual(show({ tables: [table(null, [row("b", "Beta")])] }), [[["b"], ["a", "c"]]]);
+});
+test("never guesses a group, and a finished event only shows results", () => {
+  assert.deepEqual(show({ tables: [table("g1", [row("a", "Alpha")]), table("g2", [])] }), [[["a"], []]]);
+  assert.deepEqual(show({ tables: [table("g1", [row("a", "Alpha")])] }), [[["a"], []]]);
+  assert.deepEqual(show({ completed: true, tables: [table(null, [row("a", "Alpha")])] }), [[["a"], []]]);
+  assert.deepEqual(show({ completed: true }), [[[], []]]);
 });

@@ -11,6 +11,18 @@ export type PanelStanding = { squad: string; slug: string; placement: number; ki
 export type PanelKill = { player: string; squad: string; kills: number; matches: number | null; group: string | null };
 export type PanelVersion = { id: string; kind: "standings" | "kills"; tier: number | null; summary: string | null; created_at: string };
 
+const TOP = 10;
+/** Long tables start with their top ten. */
+function More({ total, all, onToggle }: { total: number; all: boolean; onToggle: () => void }) {
+  if (total <= TOP) return null;
+  return (
+    <button type="button" className="ad-card__more" aria-expanded={all} onClick={onToggle}>
+      {all ? "Show top ten" : `Show all ${total}`}
+      <Icon name="chevron" size={14} />
+    </button>
+  );
+}
+
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 /**
@@ -23,8 +35,8 @@ export function AllTiersUpload({ eventId, tables, entries, teams, people }: { ev
     <section className="ad-card ad-alltiers">
       <header className="ad-card__head">
         <div>
-          <h2>Have one sheet with every tier?</h2>
-          <p>Upload it here instead of tier by tier: a tab per tier, or one list with a Tier column. Each team&apos;s row goes to its own tier.</p>
+          <h2>One sheet with every tier?</h2>
+          <p>Upload it here. A tab per tier, or one list with a Tier column: each row goes to its own tier.</p>
         </div>
         <div className="ad-card__actions">
           <button type="button" className="ad-btn ad-btn--quiet" onClick={() => setOpen(open === "standings" ? null : "standings")} aria-expanded={open === "standings"}>
@@ -74,6 +86,7 @@ export default function ResultsPanel({
   const [open, setOpen] = useState<"standings" | "kills" | null>(null);
   const [message, setMessage] = useState<SaveResult>({});
   const [busy, start] = useTransition();
+  const [all, setAll] = useState({ standings: false, kills: false });
   const router = useRouter();
   const groups = kills.some((k) => k.group);
   const lastStandings = versions.find((v) => v.kind === "standings");
@@ -102,8 +115,8 @@ export default function ResultsPanel({
       <section className="ad-card">
         <header className="ad-card__head">
           <div>
-            <h2>{table.name} standings</h2>
-            <p>{standings.length ? `${standings.length} teams, ranked by total points` : "Nothing uploaded yet. Comes from the collation sheet."}</p>
+            <h2>Standings</h2>
+            <p>{standings.length ? `${standings.length} teams, ranked by total points` : "From the collation sheet"}</p>
           </div>
           <div className="ad-card__actions">
             {lastStandings && (
@@ -134,7 +147,7 @@ export default function ResultsPanel({
                 </tr>
               </thead>
               <tbody>
-                {standings.map((s, i) => (
+                {(all.standings ? standings : standings.slice(0, TOP)).map((s, i) => (
                   <tr key={s.slug}>
                     <td className="num ad-standings__rank">{i + 1}</td>
                     <td>
@@ -153,6 +166,7 @@ export default function ResultsPanel({
         ) : (
           open !== "standings" && <p className="ad-card__empty">Upload the collation sheet for {table.name}. Any layout works: you&apos;ll check every row before anything is saved. Points are taken from the sheet as they are.</p>
         )}
+        <More total={standings.length} all={all.standings} onToggle={() => setAll((a) => ({ ...a, standings: !a.standings }))} />
         {standings.length > 0 && (
           <button type="button" className="ad-card__clear" disabled={busy} onClick={() => run(() => clearTable(eventId, table.id, table.tier), `Empty the ${table.name} standings? You can undo it.`)}>
             Clear this table
@@ -164,8 +178,8 @@ export default function ResultsPanel({
       <section className="ad-card">
         <header className="ad-card__head">
           <div>
-            <h2>{table.name} kill table</h2>
-            <p>{kills.length ? `${kills.length} players${kills[0] ? ` · most kills ${kills[0].kills}` : ""}` : "Nothing uploaded yet. Comes from the kill sheet."}</p>
+            <h2>Kill table</h2>
+            <p>{kills.length ? `${kills.length} players${kills[0] ? ` · most kills ${kills[0].kills}` : ""}` : "From the kill sheet"}</p>
           </div>
           <div className="ad-card__actions">
             {lastKills && (
@@ -196,7 +210,7 @@ export default function ResultsPanel({
                 </tr>
               </thead>
               <tbody>
-                {kills.map((k, i) => (
+                {(all.kills ? kills : kills.slice(0, TOP)).map((k, i) => (
                   <tr key={`${k.player}-${i}`}>
                     <td className="num ad-standings__rank">{i + 1}</td>
                     <td>
@@ -216,6 +230,7 @@ export default function ResultsPanel({
         ) : (
           open !== "kills" && <p className="ad-card__empty">Upload the kill sheet for {table.name}: player, team and kills, in any order. Players missing from their team&apos;s roster are added to it, and the preview shows who moves before you save.</p>
         )}
+        <More total={kills.length} all={all.kills} onToggle={() => setAll((a) => ({ ...a, kills: !a.kills }))} />
       </section>
 
       {/* Versions ----------------------------------------------------------------------- */}

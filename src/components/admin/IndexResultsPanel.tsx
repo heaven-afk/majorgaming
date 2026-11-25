@@ -1,22 +1,32 @@
-import { Section } from "./Form";
 import IndexResultsForm from "./IndexResultsForm";
-import { getAdminLinks } from "@/lib/index-results/store";
-import { uncheckedTeams } from "@/lib/index-results/match";
+import type { ResultLink } from "@/lib/index-results/store";
+import { teamsIn, uncheckedTeams } from "@/lib/index-results/match";
 import { parseIndexSnapshot } from "@/lib/index-results/contract";
 import { indexCatalog, indexConfigured, IndexResultsError } from "@/lib/index-results/client";
 
-export default async function IndexResultsPanel({ event, table, token, teamIds }: { event: { id: string; slug: string; status: string }; table: { id: string; name: string }; token: string; teamIds: string[] }) {
-  const links = await getAdminLinks(token, event.id).catch(() => null);
-  const title = "Heaven Index · " + table.name;
+/** One table's live results: its link, how its teams match, and the tournaments it could use. */
+export default async function IndexResultsPanel({ event, table, links, teamIds }: {
+  event: { slug: string; status: string }; table: { id: string; name: string };
+  /** Every link on the event; null when they can't be read. */
+  links: ResultLink[] | null; teamIds: string[];
+}) {
   if (links === null) {
-    return <Section title={title}><p>The results link is unavailable. Check that the tier results migration is applied in MGL Supabase.</p></Section>;
+    return <section className="ad-card"><p className="ad-alert ad-alert--error">Live results are unavailable. Check that the tier results migration is applied in MGL Supabase.</p></section>;
   }
   const link = links.find(link => link.table_id === table.id);
   const legacy = links.some(link => link.table_id !== null) ? undefined : links.find(link => link.table_id === null && link.enabled);
-  let unchecked = 0;
-  if (link?.enabled && link.snapshot) {
+  let teams = { sent: 0, matched: 0, unchecked: 0 };
+  if (link?.snapshot) {
     try {
-      unchecked = uncheckedTeams(parseIndexSnapshot(link.snapshot, link.tournament_id), link.team_matches ?? {}, new Set(teamIds)).length;
+      const snapshot = parseIndexSnapshot(link.snapshot, link.tournament_id);
+      const matches = link.team_matches ?? {};
+      const known = new Set(teamIds);
+      const sent = teamsIn(snapshot);
+      teams = {
+        sent: sent.length,
+        matched: sent.filter(({ id }) => Object.hasOwn(matches, id) && matches[id] !== null && known.has(matches[id])).length,
+        unchecked: uncheckedTeams(snapshot, matches, known).length,
+      };
     } catch { /* An unreadable snapshot has no teams to check; syncing replaces it. */ }
   }
   let events: Awaited<ReturnType<typeof indexCatalog>> = [];
@@ -31,25 +41,23 @@ export default async function IndexResultsPanel({ event, table, token, teamIds }
       message = error instanceof IndexResultsError ? error.message : "Heaven Index returned an invalid tournament list.";
     }
   }
+  const saved = (link ?? legacy)?.snapshot;
   return (
-    <Section title={title} lede={legacy ? "Choosing this tier’s tournament switches the event to per-tier links. Other tiers will show their saved manual sheets until linked." : "Choose the Heaven Index tournament for this table’s live results, then check that its teams match MGL’s before linking. You can switch back to the saved spreadsheet at any time."}>
-      <IndexResultsForm
-        key={table.id}
-        slug={event.slug}
-        tableId={table.id}
-        tableName={table.name}
-        live={event.status === "live"}
-        upcoming={event.status === "upcoming"}
-        events={events}
-        current={link?.tournament_id}
-        enabled={link?.enabled ?? false}
-        legacy={Boolean(legacy)}
-        unchecked={unchecked}
-        savedName={(link ?? legacy)?.snapshot?.event.name}
-        syncedAt={(link ?? legacy)?.synced_at}
-        completed={(link ?? legacy)?.snapshot?.completed ?? false}
-        message={message}
-      />
-    </Section>
+    <IndexResultsForm
+      key={table.id}
+      slug={event.slug}
+      tableId={table.id}
+      tableName={table.name}
+      status={event.status}
+      events={events}
+      current={link?.tournament_id}
+      enabled={link?.enabled ?? false}
+      legacy={Boolean(legacy)}
+      teams={teams}
+      savedName={saved?.event.name}
+      savedStatus={saved?.completed ? "Final" : saved?.event.status}
+      syncedAt={(link ?? legacy)?.synced_at}
+      message={message}
+    />
   );
 }

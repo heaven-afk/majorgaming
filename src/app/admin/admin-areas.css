@@ -1184,45 +1184,363 @@
   align-items: start;
 }
 
-/* Linking Heaven Index: its teams beside MGL's, checked before anything saves */
-.ad-index,
-.ad-check {
+/* Results: live results or spreadsheets, as two tabs ------------------------------------------- */
+
+.ad-source {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
-.ad-check {
+.ad-source__tabs {
+  display: grid;
+  gap: 6px;
+}
+.ad-source__tabs button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 12px 12px;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.025);
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+  color: var(--ad-muted);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s,
+    color 0.2s;
+}
+.ad-source__tabs button:hover {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+  color: var(--color-text);
+}
+.ad-source__tabs button:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 2px;
+}
+.ad-source__tabs button[aria-selected="true"] {
+  background: linear-gradient(180deg, #2b2b2b 0%, #222 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+  color: var(--color-text);
+}
+.ad-source__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--ad-soft);
+}
+.ad-source__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ad-source__text strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.ad-source__text small {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--ad-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ad-source__badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(127 212 155 / 0.12);
+  color: var(--ad-ok);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.ad-card__more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--ad-soft);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ad-card__more:hover {
+  background: rgb(255 255 255 / 0.09);
+}
+.ad-card__more svg {
+  rotate: 90deg;
+}
+.ad-card__more[aria-expanded="true"] svg {
+  rotate: -90deg;
+}
+@media (min-width: 700px) {
+  .ad-source__tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Live results: the connected tournament, or connecting one */
+.ad-feed {
   grid-template-columns: minmax(0, 1fr);
+}
+.ad-feed .ad-alert {
+  margin: 0;
+}
+.ad-feed__loading {
+  color: var(--ad-muted);
+}
+.ad-feed__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.ad-feed__teams {
+  display: grid;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #141414;
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-feed__teams[data-tone="amber"] {
+  box-shadow: inset 0 0 0 1px rgb(249 169 64 / 0.3);
+}
+.ad-feed__teams dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ad-feed__teams dl > div {
+  padding: 14px 16px;
+}
+.ad-feed__teams dl > div + div {
+  border-left: 1px solid var(--ad-line);
+}
+.ad-feed__teams dt {
+  font-size: 12.5px;
+  color: var(--ad-muted);
+}
+.ad-feed__teams dd {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ad-feed__teams div[data-tone="amber"] dd {
+  color: var(--color-amber);
+}
+.ad-feed__check,
+.ad-feed__off {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+.ad-feed__check {
+  padding: 12px 12px 12px 16px;
+  border-top: 1px solid var(--ad-line);
+}
+.ad-feed__check p,
+.ad-feed__off p {
+  flex: 1 1 14rem;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ad-muted);
+}
+.ad-feed__pick {
+  display: grid;
+  gap: 10px;
+}
+.ad-feed__pick .ad-btn {
+  height: 44px;
+}
+.ad-feed__change {
+  display: grid;
+  gap: 18px;
+}
+.ad-feed__off:not(:first-child) {
   padding-top: 16px;
   border-top: 1px solid var(--ad-line);
 }
-.ad-index {
+.ad-feed__steps {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ad-muted);
+  counter-reset: feed;
+}
+.ad-feed__steps li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  counter-increment: feed;
+}
+.ad-feed__steps li::before {
+  content: counter(feed);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ad-soft);
+  font-size: 12.5px;
+  color: var(--color-text);
+}
+.ad-feed__preview .index-results {
+  margin-top: 4px;
+}
+@media (min-width: 700px) {
+  .ad-feed__pick {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+  .ad-feed__steps {
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: 22px;
+  }
+}
+
+/* Checking teams: each Heaven Index team beside its MGL team */
+.ad-match {
+  display: grid;
   grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
 }
-.ad-check h3 {
-  font-size: 17px;
-  font-weight: 500;
-  overflow-wrap: anywhere;
+.ad-match h3 {
+  margin: 0 2px 8px;
+  font-size: 14px;
+  font-weight: 600;
 }
-.ad-check .ad-preview td {
-  overflow-wrap: anywhere;
+.ad-match h3 small {
+  margin-left: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ad-muted);
 }
-.ad .ad-check .ad-preview select {
-  width: 100%;
-  min-width: 0;
-  margin-top: 0;
+.ad-match__progress {
+  display: grid;
+  gap: 10px;
 }
-.ad-check .ad-preview table {
-  table-layout: fixed;
-}
-.ad-check__missing summary {
-  font-size: 13.5px;
-  cursor: pointer;
-}
-.ad-check__missing p {
-  margin-top: 6px;
-}
-.ad-check__actions {
+.ad-match__progress p {
   display: flex;
   flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 14px;
+}
+.ad-match__progress strong {
+  font-weight: 600;
+}
+.ad-match__progress [data-tone="amber"],
+.ad-match__pick [data-tone="amber"] {
+  color: var(--color-amber);
+}
+.ad-match__progress [data-tone="error"],
+.ad-match__pick [data-tone="error"] {
+  color: var(--ad-error);
+}
+.ad-match__progress i {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ad-soft);
+}
+.ad-match__progress i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ad-ok);
+  transform: scaleX(var(--done));
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-out);
+}
+.ad-match__list {
+  overflow: hidden;
+  border-radius: 16px;
+  background: #141414;
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-match__list li {
+  display: grid;
   gap: 8px;
+  padding: 12px 14px;
+  overflow-wrap: anywhere;
+}
+.ad-match__list li + li {
+  border-top: 1px solid var(--ad-line);
+}
+.ad-match__list li[data-tone="amber"] {
+  background: rgb(249 169 64 / 0.05);
+}
+.ad-match__list li[data-tone="error"] {
+  background: rgb(255 138 107 / 0.07);
+}
+.ad-match__team,
+.ad-match__pick {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ad-match__team strong {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.ad-match small {
+  font-size: 12.5px;
+  color: var(--ad-muted);
+}
+.ad-match__list li[data-tone="amber"] .ad-match__team small {
+  color: var(--color-amber);
+}
+.ad-match__list li[data-tone="ok"] .ad-match__team small {
+  color: var(--ad-ok);
+}
+.ad-match .ad-savebar {
+  flex-wrap: wrap;
+  padding: 10px;
+}
+.ad-match .ad-savebar__msg {
+  flex: 1 1 auto;
+  padding-left: 6px;
+}
+.ad-match .ad-savebar__actions {
+  flex: 1 1 100%;
+}
+.ad-match .ad-savebar__actions .ad-btn--primary {
+  flex: 1;
+}
+.ad-match__arrow {
+  display: none;
+  color: var(--ad-muted);
+}
+@media (min-width: 700px) {
+  .ad-match__list li {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 9px 10px 9px 16px;
+  }
+  .ad-match__arrow {
+    display: block;
+  }
+  .ad-match .ad-savebar__actions {
+    flex: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ad-match__progress i::after {
+    transition: none;
+  }
 }
