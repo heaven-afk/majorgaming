@@ -12,13 +12,13 @@ const day = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeZone: "A
 const when = (iso: string) => day.format(new Date(iso));
 const roleOptions = ROLES.map((r) => ({ value: r, label: copy.roles[r].label, hint: copy.roles[r].hint }));
 
-/** Owners add admins by email, switch anyone else between Owner and Editor, and remove them. */
+/** Owners grant access to a selected account, switch anyone else between Owner and Editor, and remove them. */
 export default function AdminsManager({ admins, me, actions }: { admins: AdminRow[]; me: string; actions: { add: Action; role: Action; remove: Action } }) {
   const [added, addAction] = useActionState(actions.add, {});
   const [addPending, startAdd] = useTransition();
   const addToast = useSavedToast(added);
   const [role, setRole] = useState<AdminRole>("editor");
-  // Clear the email and password once an admin is added, so the password doesn't linger on screen.
+  // Clear the account details after a successful grant.
   const addForm = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (added.saved) addForm.current?.reset();
@@ -38,8 +38,8 @@ export default function AdminsManager({ admins, me, actions }: { admins: AdminRo
           <Field name="email" label={copy.add.email} error={added.fields?.email}>
             <input id="f-email" name="email" type="email" autoComplete="off" spellCheck={false} placeholder="name@example.com" {...invalid(added.fields, "email")} />
           </Field>
-          <Field name="password" label={copy.add.password} hint={copy.add.passwordHint} error={added.fields?.password}>
-            <input id="f-password" name="password" type="password" autoComplete="new-password" minLength={8} {...invalid(added.fields, "password")} />
+          <Field name="userId" label={copy.add.userId} error={added.fields?.userId}>
+            <input id="f-userId" name="userId" autoComplete="off" spellCheck={false} maxLength={36} required {...invalid(added.fields, "userId")} />
           </Field>
           <Choice name="role" label={copy.add.role} options={roleOptions} value={role} onChange={(v) => setRole(v as AdminRole)} />
         </Section>

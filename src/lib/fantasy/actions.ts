@@ -6,6 +6,7 @@
  */
 
 import { cookies, headers } from "next/headers";
+import { siteOrigin } from "@/lib/site-url.mjs";
 import { redirect } from "next/navigation";
 import { db, DbError, publicRpc, sendPasswordReset, signInWithPassword, signOutSession, signUp, updatePassword, userOf } from "@/lib/admin/supabase";
 import { FantasyCoreError } from "./client";
@@ -25,7 +26,7 @@ const safeNext = (next: string) => (/^\/fantasy(\/[\w-]*)*(\?[\w=&-]*)?$/.test(n
 
 async function origin() {
   const h = await headers();
-  return h.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  return siteOrigin({ requestOrigin: h.get("origin") });
 }
 
 async function nameTaken(name: string) {
@@ -58,9 +59,9 @@ export async function join(_: AuthState, form: FormData): Promise<AuthState> {
   const res = await signUp(email, password, { display_name: displayName }, `${await origin()}/fantasy/welcome`);
   if ("error" in res) {
     if (res.offline) return { error: OFFLINE };
-    if (/registered|exists/i.test(res.error)) return { fields: { email: "There's already an account with this email. Sign in instead." } };
+    if (/registered|exists/i.test(res.error)) return { sent: email };
     if (/password/i.test(res.error)) return { fields: { password: res.error } };
-    return { error: res.error };
+    return { error: "Unable to create an account right now. Try again later." };
   }
   // Email confirmation is on, so this is the usual path: check your inbox.
   if (!res.session) return { sent: email };

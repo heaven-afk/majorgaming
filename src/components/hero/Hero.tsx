@@ -8,9 +8,15 @@ import GlitchImage from "./GlitchImage";
 import MeshGradient from "./MeshGradient";
 
 export default async function Hero() {
-  const { registration } = await getLeague();
+  const { registration, personBySlug } = await getLeague();
   const { community, title, images } = hero;
   const { community: text } = await getSettings();
+  const avatars = community.players.map(({ slug, ...frame }) => {
+    const person = personBySlug(slug);
+    return { ...frame, slug, name: person?.name ?? slug,
+      // A removed portrait falls back to initials, never another character image.
+      src: person?.photo?.startsWith("https://") ? person.photo : undefined };
+  });
 
   return (
     <section className="hero" aria-labelledby="hero-title">
@@ -20,9 +26,10 @@ export default async function Hero() {
 
         <div className="community">
           <ul className="community__faces">
-            {community.avatars.map((a, i) => (
-              <li key={a.src} style={{ "--i": i } as React.CSSProperties}>
-                <Image src={a.src} alt="" width={96} height={96} />
+            {avatars.map((a, i) => (
+              <li key={a.slug} style={{ "--i": i } as React.CSSProperties}>
+                {a.src ? <Image src={a.src} alt={a.name} width={96} height={96} style={{ objectPosition: "50% 0", transform: `scale(${a.zoom})`, transformOrigin: a.origin }} /> :
+                  <span className="community__initials" aria-label={a.name}>{a.name.split(/\s+/).map(part => part[0]).join("").slice(0, 2)}</span>}
               </li>
             ))}
           </ul>

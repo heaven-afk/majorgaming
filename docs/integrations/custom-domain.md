@@ -4,6 +4,35 @@ MGL's primary public origin is `https://www.majorgamingleague.com`.
 The apex domain redirects there. Heaven Index and Fantasy Core remain separate
 services at their existing origins; do not replace their API base URLs with MGL's.
 
+## Application redirects
+
+`src/lib/site-url.mjs` owns MGL's public origin. Production confirmation/reset
+callbacks and admin sign-up callbacks always use the custom domain, even when
+the request comes from an old Vercel host, a preview, or a stale public-site
+environment value. Local development alone can return to loopback/private LAN
+origins. Social metadata uses the same canonical origin.
+
+`next.config.ts` permanently redirects browser-facing pages on the legacy
+`mglwebsite.vercel.app` host to www, preserving the requested path and query.
+API, public-key and Next.js asset paths remain compatible with existing server
+clients while their configured URLs migrate; signed webhook delivery must not
+depend on a client following an HTTP redirect. Vercel branch preview pages
+remain available for review; their production email callbacks use www. Existing
+relative application redirects stay on the canonical host once a visitor arrives
+there. Deploy this code before expecting the old alias to redirect.
+
+Local HTTP verification returned 308 with the exact custom-domain destinations
+for `/admin/login`, `/teams/goat-esport`, and
+`/fantasy/welcome?type=recovery&next=account`.
+
+Hosted Supabase URL Configuration still requires a separate save. The dashboard
+was stuck in its shell loader on 2026-11-19, then timed out on reload. No Supabase
+management credential is connected, so its settings could not be read or changed.
+The owner subsequently confirmed saving the custom-domain Site URL and callback
+URLs, and removing the previous URL, on 2026-11-19. That is owner-confirmed
+completion; an independent dashboard read and real email-link acceptance have
+not been performed here. Do not ask the owner to repeat the completed save.
+
 ## Production configuration
 
 1. **Vercel → MGL developers → majorgaming → Environment Variables:** set
