@@ -59,9 +59,9 @@ export async function join(_: AuthState, form: FormData): Promise<AuthState> {
   const res = await signUp(email, password, { display_name: displayName }, `${await origin()}/fantasy/welcome`);
   if ("error" in res) {
     if (res.offline) return { error: OFFLINE };
-    if (/registered|exists/i.test(res.error)) return { fields: { email: "There's already an account with this email. Sign in instead." } };
+    if (/registered|exists/i.test(res.error)) return { sent: email };
     if (/password/i.test(res.error)) return { fields: { password: res.error } };
-    return { error: res.error };
+    return { error: "Unable to create an account right now. Try again later." };
   }
   // Email confirmation is on, so this is the usual path: check your inbox.
   if (!res.session) return { sent: email };

@@ -1,13 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { siteOrigin } from "@/lib/site-url.mjs";
 import { unstable_rethrow } from "next/navigation";
 import type { FormState } from "@/components/admin/Form";
 import { adminsCopy as copy, ROLES, type AdminRole } from "@/content/admins";
 import { requireOwner } from "../session";
-import { db, DbError, signOutSession, signUp } from "../supabase";
+import { db, DbError } from "../supabase";
 
 export type AdminRow = { user_id: string; email: string; role: AdminRole; created_at: string; last_sign_in_at: string | null };
 
@@ -43,39 +41,17 @@ async function run(fn: string, body: Record<string, unknown>, done: (result: str
   }
 }
 
-/**
- * Adds an admin. With a password, the owner creates their login too: an account is made through
- * Supabase's sign-up (email confirmation is off, so it works at once) and the session it returns
- * is ended straight away. Without one, the email must already have an account.
- */
+/** Grants privileges to the exact account the owner selected in Supabase Auth. */
 export async function addAdmin(_: FormState, form: FormData): Promise<FormState> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
-  const password = String(form.get("password") ?? "");
+  const target = String(form.get("userId") ?? "").trim();
   const role = roleOf(form.get("role"));
   if (!EMAIL.test(email)) return { error: copy.results.badEmail, fields: { email: copy.results.badEmail } };
-  if (password && password.length < 8) return { error: copy.results.shortPassword, fields: { password: copy.results.shortPassword } };
+  if (!UUID.test(target)) return { error: copy.results.badUserId, fields: { userId: copy.results.badUserId } };
   if (!role) return { error: copy.results.failed };
 
-  let existed = false;
-  if (password) {
-    try {
-      await requireOwner();
-    } catch (err) {
-      unstable_rethrow(err);
-      return { error: err instanceof Error ? err.message : copy.results.failed };
-    }
-    const made = await signUp(email, password, {}, `${siteOrigin({ requestOrigin: (await headers()).get("origin") })}/admin/login`);
-    if ("error" in made) {
-      // An account with this email already exists: add it as it is, keeping its own password.
-      if (made.status === 422 || /already/i.test(made.error)) existed = true;
-      else return { error: made.offline ? copy.results.failed : made.error, fields: made.offline ? undefined : { password: made.error } };
-    } else if (made.session) {
-      await signOutSession(made.session.accessToken);
-    }
-  }
-
-  return run("admin_add", { target_email: email, new_role: role }, (r) =>
-    r === "added" ? (password && !existed ? copy.results.created(email) : existed ? copy.results.addedExisting(email) : copy.results.added(email)) : undefined,
+  return run("admin_add_account", { target, target_email: email, new_role: role }, (result) =>
+    result === "added" ? copy.results.added(email) : undefined,
   );
 }
 
