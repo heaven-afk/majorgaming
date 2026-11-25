@@ -246,7 +246,7 @@ export const footer = {
   /** The closing scene: full-bleed artwork behind the last call to register. */
   scene: {
     image: {
-      wide: { src: "/images/footer/vault-wide.webp", width: 1700, height: 956, focus: [0.62, 0.52] as const },
+      wide: { src: "/images/footer/vault-left.webp", width: 1535, height: 858, focus: [0.5, 0.52] as const },
       tall: { src: "/images/footer/vault-tall.webp", width: 1086, height: 1448, focus: [0.54, 0.45] as const },
       alt: "An operator vaults a concrete barrier as the squad pushes toward a burning stadium at sunset.",
     },
