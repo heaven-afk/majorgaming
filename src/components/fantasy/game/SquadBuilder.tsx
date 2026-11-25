@@ -55,6 +55,7 @@ export default function SquadBuilder({
   squad,
   previous,
   open,
+  transfersOpen,
   deadline,
   chips,
 }: {
@@ -62,6 +63,7 @@ export default function SquadBuilder({
   squad: Lineup | null;
   previous: Lineup | null;
   open: boolean;
+  transfersOpen: boolean;
   deadline: string | null;
   chips: { triple_captain: boolean; bench_boost: boolean; free_transfer: boolean };
 }) {
@@ -313,6 +315,7 @@ export default function SquadBuilder({
               {editing ? (
                 <button
                   className="fx-chip-btn"
+                  disabled={!transfersOpen}
                   onClick={() => {
                     setReplacing(activePlayer);
                     setActive(null);

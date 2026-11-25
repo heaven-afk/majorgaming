@@ -30,6 +30,9 @@ const matchday = object({
   tournamentId: id, matchdayNumber: positive, expectedMatches: integer, matchesPlayed: integer,
   fantasyStatus: literal("DISCOVERED", "READY", "COMPLETED", "PROCESSING", "PROCESSED", "FAILED"),
   marketStatus: nullable(marketStatus), submissionDeadline: nullable(timestamp), processedAt: nullable(timestamp),
+  splitWindows: optional(boolean),
+  buildSquadDeadline: optional(nullable(timestamp)), matchdayStartsAt: optional(nullable(timestamp)),
+  pricesPublishedAt: optional(nullable(timestamp)), transfersOpenAt: optional(nullable(timestamp)), transfersCloseAt: optional(nullable(timestamp)),
 });
 const squad = object({
   id, tournamentId: id, matchdayNumber: positive, captainPlayerId: id, activeChip: chip,
@@ -58,6 +61,7 @@ const schemas = {
   }),
   transfer: object({ penaltyApplied: literal(0, 4), usedFreeTransferChip: boolean, remainingCredits: nonnegative, managerPoints: points }),
   profile: object({ managerId: id, displayName: string, updatedAt: nullable(timestamp) }),
+  transferWindow: object({ success: literal(true), tournamentId: id, matchdayNumber: positive, transfersOpenAt: nullable(timestamp), transfersCloseAt: nullable(timestamp) }),
   window: object({ success: literal(true), tournamentId: id, matchdayNumber: positive, status: marketStatus }),
   validation: object({ valid: boolean, validationMode: literal("authoritative"), tournamentId: id, matchdayNumber: positive, marketStatus, totalCost: number, remainingBudget: number, errors: array(string) }),
 };

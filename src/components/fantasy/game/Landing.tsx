@@ -59,13 +59,13 @@ export default async function Landing({ game, cards, board }: { game: Game; card
             </div>
             {ready && (
               <dl className="fx-hero__facts">
-                {ready.open && ready.current.submissionDeadline && (
+                {ready.open && (ready.current.splitWindows ? ready.current.matchdayNumber === 1 && Date.parse(ready.current.buildSquadDeadline ?? "") > Date.now() : ready.current.submissionDeadline) && (
                   <div className="fx-hero__deadline">
                     <dt>
-                      {h.facts.deadline} · Matchday {ready.current.matchdayNumber}
+                      {ready.current.splitWindows ? "Build your squad closes" : h.facts.deadline} · Matchday {ready.current.matchdayNumber}
                     </dt>
                     <dd>
-                      <Countdown to={ready.current.submissionDeadline} compact />
+                      <Countdown to={(ready.current.buildSquadDeadline ?? ready.current.submissionDeadline)!} compact />
                     </dd>
                   </div>
                 )}

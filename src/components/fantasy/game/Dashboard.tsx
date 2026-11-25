@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canManageSquad } from "@/lib/fantasy/lifecycle.mjs";
 import { fantasyPage } from "@/content/fantasy";
 import { BUDGET, getMine, getStandings, type Game } from "@/lib/fantasy/game";
 import type { Manager } from "@/lib/fantasy/session";
@@ -44,10 +45,14 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
   const left = BUDGET - ids.reduce((n, id) => n + (players.get(id)?.price ?? 0), 0);
   const days = [...game.matchdays].sort((a, b) => a.matchdayNumber - b.matchdayNumber);
   const status = statusOf(game);
-  const deadline = game.current.submissionDeadline;
+  const hasSquad = Boolean(mine.squad || mine.previous);
+  const canEditSquad = canManageSquad(game.open, game.current, hasSquad);
+  const deadline = game.current.splitWindows
+    ? hasSquad ? game.current.matchdayStartsAt : game.current.buildSquadDeadline
+    : game.current.submissionDeadline;
   const top = standings?.rows.slice(0, 5) ?? [];
   const board = me && me.rank > 5 ? [...top, me] : top;
-  const cta = !game.open ? { label: "View squad", icon: "squad" } : mine.squad ? { label: hub.edit, icon: "arrow" } : { label: mine.previous ? hub.carry.title : hub.pick, icon: "arrow" };
+  const cta = !canEditSquad ? { label: "View squad", icon: "squad" } : mine.squad ? { label: hub.edit, icon: "arrow" } : { label: mine.previous ? hub.carry.title : "Build your squad", icon: "arrow" };
 
   const leader = standings?.rows[0];
   const kpis = [
@@ -75,7 +80,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
             <i />
             {status.label}
           </span>
-          <span className="fx-score__when">{deadline && game.open ? `Deadline ${formatDeadline(deadline)}` : `${game.current.matchesPlayed} of ${game.current.expectedMatches} matches played`}</span>
+          <span className="fx-score__when">{deadline && canEditSquad ? `Deadline ${formatDeadline(deadline)}` : `${game.current.matchesPlayed} of ${game.current.expectedMatches} matches played`}</span>
         </div>
         <div className="fx-score__board">
           <div className="fx-score__side">
@@ -87,7 +92,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
           </div>
           <div className="fx-score__mid">
             <h2 id="fx-score-title">MD{game.current.matchdayNumber}</h2>
-            {game.open && deadline ? <Countdown to={deadline} compact /> : <small>{status.tone === "done" ? "Scored" : "In play"}</small>}
+            {canEditSquad && deadline ? <Countdown to={deadline} compact /> : <small>{status.tone === "done" ? "Scored" : "In play"}</small>}
           </div>
           <div className="fx-score__side fx-score__side--end">
             <small>Leader</small>
@@ -145,7 +150,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
               </span>
               <h3>{mine.previous ? hub.carry.title : hub.noSquad.title}</h3>
               <p>{mine.previous ? hub.carry.body : hub.noSquad.body}</p>
-              {game.open && (
+              {canEditSquad && (
                 <Link className="fx-btn fx-btn--primary" href="/fantasy/squad">
                   {hub.pick}
                   <Icon name="arrow" size={15} />

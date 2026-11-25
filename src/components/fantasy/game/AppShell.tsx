@@ -32,7 +32,7 @@ export default function AppShell({ game, manager, title, actions, children }: { 
             </span>
             <strong>Matchday {ready.current.matchdayNumber}</strong>
             <small>{ready.tournament.name}</small>
-            {ready.open && ready.current.submissionDeadline && <Countdown to={ready.current.submissionDeadline} compact />}
+            {ready.open && (ready.current.matchdayStartsAt ?? ready.current.submissionDeadline) && <Countdown to={(ready.current.matchdayStartsAt ?? ready.current.submissionDeadline)!} compact />}
           </div>
         )}
         <div className="fx-side__foot">

@@ -10,7 +10,8 @@ import { siteOrigin } from "@/lib/site-url.mjs";
 import { redirect } from "next/navigation";
 import { db, DbError, publicRpc, sendPasswordReset, signInWithPassword, signOutSession, signUp, updatePassword, userOf } from "@/lib/admin/supabase";
 import { FantasyCoreError } from "./client";
-import { coreMessage, getGame, makeTransfer, saveLineup, syncName, type Lineup, type Receipt, type TransferInput } from "./game";
+import { canManageSquad, transferWindowIsOpen } from "./lifecycle.mjs";
+import { coreMessage, getGame, getMine, makeTransfer, saveLineup, syncName, type Lineup, type Receipt, type TransferInput } from "./game";
 import { preview } from "./preview";
 import { validLineupInput, validTransferInput } from "./inputs.mjs";
 import { clearManagerSession, DISPLAY_NAME, ensureManagerRow, getManager, MANAGER_COOKIES, storeManagerSession } from "./session";
@@ -181,7 +182,6 @@ async function playing() {
   if (!manager.displayName) return { error: "Pick a display name on your account first." } as const;
   const game = await getGame();
   if (game.state !== "ready") return { error: "MGL Fantasy isn't running right now." } as const;
-  if (!game.open) return { error: "Transfers are closed for this matchday." } as const;
   return { manager, game };
 }
 
@@ -190,6 +190,8 @@ export async function saveSquad(lineup: Lineup): Promise<PlayResult> {
   const ctx = await playing();
   if ("error" in ctx) return { ok: false, error: ctx.error! };
   try {
+    const { squad, previous } = await getMine(ctx.manager, ctx.game);
+    if (!canManageSquad(ctx.game.open, ctx.game.current, Boolean(squad || previous))) return { ok: false, error: "Squad changes are closed for this matchday." };
     await saveLineup(ctx.manager, ctx.game, { starters: lineup.starters.map(({ playerId, role }) => ({ playerId, role })), sub: lineup.sub, captain: lineup.captain, chip: lineup.chip });
     return { ok: true };
   } catch (err) {
@@ -203,6 +205,7 @@ export async function transfer(input: TransferInput, key: string): Promise<PlayR
   const ctx = await playing();
   if ("error" in ctx) return { ok: false, error: ctx.error! };
   try {
+    if (!transferWindowIsOpen(ctx.game.open, ctx.game.current)) return { ok: false, error: "Transfers are closed for this matchday." };
     const clean: TransferInput = { playerOutId: input.playerOutId, playerInId: input.playerInId, useFreeTransferChip: input.useFreeTransferChip };
     if (input.expectedSquadUpdatedAt) clean.expectedSquadUpdatedAt = input.expectedSquadUpdatedAt;
     return { ok: true, receipt: await makeTransfer(ctx.manager, ctx.game, clean, key) };

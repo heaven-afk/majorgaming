@@ -42,8 +42,9 @@ export function createFantasyTransport({ baseUrl, siteSlug, apiKey, profileKey, 
     const managerOnly = /^\/api\/v1\/(squads(?:\/(?:me|chips))?|managers\/me\/points|transfers)$/.test(path);
     if (managerOnly && !token) throw new FantasyCoreError("A verified MGL manager token is required.");
     if (path.endsWith("/window") && (!token || !body || typeof body !== "object" || Array.isArray(body) ||
-        Object.keys(body).some(key => !["action", "matchdayNumber"].includes(key)) ||
-        !["open", "lock", "close"].includes(body.action) || !Number.isSafeInteger(body.matchdayNumber) || body.matchdayNumber < 1)) {
+        Object.keys(body).some(key => !(body.action === "schedule-transfers" ? ["action", "matchdayNumber", "opensAt", "closesAt"] : ["action", "matchdayNumber"]).includes(key)) ||
+        !["open", "lock", "close", "schedule-transfers", "close-transfers"].includes(body.action) ||
+        (body.action === "schedule-transfers" && (typeof body.opensAt !== "string" || typeof body.closesAt !== "string")) || !Number.isSafeInteger(body.matchdayNumber) || body.matchdayNumber < 1)) {
       throw new FantasyCoreError("Window controls require a verified administrator token and valid action.");
     }
     if (path === "/api/v1/transfers" && !/^[a-zA-Z0-9._:-]{8,128}$/.test(idempotencyKey || "")) {

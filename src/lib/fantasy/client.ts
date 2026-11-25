@@ -16,6 +16,12 @@ export type FantasyMatchday = {
   marketStatus: MarketStatus | null;
   submissionDeadline: string | null;
   processedAt: string | null;
+  splitWindows?: boolean;
+  buildSquadDeadline?: string | null;
+  matchdayStartsAt?: string | null;
+  pricesPublishedAt?: string | null;
+  transfersOpenAt?: string | null;
+  transfersCloseAt?: string | null;
 };
 export type FantasyMarket = {
   tournamentId: string;
@@ -128,6 +134,11 @@ export async function transferFantasyPlayer(token: string, idempotencyKey: strin
   matchday(input.matchdayNumber);
   // Preserve this exact key and body if a request has an unknown outcome.
   return parseFantasyResponse("transfer", await request()("/api/v1/transfers", { token, idempotencyKey, body: input }), { tournamentId: input.tournamentId });
+}
+
+export async function setTransferWindow(token: string, tournamentId: string, day: number, schedule: { opensAt: string; closesAt: string } | null) {
+  const body = schedule ? { action: "schedule-transfers", matchdayNumber: matchday(day), ...schedule } : { action: "close-transfers", matchdayNumber: matchday(day) };
+  return parseFantasyResponse("transferWindow", await request()("/api/v1/markets/" + id(tournamentId) + "/window", { token, body }), { tournamentId, matchdayNumber: day });
 }
 
 export async function setFantasyWindow(token: string, tournamentId: string, day: number, action: "open" | "lock" | "close"): Promise<{ success: true; tournamentId: string; matchdayNumber: number; status: MarketStatus }> {
