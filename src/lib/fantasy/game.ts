@@ -31,6 +31,7 @@ import {
 import { fantasyIdentity } from "./identity";
 import { preview, previewLeaderboard, previewMarket, previewMatchdays, previewStore, previewTournaments, PREVIEW_SCORING_POINTS, type PreviewSquad } from "./preview";
 import type { Manager } from "./session";
+import { getFantasyLiveAt } from "./launch";
 import { currentTournament, currentMatchday, marketIsOpen } from "./lifecycle.mjs";
 import { parseFantasyResponse } from "./responses.mjs";
 import { fantasy } from "@/content/site";
@@ -127,7 +128,7 @@ export const getGame = cache(async (): Promise<Game> => {
     const { tournaments } = preview ? previewTournaments() : await getFantasyTournaments();
     // One in play first, then the next one coming, then the latest.
     const tournament = currentTournament(tournaments) as FantasyTournament | undefined;
-    if (!tournament) return { state: "off" };
+    if (!tournament || (!preview && !await getFantasyLiveAt(tournament.id))) return { state: "off" };
     const { matchdays } = preview ? previewMatchdays() : await getFantasyMatchdays(tournament.id);
     const current = currentMatchday(matchdays) as Matchday | undefined;
     if (!current) return { state: "off" };

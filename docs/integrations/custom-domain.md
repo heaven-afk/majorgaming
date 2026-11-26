@@ -4,7 +4,28 @@ MGL's primary public origin is `https://www.majorgamingleague.com`.
 The apex domain redirects there. Heaven Index and Fantasy Core remain separate
 services at their existing origins; do not replace their API base URLs with MGL's.
 
-## Application redirects
+## Search identity and icons (2026-11-25)
+
+Public Home, Teams, Events, News, Staff and Fantasy pages declare their own
+canonical paths under the www metadata base, including individual team, event
+and published news pages. Never put the homepage canonical in the root layout:
+that would incorrectly identify every child page as the homepage.
+
+`/sitemap.xml` lists public pages and current database records using only the
+custom domain. `/robots.txt` points to that sitemap and excludes Admin, API and
+private/account entry paths. This is crawler guidance, not access control.
+
+The browser ICO, 96px PNG search icon and 180px Apple home-screen icon all use
+the existing MGL vector mark on a light plate for contrast. Regenerate them with
+`node scripts/generate-brand-icons.mjs` after an approved logo change.
+
+Production inspection on 2026-11-25 found the legacy Vercel homepage still
+returning 200, with robots and sitemap returning 404 on www. Deploy the branch
+changes before claiming these are fixed on the hosted site. Then submit the www
+sitemap and request homepage reindexing in Google Search Console. Search engines
+choose when to recrawl and update their displayed domain/favicon.
+
+## Browser and email redirects
 
 `src/lib/site-url.mjs` owns MGL's public origin. Production confirmation/reset
 callbacks and admin sign-up callbacks always use the custom domain, even when
@@ -34,6 +55,16 @@ completion; an independent dashboard read and real email-link acceptance have
 not been performed here. Do not ask the owner to repeat the completed save.
 
 ## Production configuration
+
+On 2026-11-19 the owner confirmed the Fantasy variables were missing in Vercel.
+The existing API/PROFILE credentials and RSA key were verified against Core's
+active MGL registration. Core's issuer and JWKS were aligned to www, preserving
+the existing PEM key, status, access gate and tournament assignments. An ignored
+local import file is prepared at `.local/deployment/mgl-fantasy-production.env`.
+It contains secrets: import only into MGL's intended Vercel Production project,
+never commit it or paste its contents into chat. Set both API keys and the private
+key to Secret; public origins and the website slug can use Config. Import and
+redeployment are pending; browser control could not verify the native browser URL.
 
 1. **Vercel → MGL developers → majorgaming → Environment Variables:** set
    `NEXT_PUBLIC_SITE_URL=https://www.majorgamingleague.com` in Production.

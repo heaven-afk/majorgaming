@@ -9,6 +9,7 @@ import { formatDate, getLeague, readingTime } from "@/lib/league";
 
 export const metadata: Metadata = {
   title: "News · MGL",
+  alternates: { canonical: "/news" },
   description: "Announcements, season recaps and features from MGL, Africa's ranked CODM Battle Royale league.",
 };
 

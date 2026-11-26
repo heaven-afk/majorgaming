@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/teams/[team]">): 
   const { teamBySlug } = await getLeague();
   const team = teamBySlug((await params).team);
   if (!team) return {};
-  return { title: `${team.name} · Teams · MGL`, description: `${team.name}'s lineup, manager and the MGL events they have played.` };
+  return { title: `${team.name} · Teams · MGL`, description: `${team.name}'s lineup, manager and the MGL events they have played.`, alternates: { canonical: `/teams/${team.slug}` } };
 }
 
 /**

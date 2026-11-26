@@ -5,9 +5,11 @@ import AdminShell, { AdminLoading, OwnerOnly } from "@/components/admin/AdminShe
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { Section } from "@/components/admin/Form";
 import TransferWindow from "@/components/admin/TransferWindow";
+import FantasyLaunch from "@/components/admin/FantasyLaunch";
 import { fantasyAdminCopy as copy } from "@/content/fantasy-admin";
 import { getFantasyAdminOverview } from "@/lib/fantasy/admin";
-import { currentTournament, currentMatchday } from "@/lib/fantasy/lifecycle.mjs";
+import { getFantasyLiveAt } from "@/lib/fantasy/launch";
+import { currentTournament, currentMatchday, launchReady } from "@/lib/fantasy/lifecycle.mjs";
 import type { FantasyMatchday } from "@/lib/fantasy/client";
 import "./fantasy-admin.css";
 
@@ -19,6 +21,9 @@ async function Overview() {
   try { state = await getFantasyAdminOverview(); }
   catch (err) { unstable_rethrow(err); return <p className="ad-alert ad-alert--error" role="alert">{copy.unavailable}</p>; }
   const tournament = currentTournament(state.tournaments);
+  const liveAt = tournament && !state.preview ? await getFantasyLiveAt(tournament.id).catch(() => null) : null;
+  const first = state.matchdays.find(day => day.matchdayNumber === 1);
+  const canLaunch = state.configured && !state.preview && launchReady(tournament, first, state.market);
   const day = currentMatchday(state.matchdays) as FantasyMatchday | undefined;
   const eligible = state.market?.players.filter(p => p.isEligible).length ?? 0;
   const transferDays = state.matchdays.filter(day => day.splitWindows && day.marketStatus === "OPEN" &&
@@ -43,6 +48,9 @@ async function Overview() {
         </> : <p>{copy.noMatchday}</p>}
       </> : <><h3>{copy.none}</h3><p>{copy.empty}</p></>}
     </Section>
+    {tournament && <Section title={copy.launchTitle}>
+      <FantasyLaunch tournamentId={tournament.id} live={Boolean(liveAt)} ready={canLaunch} />
+    </Section>}
     {tournament && <Section title={copy.transfers}>
       <p>{copy.transferRule}</p>
       {transferDays.map(day =>

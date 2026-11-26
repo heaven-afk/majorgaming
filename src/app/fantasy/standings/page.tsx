@@ -9,7 +9,7 @@ import { getGame, getStandings } from "@/lib/fantasy/game";
 import { getManager } from "@/lib/fantasy/session";
 import { LiveRefresh } from "@/components/fantasy/game/LiveRefresh";
 
-export const metadata: Metadata = { title: "Standings · MGL Fantasy" };
+export const metadata: Metadata = { title: "Standings · MGL Fantasy", alternates: { canonical: "/fantasy/standings" } };
 const copy = fantasyPage.standings;
 
 async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cursor?: string }> }) {

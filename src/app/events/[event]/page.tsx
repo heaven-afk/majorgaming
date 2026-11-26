@@ -30,6 +30,7 @@ export async function generateMetadata({ params }: PageProps<"/events/[event]">)
   if (!event) return {};
   return {
     title: `${event.name} · Events · MGL`,
+    alternates: { canonical: `/events/${event.slug}` },
     description: event.summary ?? (event.tables.length ? `${event.name} standings: ${event.tables.map((t) => t.name).join(", ")}.` : `${event.name}: dates, format and registration.`),
   };
 }

@@ -13,7 +13,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(MGL_ORIGIN),
   title: "MGL · Major Gaming League",
   description: "The ranked league for Call of Duty: Mobile Battle Royale.",
-  icons: { icon: "/brand/mgl-mark.svg" },
+  applicationName: "MGL",
+  openGraph: { siteName: "Major Gaming League", locale: "en_GB", type: "website" },
+  icons: {
+    icon: [{ url: "/brand/favicon-96.png", type: "image/png", sizes: "96x96" }],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {

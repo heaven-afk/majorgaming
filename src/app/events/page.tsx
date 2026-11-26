@@ -11,6 +11,7 @@ import { getLeague } from "@/lib/league";
 
 export const metadata: Metadata = {
   title: "Events · MGL",
+  alternates: { canonical: "/events" },
   description: "Live standings while an event runs, and every final table from MGL's seasons, mixed events and partner events.",
 };
 

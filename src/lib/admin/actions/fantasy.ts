@@ -3,6 +3,9 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { requireOwner } from "../session";
+import { db } from "../supabase";
+import { getFantasyLiveAt } from "@/lib/fantasy/launch";
+import { currentTournament, launchReady } from "@/lib/fantasy/lifecycle.mjs";
 import { readCurrentFantasy } from "@/lib/fantasy/admin";
 import { fantasyIdentity } from "@/lib/fantasy/identity";
 import { setFantasyWindow, setTransferWindow, FantasyCoreError } from "@/lib/fantasy/client";
@@ -10,6 +13,33 @@ import { executeWindowControl } from "@/lib/fantasy/window-control.mjs";
 import { fantasyAdminCopy } from "@/content/fantasy-admin";
 
 export type WindowActionState = { error?: string; notice?: string; saved?: number };
+
+export async function goLive(_: WindowActionState, form: FormData): Promise<WindowActionState> {
+  try {
+    const owner = await requireOwner();
+    const state = await readCurrentFantasy();
+    const tournament = currentTournament(state.tournaments);
+    if (state.preview || !state.configured || !tournament ||
+        tournament.id !== form.get("tournamentId")) {
+      return { error: fantasyAdminCopy.launchUnavailable };
+    }
+    if (await getFantasyLiveAt(tournament.id)) return { saved: Date.now(), notice: fantasyAdminCopy.launchSaved };
+    const first = state.matchdays.find(day => day.matchdayNumber === 1);
+    if (!launchReady(tournament, first, state.market)) return { error: fantasyAdminCopy.launchUnavailable };
+    await db(owner.token, "fantasy_launches?on_conflict=tournament_id", {
+      method: "POST",
+      body: { tournament_id: tournament.id },
+      prefer: "resolution=ignore-duplicates,return=minimal",
+    });
+    updateTag("fantasy-core");
+    revalidatePath("/admin/fantasy");
+    revalidatePath("/fantasy", "layout");
+    return { saved: Date.now(), notice: fantasyAdminCopy.launchSaved };
+  } catch (err) {
+    unstable_rethrow(err);
+    return { error: fantasyAdminCopy.launchError };
+  }
+}
 
 export async function manageTransfers(_: WindowActionState, form: FormData): Promise<WindowActionState> {
   const owner = await requireOwner();

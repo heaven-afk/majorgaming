@@ -11,6 +11,7 @@ import "./staff.css";
 
 export const metadata: Metadata = {
   title: "Staff · MGL",
+  alternates: { canonical: "/staff" },
   description: "The team that runs MGL: leadership, match-day operations, media and community.",
 };
 

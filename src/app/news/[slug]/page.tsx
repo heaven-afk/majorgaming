@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/news/[slug]">): P
   const { storyBySlug } = await getLeague();
   const story = storyBySlug((await params).slug);
   if (!story) return {};
-  return { title: `${story.title} · News · MGL`, description: story.excerpt, openGraph: { images: [story.cover.src] } };
+  return { title: `${story.title} · News · MGL`, description: story.excerpt, alternates: { canonical: `/news/${story.slug}` }, openGraph: { images: [story.cover.src], url: `/news/${story.slug}`, siteName: "Major Gaming League" } };
 }
 
 /**

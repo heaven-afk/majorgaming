@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import AppShell from "@/components/fantasy/game/AppShell";
@@ -9,6 +10,8 @@ import { getGame, getShowcase, getStandings } from "@/lib/fantasy/game";
 import { getManager } from "@/lib/fantasy/session";
 
 const copy = fantasyPage;
+
+export const metadata: Metadata = { alternates: { canonical: "/fantasy" } };
 
 /** Visitors get the landing page; signed-in managers get their dashboard. */
 async function Home() {

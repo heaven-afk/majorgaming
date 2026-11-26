@@ -9,6 +9,7 @@ import "./teams.css";
 
 export const metadata: Metadata = {
   title: "Teams · MGL",
+  alternates: { canonical: "/teams" },
   description: "The squads registered with MGL, tier by tier, with their lineups, managers and the events they have played.",
 };
 

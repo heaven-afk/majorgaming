@@ -41,6 +41,15 @@ export function transferWindowIsOpen(open, day, now = Date.now()) {
     (Date.parse(day.transfersOpenAt) <= now && Date.parse(day.transfersCloseAt) > now && Date.parse(day.matchdayStartsAt) > now));
 }
 
+export function launchReady(tournament, matchday, market, now = Date.now()) {
+  return Boolean(tournament && tournamentState(tournament) !== "done" &&
+    matchday?.tournamentId === tournament.id && matchday.matchdayNumber === 1 &&
+    matchday.splitWindows && matchday.matchesPlayed === 0 && market?.tournamentId === tournament.id &&
+    market.matchdayNumber === 1 && marketIsOpen(market, matchday, now) &&
+    Date.parse(matchday.buildSquadDeadline) > now &&
+    market.players.filter(player => player.isEligible).length >= 5);
+}
+
 export function transferBlockReason(open, day, now = Date.now()) {
   if (transferWindowIsOpen(open, day, now)) return null;
   if (!open || (day.matchdayStartsAt && Date.parse(day.matchdayStartsAt) <= now)) return "This matchday is locked. Transfers are closed.";
