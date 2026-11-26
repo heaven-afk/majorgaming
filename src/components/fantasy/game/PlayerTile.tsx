@@ -19,7 +19,7 @@ export function PlayerTile({ role, name, ign, team, logo, photo, price, captain,
     <span className="fx-pt__empty"><span aria-hidden="true">+</span><strong>{name ?? "Pick"}</strong><small>{team}</small></span>
   </span>;
   return <span className="fantasy-player fx-pt" data-captain={captain ? "" : undefined} data-sub={sub ? "" : undefined}>
-    <PlayerCardContent player={{ name: name ?? "Unknown", ign, team: team ?? "No team", logo, photo, price }}>
+    <PlayerCardContent player={{ name: name ?? "Unknown", ign, team: team ?? "", logo, photo, price }}>
       {(role || captain || sub) && <span className="fx-pt__badges"><span>{sub ? "Sub" : role}</span>{captain && <b>Captain {captain === "C" ? "2×" : captain}</b>}</span>}
       {action}
     </PlayerCardContent>

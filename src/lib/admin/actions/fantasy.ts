@@ -22,7 +22,7 @@ export async function manageTransfers(_: WindowActionState, form: FormData): Pro
       return { error: fantasyAdminCopy.transfersUnavailable };
     }
     const toIso = (value: FormDataEntryValue | null) => {
-      if (typeof value !== "string" || !/^d{4}-dd-ddTdd:dd$/.test(value)) throw new Error(fantasyAdminCopy.invalidTimes);
+      if (typeof value !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(value)) throw new Error(fantasyAdminCopy.invalidTimes);
       return new Date(value + ":00+01:00").toISOString();
     };
     const action = form.get("action");

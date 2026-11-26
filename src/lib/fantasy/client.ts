@@ -35,6 +35,9 @@ export type FantasyMarket = {
     playerName: string;
     ign: string | null;
     teamIdAtLock: string | null;
+    teamName?: string | null;
+    teamLogoUrl?: string | null;
+    photoUrl?: string | null;
     price: number;
     isEligible: boolean;
   }[];
@@ -76,8 +79,8 @@ export async function getFantasyMatchdays(tournamentId: string, fresh = false): 
   return parseFantasyResponse("matchdays", await request()(`/api/v1/tournaments/${id(tournamentId)}/matchdays`, { fresh }), { tournamentId });
 }
 
-export async function getFantasyMarket(tournamentId: string, day: number, fresh = false): Promise<FantasyMarket> {
-  return parseFantasyResponse("market", await request()(`/api/v1/markets/${id(tournamentId)}`, { fresh, query: { matchday: matchday(day) } }), { tournamentId, matchdayNumber: day });
+export async function getFantasyMarket(tournamentId: string, day: number, fresh = false, includeMedia = false): Promise<FantasyMarket> {
+  return parseFantasyResponse("market", await request()(`/api/v1/markets/${id(tournamentId)}`, { fresh, query: { matchday: matchday(day), includeMedia: includeMedia ? "true" : undefined } }), { tournamentId, matchdayNumber: day });
 }
 
 // Never use cached market state to authorize a save. Core validates current prices

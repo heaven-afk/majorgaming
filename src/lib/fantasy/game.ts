@@ -33,7 +33,6 @@ import { preview, previewLeaderboard, previewMarket, previewMatchdays, previewSt
 import type { Manager } from "./session";
 import { currentTournament, currentMatchday, marketIsOpen } from "./lifecycle.mjs";
 import { parseFantasyResponse } from "./responses.mjs";
-import { loadIndexMedia } from "./index-media.mjs";
 import { fantasy } from "@/content/site";
 
 export const ROLES: FantasyRole[] = ["Fragger", "IGL", "Support", "Anchor"];
@@ -92,15 +91,15 @@ export function coreMessage(err: unknown) {
 
 async function enrich(market: FantasyMarket): Promise<Player[]> {
   const sampleTeams = preview ? (await getLeague()).teamBySlug : undefined;
-  const index = preview ? undefined : await loadIndexMedia(market.players, {
-    baseUrl: process.env.HSE_BASE_URL,
-    apiKey: process.env.HSE_API_SECRET,
-  });
-  return market.players.map((p) => {
-    const key = p.teamIdAtLock ?? `solo:${p.playerId}`;
-    const team = p.teamIdAtLock ? (index?.teams.get(key) ?? sampleTeams?.(key)) : undefined;
-    const profile = index?.players.get(p.playerId);
-    return { id: p.playerId, name: profile?.name || p.playerName, ign: profile?.ign || p.ign, price: p.price, eligible: p.isEligible, team: { key, name: team?.name || p.teamIdAtLock || "No team", logo: team?.logo }, photo: profile?.photo };
+  return market.players.map(player => {
+    const key = player.teamIdAtLock ?? "solo:" + player.playerId;
+    const previewTeam = player.teamIdAtLock ? sampleTeams?.(key) : undefined;
+    const name = previewTeam?.name || player.teamName?.trim() || "";
+    return {
+      id: player.playerId, name: player.playerName, ign: player.ign, price: player.price, eligible: player.isEligible,
+      team: { key, name: name === key ? "" : name, logo: previewTeam?.logo || player.teamLogoUrl || undefined },
+      photo: player.photoUrl || undefined,
+    };
   });
 }
 
@@ -135,7 +134,7 @@ export const getGame = cache(async (): Promise<Game> => {
 
     let market: FantasyMarket | undefined;
     try {
-      market = preview ? previewMarket(await previewPlayers(), current.matchdayNumber) : await getFantasyMarket(tournament.id, current.matchdayNumber);
+      market = preview ? previewMarket(await previewPlayers(), current.matchdayNumber) : await getFantasyMarket(tournament.id, current.matchdayNumber, false, true);
     } catch (err) {
       // No published prices yet for this matchday.
       if (!(err instanceof FantasyCoreError && err.status === 404)) throw err;

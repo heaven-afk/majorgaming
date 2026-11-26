@@ -55,7 +55,7 @@ export default function SquadBuilder({
   squad,
   previous,
   open,
-  transfersOpen,
+  transferReason,
   deadline,
   chips,
 }: {
@@ -63,7 +63,7 @@ export default function SquadBuilder({
   squad: Lineup | null;
   previous: Lineup | null;
   open: boolean;
-  transfersOpen: boolean;
+  transferReason: string | null;
   deadline: string | null;
   chips: { triple_captain: boolean; bench_boost: boolean; free_transfer: boolean };
 }) {
@@ -110,7 +110,7 @@ export default function SquadBuilder({
   const dirty = !same(draft, saved);
   const out = replacing ? byId.get(replacing) : undefined;
 
-  const teams = useMemo(() => [...new Map(players.map((p) => [p.team.key, p.team.name])).entries()].sort((a, b) => a[1].localeCompare(b[1])), [players]);
+  const teams = useMemo(() => [...new Map(players.filter(p => p.team.name).map((p) => [p.team.key, p.team.name])).entries()].sort((a, b) => a[1].localeCompare(b[1])), [players]);
 
   /** Why a player can't be added right now, or undefined if they can. */
   function blocked(p: Player): string | undefined {
@@ -141,6 +141,7 @@ export default function SquadBuilder({
     if (readOnly) return;
     setMessage(null);
     if (replacing) {
+      if (transferReason) { setMessage({ tone: "error", text: transferReason }); return; }
       setPending({ out: replacing, in: p.id, useFree: chips.free_transfer, key: newKey(), updatedAt: squad?.updatedAt });
       return;
     }
@@ -188,6 +189,7 @@ export default function SquadBuilder({
 
   function confirmTransfer() {
     if (!pending || readOnly) return;
+    if (transferReason) { setMessage({ tone: "error", text: transferReason }); setPending(null); return; }
     const p = pending;
     start(async () => {
       const res: PlayResult = await transfer({ playerOutId: p.out, playerInId: p.in, useFreeTransferChip: p.useFree, ...(p.updatedAt ? { expectedSquadUpdatedAt: p.updatedAt } : {}) }, p.key);
@@ -248,7 +250,7 @@ export default function SquadBuilder({
         </section>
       )}
 
-      <section className="fx-lineup" aria-labelledby="fx-lineup-title">
+      <section className="fx-lineup" aria-labelledby="fx-lineup-title" tabIndex={0}>
         <header className="fx-lineup__head">
           <div>
             <h2 id="fx-lineup-title">{copy.lineup}</h2>
@@ -256,6 +258,8 @@ export default function SquadBuilder({
           </div>
           <span className="fx-lineup__rule">{copy.perTeam}</span>
         </header>
+
+        {(squad || previous) && transferReason && <p className="fx-transfer-note" id="fx-transfer-note" role="status">{transferReason}</p>}
 
         {previous && !squad && open && (
           <div className="fx-carry">
@@ -287,7 +291,7 @@ export default function SquadBuilder({
               <span>
                 <strong>{byId.get(activePlayer)?.name}</strong>
                 <small>
-                  {active === "Sub" ? copy.sub : active} · {byId.get(activePlayer)?.team.name}
+                  {active === "Sub" ? copy.sub : active}{byId.get(activePlayer)?.team.name && " · " + byId.get(activePlayer)?.team.name}
                 </small>
               </span>
               <button className="fx-actions__close" onClick={() => setActive(null)} aria-label="Close">
@@ -315,7 +319,8 @@ export default function SquadBuilder({
               {editing ? (
                 <button
                   className="fx-chip-btn"
-                  disabled={!transfersOpen}
+                  disabled={Boolean(transferReason)}
+                  aria-describedby={transferReason ? "fx-transfer-note" : undefined}
                   onClick={() => {
                     setReplacing(activePlayer);
                     setActive(null);
@@ -446,7 +451,7 @@ export default function SquadBuilder({
           credits={BUDGET - spent + (byId.get(pending.out)?.price ?? 0) - (byId.get(pending.in)?.price ?? 0)}
           freeAvailable={chips.free_transfer}
           busy={busy}
-          closed={readOnly}
+          closed={readOnly || Boolean(transferReason)}
           onFree={(useFree) => setPending({ ...pending, useFree, key: newKey() })}
           // Closing after a lost answer: refresh, in case the transfer did go through.
           onCancel={() => (pending.retry && router.refresh(), setPending(null))}

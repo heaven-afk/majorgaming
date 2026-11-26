@@ -10,7 +10,7 @@ import { siteOrigin } from "@/lib/site-url.mjs";
 import { redirect } from "next/navigation";
 import { db, DbError, publicRpc, sendPasswordReset, signInWithPassword, signOutSession, signUp, updatePassword, userOf } from "@/lib/admin/supabase";
 import { FantasyCoreError } from "./client";
-import { canManageSquad, transferWindowIsOpen } from "./lifecycle.mjs";
+import { canManageSquad, transferBlockReason } from "./lifecycle.mjs";
 import { coreMessage, getGame, getMine, makeTransfer, saveLineup, syncName, type Lineup, type Receipt, type TransferInput } from "./game";
 import { preview } from "./preview";
 import { validLineupInput, validTransferInput } from "./inputs.mjs";
@@ -205,7 +205,8 @@ export async function transfer(input: TransferInput, key: string): Promise<PlayR
   const ctx = await playing();
   if ("error" in ctx) return { ok: false, error: ctx.error! };
   try {
-    if (!transferWindowIsOpen(ctx.game.open, ctx.game.current)) return { ok: false, error: "Transfers are closed for this matchday." };
+    const reason = transferBlockReason(ctx.game.open, ctx.game.current);
+    if (reason) return { ok: false, error: reason };
     const clean: TransferInput = { playerOutId: input.playerOutId, playerInId: input.playerInId, useFreeTransferChip: input.useFreeTransferChip };
     if (input.expectedSquadUpdatedAt) clean.expectedSquadUpdatedAt = input.expectedSquadUpdatedAt;
     return { ok: true, receipt: await makeTransfer(ctx.manager, ctx.game, clean, key) };

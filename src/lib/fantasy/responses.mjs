@@ -26,6 +26,7 @@ const object = (fields) => (v) => {
 const marketStatus = literal("DRAFT", "OPEN", "LOCKED", "CLOSED");
 const role = literal("Fragger", "IGL", "Support", "Anchor");
 const chip = literal(null, "triple_captain", "bench_boost");
+const image = (value) => typeof value === "string" && value.length <= 750000 ? value : invalid();
 const matchday = object({
   tournamentId: id, matchdayNumber: positive, expectedMatches: integer, matchesPlayed: integer,
   fantasyStatus: literal("DISCOVERED", "READY", "COMPLETED", "PROCESSING", "PROCESSED", "FAILED"),
@@ -46,7 +47,9 @@ const schemas = {
   market: object({
     tournamentId: id, matchdayNumber: positive, status: marketStatus, pricingVersion: string,
     lockTime: nullable(timestamp), pricesFrozenAt: nullable(timestamp),
-    players: array(object({ playerId: id, playerName: string, ign: nullable(string), teamIdAtLock: nullable(id), price: nonnegative, isEligible: boolean })),
+    players: array(object({ playerId: id, playerName: string, ign: nullable(string), teamIdAtLock: nullable(id), price: nonnegative, isEligible: boolean,
+      teamName: optional(nullable(string)), teamLogoUrl: optional(nullable(image)), photoUrl: optional(nullable(image)),
+    })),
   }),
   squad,
   ownSquad: object({ squad }),

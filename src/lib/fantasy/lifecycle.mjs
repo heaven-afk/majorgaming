@@ -41,6 +41,17 @@ export function transferWindowIsOpen(open, day, now = Date.now()) {
     (Date.parse(day.transfersOpenAt) <= now && Date.parse(day.transfersCloseAt) > now && Date.parse(day.matchdayStartsAt) > now));
 }
 
+export function transferBlockReason(open, day, now = Date.now()) {
+  if (transferWindowIsOpen(open, day, now)) return null;
+  if (!open || (day.matchdayStartsAt && Date.parse(day.matchdayStartsAt) <= now)) return "This matchday is locked. Transfers are closed.";
+  if (!day.transfersOpenAt || !day.transfersCloseAt) return "MGL has not scheduled transfers for this matchday.";
+  if (Date.parse(day.transfersOpenAt) > now) {
+    const time = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Lagos" }).format(new Date(day.transfersOpenAt));
+    return "Transfers open " + time + " Lagos time.";
+  }
+  return "The transfer window has closed for this matchday.";
+}
+
 export function windowActionAllowed(day, action, now = Date.now()) {
   if (!day || !["open", "lock", "close"].includes(action)) return false;
   if (action === "open") return day.marketStatus === "DRAFT" &&

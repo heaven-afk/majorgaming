@@ -16,7 +16,7 @@ export function PlayerPortrait({ player, badges = true }: { player: Pick<Fantasy
   return (
     <span className="fantasy-player__portrait" style={{ "--team-light": theme.light, "--team-dark": theme.dark } as CSSProperties}>
       <Image className="fantasy-player__headshot" data-placeholder={photo ? undefined : ""} src={photo || fantasyCards.silhouette} alt="" fill sizes="(min-width: 900px) 240px, 45vw" unoptimized={Boolean(photo)} onError={photo ? () => setFailedPhoto(photo) : undefined} />
-      {badges && <span className="fantasy-player__logo" aria-hidden="true">{logo ? <Image src={logo} alt="" width={28} height={28} unoptimized onError={() => setFailedLogo(logo)} /> : initials(player.team)}</span>}
+      {badges && (logo || player.team) && <span className="fantasy-player__logo" aria-hidden="true">{logo ? <Image src={logo} alt="" width={28} height={28} unoptimized onError={() => setFailedLogo(logo)} /> : initials(player.team)}</span>}
       {badges && player.price !== undefined && <span className="fantasy-player__price">{player.price.toFixed(1)} <small>{fantasyCards.labels.credits}</small></span>}
     </span>
   );

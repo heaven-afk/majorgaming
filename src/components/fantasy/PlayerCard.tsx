@@ -43,7 +43,7 @@ export function PlayerCardContent({ player, children }: { player: FantasyCardPla
     <span className="fantasy-player__body">
       <strong className="fantasy-player__name">{player.name}</strong>
       <span className="fantasy-player__id"><small>{fantasyCards.labels.currentId}</small> {player.ign || fantasyCards.labels.missingId}</span>
-      <span className="fantasy-player__team">{player.team}{player.role && <> <span aria-hidden="true">·</span> {player.role}</>}</span>
+      {(player.team || player.role) && <span className="fantasy-player__team">{player.team}{player.team && player.role && <> <span aria-hidden="true">·</span> </>}{player.role}</span>}
       {children}
     </span>
   </>;

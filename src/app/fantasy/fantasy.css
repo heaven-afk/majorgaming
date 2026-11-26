@@ -2255,7 +2255,12 @@ ol:first-of-type > .fx-sheet-row:first-child {
     grid-area: lineup;
     position: sticky;
     top: 24px;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
   }
+  .fx-lineup > * { flex-shrink: 0; }
   .fx-market {
     grid-area: market;
   }
@@ -2360,6 +2365,7 @@ ol:first-of-type > .fx-sheet-row:first-child {
   background: var(--fx-panel);
   box-shadow: inset 0 0 0 1px var(--fx-line), inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
+.fx-transfer-note { padding: 10px 12px; border: 1px solid var(--fx-line); border-radius: 8px; font-size: 13px; line-height: 1.45; }
 .fx-lineup__head {
   display: flex;
   align-items: flex-start;
