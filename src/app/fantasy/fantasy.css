@@ -2244,21 +2244,21 @@ ol:first-of-type > .fx-sheet-row:first-child {
 @media (min-width: 1100px) {
   .fx-builder {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    grid-template-areas: "summary summary" "lineup market";
+    grid-template-areas: "notice notice" "summary summary" "lineup market";
     align-items: start;
     gap: 16px;
   }
   .fx-summary {
     grid-area: summary;
   }
+  .fx-notice {
+    grid-area: notice;
+  }
   .fx-lineup {
     grid-area: lineup;
     position: sticky;
-    top: 24px;
-    max-height: calc(100dvh - 48px);
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-    scrollbar-gutter: stable;
+    /* Sticks by its top, or by its bottom when taller than the screen: no inner scrollbar. */
+    top: min(24px, calc(100dvh - var(--fx-lineup-h, 0px) - 24px));
   }
   .fx-lineup > * { flex-shrink: 0; }
   .fx-market {
@@ -2266,7 +2266,7 @@ ol:first-of-type > .fx-sheet-row:first-child {
   }
   .fx-builder[data-readonly] {
     grid-template-columns: minmax(0, 760px);
-    grid-template-areas: "lineup";
+    grid-template-areas: "notice" "lineup";
   }
 }
 
@@ -2356,6 +2356,9 @@ ol:first-of-type > .fx-sheet-row:first-child {
 }
 
 /* Line-up */
+.fx-lineup[hidden] {
+  display: none !important;
+}
 .fx-lineup {
   display: flex;
   flex-direction: column;
@@ -2365,7 +2368,56 @@ ol:first-of-type > .fx-sheet-row:first-child {
   background: var(--fx-panel);
   box-shadow: inset 0 0 0 1px var(--fx-line), inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
-.fx-transfer-note { padding: 10px 12px; border: 1px solid var(--fx-line); border-radius: 8px; font-size: 13px; line-height: 1.45; }
+/* What's closed and why, at the top of the squad screen */
+.fx-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgb(249 169 64 / 0.16), rgb(249 169 64 / 0.05));
+  box-shadow: inset 0 0 0 1px rgb(249 169 64 / 0.38);
+  animation: fx-in 0.4s var(--ease-out);
+}
+.fx-notice[data-tone="info"] {
+  background: var(--fx-raise);
+  box-shadow: inset 0 0 0 1px var(--fx-line-2);
+}
+.fx-notice__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--color-amber);
+  color: var(--color-ink);
+}
+.fx-notice[data-tone="info"] .fx-notice__icon {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--color-amber);
+}
+.fx-notice h2 {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.fx-notice p {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fx-soft, #bdbbb7);
+}
+@media (min-width: 600px) {
+  .fx-notice {
+    align-items: center;
+    padding: 18px 20px;
+  }
+  .fx-notice h2 {
+    font-size: 20px;
+  }
+}
 .fx-lineup__head {
   display: flex;
   align-items: flex-start;
@@ -2425,6 +2477,7 @@ ol:first-of-type > .fx-sheet-row:first-child {
 
 /* What to do with the chosen player */
 .fx-actions {
+  scroll-margin: 96px 0 calc(var(--fx-tabbar, 0px) + env(safe-area-inset-bottom) + 96px);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -2843,10 +2896,46 @@ ol:first-of-type > .fx-sheet-row:first-child {
   box-shadow: 0 16px 36px -12px rgb(0 0 0 / 0.8);
   animation: fx-in 0.4s var(--ease-out);
 }
-.fx-toast--error {
+/* Blocked actions: a pop-up on the transfer sheet's frame */
+.fx-popup .fx-sheet__card {
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 400px;
+}
+.fx-popup__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgb(249 169 64 / 0.14);
+  color: var(--color-amber);
+}
+.fx-popup__text p {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--fx-soft, #bdbbb7);
+}
+.fx-popup .fx-btn {
+  align-self: stretch;
+  margin-top: 4px;
+}
+.fx-sheet__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: #2a1712;
   color: #ffb69c;
-  box-shadow: inset 0 0 0 1px rgb(239 90 40 / 0.4), 0 16px 36px -12px rgb(0 0 0 / 0.8);
+  box-shadow: inset 0 0 0 1px rgb(239 90 40 / 0.4);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.fx-sheet__error svg {
+  flex: none;
+  margin-top: 2px;
 }
 @media (min-width: 1024px) {
   .fx-toast {
@@ -3512,8 +3601,10 @@ ol:first-of-type > .fx-sheet-row:first-child {
 .fx-market-grid .fantasy-player__team { font-size: 11px; }
 .fx-player-select { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; min-height: 36px; margin-top: 6px; padding: 7px; border-radius: 8px; background: rgb(255 255 255 / 0.07); border: 1px solid rgb(255 255 255 / 0.08); font-size: 11px; font-weight: 500; text-align: left; }
 .fx-player-select svg { flex: none; }
-.fx-player-select:not(:disabled):hover { background: var(--color-amber); color: var(--color-ink); }
-.fx-player-select:disabled { cursor: not-allowed; color: var(--fx-muted); }
+.fx-player-select:not(:disabled):not([aria-disabled="true"]):hover { background: var(--color-amber); color: var(--color-ink); }
+.fx-player-select:disabled, .fx-player-select[aria-disabled="true"] { color: var(--fx-muted); }
+.fx-player-select:disabled { cursor: default; }
+.fx-chip-btn[aria-disabled="true"] { opacity: 0.55; }
 .fx-market-grid [data-picked] .fantasy-player { border-color: var(--color-amber); }
 .fx-market-grid [data-picked] .fx-player-select { background: var(--fx-amber-wash); color: var(--color-amber); }
 .fx-market-grid [data-off] .fantasy-player__portrait { opacity: 0.6; }
@@ -3529,7 +3620,8 @@ ol:first-of-type > .fx-sheet-row:first-child {
 @media (pointer: coarse) { .fx-player-select { min-height: 44px; } }
 @media (min-width: 320px) {
   .fx-strip { grid-template-columns: repeat(auto-fit, minmax(min(100%, 112px), 1fr)); }
-  .fx-market-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 112px), 1fr)); }
+  /* Phones: always two players a row */
+  .fx-market-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 600px) {
   .fx-strip { grid-template-columns: repeat(auto-fit, minmax(min(100%, 135px), 1fr)); }

@@ -149,7 +149,21 @@ export const fantasyPage = {
     save: "Save squad",
     saving: "Saving…",
     saved: "Squad saved",
-    closed: "The market is closed. Your squad shows as it was locked in.",
+    closed: "As it was locked in.",
+    alerts: {
+      ok: "Got it",
+      closed: "Transfers are closed",
+      notSaved: "Squad not saved",
+      full: { title: "Your squad is full", body: "Tap a player in your lineup and remove them to make room." },
+      chooseOut: { title: "Choose who goes out first", body: "Tap a player in your lineup, then Transfer out. Then pick who comes in from this list." },
+      ineligible: { title: (name: string) => `${name} isn’t available`, body: "Fantasy Core hasn’t made this player available for this matchday." },
+      budget: {
+        title: "Not enough credits",
+        body: (name: string, price: number, left: number, out?: string) => `${name} costs ${price.toFixed(1)} cr and you have ${left.toFixed(1)} cr${out ? ` once ${out} goes out` : " left"}.`,
+      },
+      team: { title: "Two from this team already", body: (team: string) => `You can have up to 2 players from ${team || "one team"}. Take one out first.` },
+    },
+    expired: { tone: "locked" as const, title: "Time’s up", body: "The deadline has passed, so changes are closed. Refresh to see the latest." },
     chips: {
       title: "Chip for this matchday",
       none: "No chip",

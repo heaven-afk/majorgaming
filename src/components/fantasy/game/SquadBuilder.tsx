@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { fantasyPage } from "@/content/fantasy";
 import { fantasyCards } from "@/content/fantasy-cards";
 import { saveSquad, transfer, type PlayResult } from "@/lib/fantasy/actions";
@@ -43,6 +43,9 @@ const fmt = (n: number) => n.toFixed(1);
 const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
 /** `retry`: the last try got no answer, so the request must go again exactly as it was. */
+type Alert = { title: string; body: string };
+export type Notice = { tone: "locked" | "info"; title: string; body: string };
+
 type Pending = { out: string; in: string; useFree: boolean; key: string; updatedAt?: string | null; retry?: boolean };
 
 /**
@@ -56,6 +59,7 @@ export default function SquadBuilder({
   previous,
   open,
   transferReason,
+  notice,
   deadline,
   chips,
 }: {
@@ -64,6 +68,7 @@ export default function SquadBuilder({
   previous: Lineup | null;
   open: boolean;
   transferReason: string | null;
+  notice: Notice | null;
   deadline: string | null;
   chips: { triple_captain: boolean; bench_boost: boolean; free_transfer: boolean };
 }) {
@@ -74,13 +79,32 @@ export default function SquadBuilder({
   const [active, setActive] = useState<Slot | null>(null);
   const [replacing, setReplacing] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
-  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [alert, setAlert] = useState<Alert | null>(null);
+  const [transferError, setTransferError] = useState<string | null>(null);
   const [busy, start] = useTransition();
   const [q, setQ] = useState("");
   const [team, setTeam] = useState("");
   const [sort, setSort] = useState<Sort>("price");
   const [expired, setExpired] = useState(false);
   const marketRef = useRef<HTMLDivElement>(null);
+  const lineupRef = useRef<HTMLElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  // Desktop keeps the line-up in view without an inner scrollbar: CSS sticks it by its top,
+  // or by its bottom when it's taller than the screen.
+  useEffect(() => {
+    const el = lineupRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => el.style.setProperty("--fx-lineup-h", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  // The success toast goes by itself.
+  useEffect(() => {
+    if (!message) return;
+    const t = window.setTimeout(() => setMessage(null), 3500);
+    return () => window.clearTimeout(t);
+  }, [message]);
   useEffect(() => {
     const end = deadline ? Date.parse(deadline) : NaN;
     if (!Number.isFinite(end)) return;
@@ -129,6 +153,15 @@ export default function SquadBuilder({
       .sort((a, b) => (sort === "name" ? a.name.localeCompare(b.name) : (sort === "price" ? b.price - a.price : a.price - b.price) || a.name.localeCompare(b.name)));
   }, [players, q, team, sort]);
 
+  /** Tapping a card that can't be picked says why, instead of doing nothing. */
+  function explain(p: Player, why: string | undefined) {
+    const a = copy.alerts;
+    if (why === copy.why.ineligible) setAlert({ title: a.ineligible.title(p.name), body: a.ineligible.body });
+    else if (why === copy.why.budget) setAlert({ title: a.budget.title, body: a.budget.body(p.name, p.price, BUDGET - spent + (out?.price ?? 0), out?.name) });
+    else if (why === copy.why.team) setAlert({ title: a.team.title, body: a.team.body(p.team.name) });
+    else if (editing && !replacing) setAlert(a.chooseOut);
+  }
+
   function chooseSlot(slot: Slot) {
     if (readOnly) return;
     setMessage(null);
@@ -141,12 +174,13 @@ export default function SquadBuilder({
     if (readOnly) return;
     setMessage(null);
     if (replacing) {
-      if (transferReason) { setMessage({ tone: "error", text: transferReason }); return; }
+      if (transferReason) { setAlert({ title: copy.alerts.closed, body: transferReason }); return; }
+      setTransferError(null);
       setPending({ out: replacing, in: p.id, useFree: chips.free_transfer, key: newKey(), updatedAt: squad?.updatedAt });
       return;
     }
     const slot = active && !draft.slots[active] ? active : ([...ROLES, "Sub"] as Slot[]).find((s) => !draft.slots[s]);
-    if (!slot) return;
+    if (!slot) { setAlert(copy.alerts.full); return; }
     setDraft((d) => {
       const slots = { ...d.slots, [slot]: p.id };
       // The first starter picked is captain until they choose.
@@ -181,15 +215,15 @@ export default function SquadBuilder({
     start(async () => {
       const res = await saveSquad(lineup);
       if (res.ok) {
-        setMessage({ tone: "ok", text: copy.saved });
+        setMessage(copy.saved);
         router.refresh();
-      } else setMessage({ tone: "error", text: res.error });
+      } else setAlert({ title: copy.alerts.notSaved, body: res.error });
     });
   }
 
   function confirmTransfer() {
     if (!pending || readOnly) return;
-    if (transferReason) { setMessage({ tone: "error", text: transferReason }); setPending(null); return; }
+    if (transferReason) { setAlert({ title: copy.alerts.closed, body: transferReason }); setPending(null); return; }
     const p = pending;
     start(async () => {
       const res: PlayResult = await transfer({ playerOutId: p.out, playerInId: p.in, useFreeTransferChip: p.useFree, ...(p.updatedAt ? { expectedSquadUpdatedAt: p.updatedAt } : {}) }, p.key);
@@ -197,20 +231,31 @@ export default function SquadBuilder({
         setPending(null);
         setReplacing(null);
         setActive(null);
-        setMessage({ tone: "ok", text: tcopy.done(res.receipt?.penaltyApplied ?? 0) });
+        setTransferError(null);
+        setMessage(tcopy.done(res.receipt?.penaltyApplied ?? 0));
         router.refresh();
       } else {
         // An unknown outcome keeps the same key and body, so trying again can't charge twice.
         setPending({ ...p, key: res.retry ? p.key : newKey(), retry: res.retry });
-        setMessage({ tone: "error", text: res.error });
+        setTransferError(res.error);
       }
     });
   }
 
   const activePlayer = active ? draft.slots[active] : null;
+  // Tapping a player brings their actions into view, so they can't be missed below the fold.
+  useEffect(() => {
+    const el = actionsRef.current;
+    if (!active || !activePlayer || !el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+    el.querySelector<HTMLButtonElement>(".fx-actions__list button")?.focus({ preventScroll: true });
+  }, [active, activePlayer]);
+  const closeAlert = useCallback(() => setAlert(null), []);
+  const banner = expired ? (notice?.tone === "locked" ? notice : copy.expired) : notice;
   const shows = !readOnly && (squad || !previous);
   const captainName = draft.captain ? byId.get(draft.captain)?.name : undefined;
-  const hint = readOnly ? copy.closed : editing ? copy.hintEdit : copy.hintNew;
+  const hint = readOnly ? (squad ? copy.closed : "") : editing ? copy.hintEdit : copy.hintNew;
   const saveButton = (className = "") => (
     <button className={`fx-btn fx-btn--primary ${className}`} disabled={!complete || !dirty || busy || readOnly} onClick={() => save(lineupOf(draft))}>
       {busy && !pending ? copy.saving : copy.save}
@@ -219,6 +264,17 @@ export default function SquadBuilder({
 
   return (
     <div className="fx-builder" data-readonly={readOnly ? "" : undefined}>
+      {banner && (
+        <section className="fx-notice" data-tone={banner.tone} role="status" aria-live="polite">
+          <span className="fx-notice__icon" aria-hidden>
+            <Icon name={banner.tone === "locked" ? "lock" : "calendar"} size={20} />
+          </span>
+          <div>
+            <h2>{banner.title}</h2>
+            <p>{banner.body}</p>
+          </div>
+        </section>
+      )}
       {shows && (
         <section className="fx-summary" aria-label={copy.summary}>
           <div className="fx-summary__stat fx-summary__budget">
@@ -250,16 +306,14 @@ export default function SquadBuilder({
         </section>
       )}
 
-      <section className="fx-lineup" aria-labelledby="fx-lineup-title" tabIndex={0}>
+      <section className="fx-lineup" ref={lineupRef} aria-labelledby="fx-lineup-title" hidden={readOnly && !squad}>
         <header className="fx-lineup__head">
           <div>
             <h2 id="fx-lineup-title">{copy.lineup}</h2>
-            <p>{hint}</p>
+            {hint && <p>{hint}</p>}
           </div>
           <span className="fx-lineup__rule">{copy.perTeam}</span>
         </header>
-
-        {(squad || previous) && transferReason && <p className="fx-transfer-note" id="fx-transfer-note" role="status">{transferReason}</p>}
 
         {previous && !squad && open && (
           <div className="fx-carry">
@@ -285,7 +339,7 @@ export default function SquadBuilder({
         </p>
 
         {active && activePlayer && !readOnly && (
-          <div className="fx-actions" role="group" aria-label={`${byId.get(activePlayer)?.name}`}>
+          <div className="fx-actions" ref={actionsRef} role="group" aria-label={`${byId.get(activePlayer)?.name}`}>
             <div className="fx-actions__who">
               <Headshot src={byId.get(activePlayer)?.photo} team={byId.get(activePlayer)?.team.name} size={36} />
               <span>
@@ -319,9 +373,9 @@ export default function SquadBuilder({
               {editing ? (
                 <button
                   className="fx-chip-btn"
-                  disabled={Boolean(transferReason)}
-                  aria-describedby={transferReason ? "fx-transfer-note" : undefined}
+                  aria-disabled={transferReason ? true : undefined}
                   onClick={() => {
+                    if (transferReason) return setAlert({ title: copy.alerts.closed, body: transferReason });
                     setReplacing(activePlayer);
                     setActive(null);
                     marketRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -409,7 +463,7 @@ export default function SquadBuilder({
               return (
                 <li key={p.id} data-off={why && !picked ? "" : undefined} data-picked={picked ? "" : undefined}>
                   <PlayerTile name={p.name} ign={p.ign} team={p.team.name} logo={p.team.logo} photo={p.photo} price={p.price} action={
-                    <button className="fx-player-select" disabled={!can} onClick={() => add(p)} aria-label={`${replacing ? "Bring in" : "Add"} ${p.name}`} title={!can && !why ? fantasyCards.labels.chooseReplacement : undefined}>
+                    <button className="fx-player-select" disabled={picked} aria-disabled={!can && !picked ? true : undefined} onClick={() => (can ? add(p) : explain(p, why))} aria-label={`${replacing ? "Bring in" : "Add"} ${p.name}`}>
                       <span>{why ?? (replacing ? fantasyCards.labels.bringIn : fantasyCards.labels.select)}</span>
                       <Icon name={picked ? "check" : replacing ? "undo" : "plus"} size={14} />
                     </button>
@@ -437,11 +491,13 @@ export default function SquadBuilder({
       )}
 
       {message && (
-        <p className={`fx-toast fx-toast--${message.tone}`} role={message.tone === "error" ? "alert" : "status"}>
-          <Icon name={message.tone === "ok" ? "check" : "warning"} size={15} />
-          {message.text}
+        <p className="fx-toast" role="status">
+          <Icon name="check" size={15} />
+          {message}
         </p>
       )}
+
+      {alert && <AlertSheet alert={alert} onClose={closeAlert} />}
 
       {pending && (
         <TransferSheet
@@ -451,10 +507,11 @@ export default function SquadBuilder({
           credits={BUDGET - spent + (byId.get(pending.out)?.price ?? 0) - (byId.get(pending.in)?.price ?? 0)}
           freeAvailable={chips.free_transfer}
           busy={busy}
+          error={transferError}
           closed={readOnly || Boolean(transferReason)}
           onFree={(useFree) => setPending({ ...pending, useFree, key: newKey() })}
           // Closing after a lost answer: refresh, in case the transfer did go through.
-          onCancel={() => (pending.retry && router.refresh(), setPending(null))}
+          onCancel={() => (pending.retry && router.refresh(), setPending(null), setTransferError(null))}
           onConfirm={confirmTransfer}
         />
       )}
@@ -499,6 +556,7 @@ function TransferSheet({
   credits,
   freeAvailable,
   busy,
+  error,
   closed,
   onFree,
   onCancel,
@@ -510,6 +568,7 @@ function TransferSheet({
   credits: number;
   freeAvailable: boolean;
   busy: boolean;
+  error: string | null;
   closed: boolean;
   onFree: (v: boolean) => void;
   onCancel: () => void;
@@ -556,6 +615,12 @@ function TransferSheet({
           <span className="fx-toggle__track" aria-hidden />
           <span>{freeAvailable ? tcopy.useFree : tcopy.freeUsed}</span>
         </label>
+        {error && (
+          <p className="fx-sheet__error" role="alert">
+            <Icon name="warning" size={15} />
+            {error}
+          </p>
+        )}
         <div className="fx-sheet__actions">
           <button className="fx-btn fx-btn--ghost" onClick={onCancel} disabled={busy}>
             {tcopy.cancel}
@@ -564,6 +629,34 @@ function TransferSheet({
             {busy ? tcopy.pending : pending.retry ? tcopy.retry : tcopy.confirm}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** A blocked action, said where it can't be missed. */
+function AlertSheet({ alert, onClose }: { alert: Alert; onClose: () => void }) {
+  const ok = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    ok.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="fx-sheet fx-popup" role="alertdialog" aria-modal="true" aria-labelledby="fx-popup-title" aria-describedby="fx-popup-body">
+      <button className="fx-sheet__scrim" aria-label={copy.alerts.ok} onClick={onClose} tabIndex={-1} />
+      <div className="fx-sheet__card">
+        <span className="fx-popup__icon" aria-hidden>
+          <Icon name="warning" size={22} />
+        </span>
+        <div className="fx-popup__text">
+          <h2 id="fx-popup-title">{alert.title}</h2>
+          <p id="fx-popup-body">{alert.body}</p>
+        </div>
+        <button ref={ok} className="fx-btn fx-btn--primary" onClick={onClose}>
+          {copy.alerts.ok}
+        </button>
       </div>
     </div>
   );

@@ -90,3 +90,20 @@ test("window transport requires a token, strict input, no caching and no platfor
   await assert.rejects(request("/api/v1/markets/cup/window", { token: "admin-token", body: { action: "open", matchdayNumber: 1, permissions: ["all"] } }));
   assert.equal(calls, 1);
 });
+
+test("squad notice explains every closed state", async () => {
+  const { squadNotice } = await import("../src/lib/fantasy/lifecycle.mjs");
+  const now = Date.parse("2026-11-26T12:00:00Z");
+  const day = { matchdayNumber: 1, matchesPlayed: 0, marketStatus: "OPEN", fantasyStatus: "DISCOVERED", splitWindows: true };
+  assert.equal(squadNotice(false, day, false, now).title, "The market isn’t open yet");
+  assert.match(squadNotice(false, day, false, now).body, /once its start time is set/);
+  assert.equal(squadNotice(false, { ...day, matchesPlayed: 2 }, true, now).title, "Matchday 1 is under way");
+  assert.equal(squadNotice(false, { ...day, fantasyStatus: "PROCESSED" }, true, now).title, "Matchday 1 is over");
+  const live = { ...day, matchdayStartsAt: "2026-11-27T12:00:00Z" };
+  assert.equal(squadNotice(true, live, false, now).title, "Squad building isn’t open yet");
+  assert.equal(squadNotice(true, { ...live, buildSquadDeadline: "2026-11-26T11:00:00Z" }, false, now).title, "Squad building has closed");
+  assert.equal(squadNotice(true, { ...live, matchdayNumber: 2 }, false, now).title, "New squads are closed");
+  assert.equal(squadNotice(true, { ...live, buildSquadDeadline: "2026-11-27T11:00:00Z" }, false, now), null);
+  assert.equal(squadNotice(true, live, true, now).tone, "info");
+  assert.equal(squadNotice(true, { ...live, transfersOpenAt: "2026-11-26T10:00:00Z", transfersCloseAt: "2026-11-27T10:00:00Z" }, true, now), null);
+});

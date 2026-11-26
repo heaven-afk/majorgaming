@@ -60,3 +60,37 @@ export function windowActionAllowed(day, action, now = Date.now()) {
   if (action === "lock") return day.marketStatus === "OPEN";
   return ["OPEN", "LOCKED"].includes(day.marketStatus);
 }
+
+const lagosTime = iso => new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Lagos" }).format(new Date(iso)) + " Lagos time";
+
+/**
+ * What the squad screen says up top when something is closed, or null when everything is open.
+ * `tone`: "locked" when the squad can't change at all, "info" when only transfers are closed.
+
+ * @returns {{ tone: "locked" | "info"; title: string; body: string } | null}
+ */
+export function squadNotice(open, day, hasSquad, now = Date.now()) {
+  const n = day.matchdayNumber;
+  if (!open) {
+    const started = day.matchesPlayed > 0 || day.marketStatus === "LOCKED" || Boolean(day.matchdayStartsAt && Date.parse(day.matchdayStartsAt) <= now);
+    if (["COMPLETED", "PROCESSING", "PROCESSED"].includes(day.fantasyStatus)) {
+      return { tone: "locked", title: `Matchday ${n} is over`, body: "The next matchday’s market isn’t open yet. Check back soon to pick for it." };
+    }
+    if (started) {
+      return { tone: "locked", title: `Matchday ${n} is under way`, body: hasSquad
+        ? "Squads are locked while it’s played. Yours shows below as it was locked in; changes open again for the next matchday."
+        : "Squads are locked while it’s played. You can pick a squad once the next market opens." };
+    }
+    return { tone: "locked", title: "The market isn’t open yet", body: day.matchdayStartsAt
+      ? `Picks for Matchday ${n} open before it starts on ${lagosTime(day.matchdayStartsAt)}. Check back soon.`
+      : `Picks for Matchday ${n} open once its start time is set. Check back soon.` };
+  }
+  if (!canManageSquad(open, day, hasSquad, now)) {
+    if (n !== 1) return { tone: "locked", title: "New squads are closed", body: "Squads can only be built before Matchday 1 starts, so this tournament isn’t taking new managers." };
+    if (!day.buildSquadDeadline) return { tone: "locked", title: "Squad building isn’t open yet", body: "It opens once the deadline for building squads is set. Check back soon." };
+    return { tone: "locked", title: "Squad building has closed", body: `The deadline was ${lagosTime(day.buildSquadDeadline)}.` };
+  }
+  const transfers = hasSquad ? transferBlockReason(open, day, now) : null;
+  if (transfers) return { tone: "info", title: "Transfers are closed", body: transfers + " You can still change roles, your captain and your chip." };
+  return null;
+}
