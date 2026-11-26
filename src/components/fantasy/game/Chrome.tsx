@@ -4,16 +4,15 @@ import Nav from "@/components/Nav";
 import { fantasyPage } from "@/content/fantasy";
 import type { Game, Standing } from "@/lib/fantasy/game";
 import { SquadSheet } from "./Pieces";
+import { matchdayStatus } from "@/lib/fantasy/lifecycle.mjs";
 
 const copy = fantasyPage;
 type Ready = Extract<Game, { state: "ready" }>;
 
 /** Where the matchday stands, in a word. */
 export function statusOf(game: Ready) {
-  if (game.open) return { tone: "open", label: copy.status.open };
-  if (game.market.status === "UNPUBLISHED" || game.market.status === "DRAFT") return { tone: "soon", label: copy.status.unpublished };
-  if (game.current.fantasyStatus === "PROCESSED") return { tone: "done", label: copy.status.scored };
-  return { tone: "live", label: copy.status.locked };
+  const { tone, key } = matchdayStatus(game.open, game.market.status, game.current);
+  return { tone, key, label: copy.status[key] };
 }
 
 const deadlineFormat = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" });

@@ -92,7 +92,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
           </div>
           <div className="fx-score__mid">
             <h2 id="fx-score-title">MD{game.current.matchdayNumber}</h2>
-            {canEditSquad && deadline ? <Countdown to={deadline} compact /> : <small>{status.tone === "done" ? "Scored" : "In play"}</small>}
+            {canEditSquad && deadline ? <Countdown to={deadline} compact /> : <small>{status.tone === "done" ? "Scored" : status.tone === "live" ? "In play" : "Not started"}</small>}
           </div>
           <div className="fx-score__side fx-score__side--end">
             <small>Leader</small>
@@ -221,8 +221,9 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
             </span>
           </div>
           {days.map((d) => {
-            const state = d.matchdayNumber === game.current.matchdayNumber ? (game.open ? "open" : "live") : d.fantasyStatus === "PROCESSED" ? "done" : "next";
-            const label = { done: "Scored", open: "Transfers open", live: "In play", next: "Coming up" }[state];
+            const current = d.matchdayNumber === game.current.matchdayNumber;
+            const state = current ? ({ open: "open", live: "live", done: "done", soon: "next" } as const)[status.tone as "open" | "live" | "done" | "soon"] : d.fantasyStatus === "PROCESSED" ? "done" : "next";
+            const label = current ? status.label : { done: "Scored", open: "Transfers open", live: "In play", next: "Coming up" }[state];
             return (
               <div key={d.matchdayNumber} className="fx-days__row" role="row" data-state={state}>
                 <span role="cell">

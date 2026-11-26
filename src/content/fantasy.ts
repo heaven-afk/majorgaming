@@ -91,6 +91,10 @@ export const fantasyPage = {
 
   status: {
     open: "Transfers open",
+    building: "Squad building open",
+    transfersSoon: "Transfers open soon",
+    transfersClosed: "Transfers closed",
+    notStarted: "Not started yet",
     locked: "Matchday in play",
     scored: "Matchday scored",
     unpublished: "Prices coming",

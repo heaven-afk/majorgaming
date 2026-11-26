@@ -94,3 +94,21 @@ export function squadNotice(open, day, hasSquad, now = Date.now()) {
   if (transfers) return { tone: "info", title: "Transfers are closed", body: transfers + " You can still change roles, your captain and your chip." };
   return null;
 }
+
+/**
+ * Where the current matchday stands, for the status pill. With split windows the market being
+ * open isn't enough for "Transfers open": the transfer window MGL schedules must be open too.
+ * @returns {{ tone: "open" | "soon" | "live" | "done"; key: "open" | "building" | "transfersSoon" | "transfersClosed" | "unpublished" | "notStarted" | "locked" | "scored" }}
+ */
+export function matchdayStatus(open, marketStatus, day, now = Date.now()) {
+  if (open) {
+    if (!day.splitWindows || transferWindowIsOpen(open, day, now)) return { tone: "open", key: "open" };
+    if (day.matchdayNumber === 1 && day.buildSquadDeadline && Date.parse(day.buildSquadDeadline) > now) return { tone: "open", key: "building" };
+    if (day.transfersOpenAt && Date.parse(day.transfersOpenAt) > now) return { tone: "soon", key: "transfersSoon" };
+    return { tone: "soon", key: "transfersClosed" };
+  }
+  if (marketStatus === "UNPUBLISHED" || marketStatus === "DRAFT") return { tone: "soon", key: "unpublished" };
+  if (["COMPLETED", "PROCESSING", "PROCESSED"].includes(day.fantasyStatus)) return { tone: "done", key: "scored" };
+  const started = day.matchesPlayed > 0 || day.marketStatus === "LOCKED" || Boolean(day.matchdayStartsAt && Date.parse(day.matchdayStartsAt) <= now);
+  return started ? { tone: "live", key: "locked" } : { tone: "soon", key: "notStarted" };
+}

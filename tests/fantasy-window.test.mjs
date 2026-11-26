@@ -107,3 +107,19 @@ test("squad notice explains every closed state", async () => {
   assert.equal(squadNotice(true, live, true, now).tone, "info");
   assert.equal(squadNotice(true, { ...live, transfersOpenAt: "2026-11-26T10:00:00Z", transfersCloseAt: "2026-11-27T10:00:00Z" }, true, now), null);
 });
+
+test("status pill follows the transfer window, not just the market", async () => {
+  const { matchdayStatus } = await import("../src/lib/fantasy/lifecycle.mjs");
+  const now = Date.parse("2026-11-26T12:00:00Z");
+  const day = { matchdayNumber: 2, matchesPlayed: 0, marketStatus: "OPEN", fantasyStatus: "DISCOVERED", splitWindows: true, matchdayStartsAt: "2026-11-27T12:00:00Z" };
+  assert.equal(matchdayStatus(true, "OPEN", day, now).key, "transfersClosed");
+  assert.equal(matchdayStatus(true, "OPEN", { ...day, transfersOpenAt: "2026-11-26T15:00:00Z", transfersCloseAt: "2026-11-27T10:00:00Z" }, now).key, "transfersSoon");
+  assert.equal(matchdayStatus(true, "OPEN", { ...day, transfersOpenAt: "2026-11-26T10:00:00Z", transfersCloseAt: "2026-11-27T10:00:00Z" }, now).key, "open");
+  assert.equal(matchdayStatus(true, "OPEN", { ...day, transfersOpenAt: "2026-11-25T10:00:00Z", transfersCloseAt: "2026-11-26T10:00:00Z" }, now).key, "transfersClosed");
+  assert.equal(matchdayStatus(true, "OPEN", { ...day, matchdayNumber: 1, buildSquadDeadline: "2026-11-27T10:00:00Z" }, now).key, "building");
+  assert.equal(matchdayStatus(true, "OPEN", { ...day, splitWindows: false }, now).key, "open");
+  assert.equal(matchdayStatus(false, "OPEN", { ...day, matchdayStartsAt: null }, now).key, "notStarted");
+  assert.equal(matchdayStatus(false, "LOCKED", { ...day, marketStatus: "LOCKED", matchesPlayed: 1 }, now).key, "locked");
+  assert.equal(matchdayStatus(false, "UNPUBLISHED", day, now).key, "unpublished");
+  assert.equal(matchdayStatus(false, "LOCKED", { ...day, fantasyStatus: "PROCESSED" }, now).key, "scored");
+});
