@@ -11,7 +11,10 @@ to its own Heaven Index tournament. Unlinked tiers show their manual results.
 
 Heaven Index uses its own scoring rules and rank order. MGL displays each
 competition group separately, with team names, matches, events
-(matchdays), team kills, placement and total points, and player kill rankings.
+(matchdays), team kills, placement and total points. Heaven Index also sends
+player kill rankings; MGL ignores them (owner, 2026-11-27). Kill tables always
+come from the kill sheets uploaded under Results → Spreadsheets, whether or not
+the tier's standings are live.
 The latest saved snapshot is stored in MGL's database. Sheet uploads are kept
 separately and can be restored to the public view with **Use spreadsheets**.
 Matched teams show their MGL name and logo and open their MGL team page.

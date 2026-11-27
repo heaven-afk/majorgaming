@@ -167,8 +167,9 @@ export async function saveKills(eventId: string, payload: KillsPayload): Promise
     for (let i = 0; i < ids.length; i += 150) {
       const chunk = ids.slice(i, i + 150).join(",");
       for (const p of await db<{ id: string; ign: string | null }[]>(admin.token, `people?id=in.(${chunk})&select=id,ign`)) stored.set(p.id, p.ign);
-      for (const k of await db<{ person_id: string; event: { sort_order: number } }[]>(admin.token, `kill_rows?person_id=in.(${chunk})&event_id=neq.${eventId}&select=person_id,event:events(sort_order)`)) {
-        if (k.event.sort_order < here) newer.add(k.person_id);
+      // kill_rows reaches events only through its registration (entry_id, event_id → entries).
+      for (const k of await db<{ person_id: string; entry: { event: { sort_order: number } } }[]>(admin.token, `kill_rows?person_id=in.(${chunk})&event_id=neq.${eventId}&select=person_id,entry:entries(event:events(sort_order))`)) {
+        if (k.entry.event.sort_order < here) newer.add(k.person_id);
       }
     }
     const renamed = [...igns].filter(([id, ign]) => stored.get(id) !== ign && !newer.has(id));

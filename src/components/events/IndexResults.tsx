@@ -5,19 +5,11 @@ import type { ReactNode } from "react";
 import { useIndexResults } from "@/lib/index-results/use-index-results";
 import { eventsPage } from "@/content/site";
 import { liveTables } from "@/lib/index-results/standings";
-import type { MglTeamRef, TeamResult } from "@/lib/index-results/contract";
 import type { KillTable as KillTableData, LeagueEvent } from "@/lib/league";
 import EventTables from "./EventTables";
 import KillTable from "./KillTable";
 import LiveLadder from "./LiveLadder";
 import "./index-results.css";
-
-/** Players carry their team's feed name: show the same name as the standings above. */
-function teamLabel(name: string | null, table: { teams: TeamResult[]; mgl: (team: TeamResult) => MglTeamRef | undefined }) {
-  if (name === null) return "—";
-  const rows = table.teams.filter(team => team.name === name);
-  return (rows.length === 1 && table.mgl(rows[0])?.name) || name;
-}
 
 export default function IndexResults({ slug, name, children, compact = false, live, manualEvent, manualKills = [], adminTable, refreshKey }: {
   slug: string; name?: string; children?: ReactNode; compact?: boolean; live: boolean;
@@ -31,9 +23,10 @@ export default function IndexResults({ slug, name, children, compact = false, li
   const imported = new Set(sources.map(source => source.table));
   const manualTables = scoped ? manualEvent?.tables.filter(table => !imported.has(table.name)) : undefined;
   const manual = manualEvent && manualTables?.length ? { ...manualEvent, tables: manualTables } : undefined;
-  const manualPlayerResults = manualKills.filter(item => !imported.has(item.table)).flatMap(item => item.results);
+  // Kill tables always come from the uploaded spreadsheets, live standings or not.
+  const killTables = manualKills.flatMap(item => item.results);
   const tables = sources.flatMap(source => {
-    const shown = liveTables(source.snapshot, !compact);
+    const shown = liveTables(source.snapshot);
     return shown.map(table => ({
       ...table,
       key: JSON.stringify([source.table, table.id]),
@@ -76,20 +69,9 @@ export default function IndexResults({ slug, name, children, compact = false, li
           {admin && table.syncedAt && <p className="index-results__time">
             Updated <time dateTime={table.syncedAt}>{new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Lagos" }).format(new Date(table.syncedAt))} WAT</time>
           </p>}
-          {!table.teams.length && !table.waiting.length && !table.players.length && <p className="index-results__empty">{copy.empty}</p>}
+          {!table.teams.length && !table.waiting.length && <p className="index-results__empty">{copy.empty}</p>}
           {(table.teams.length > 0 || table.waiting.length > 0) && (
             <LiveLadder teams={table.teams} waiting={table.waiting} mgl={table.mgl} limit={compact ? 10 : undefined} label={title + ", " + table.title} />
-          )}
-          {!compact && table.players.length > 0 && (
-            <div className="index-results__scroll">
-              <table>
-                <caption>{copy.players}</caption>
-                <thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Team</th><th scope="col">Matches</th><th scope="col">Events</th><th scope="col">Kills</th></tr></thead>
-                <tbody>{table.players.map(player => (
-                  <tr key={player.id}><td>{player.rank}</td><th scope="row">{player.name}</th><td>{teamLabel(player.team, table)}</td><td>{player.matches}</td><td>{player.events}</td><td><strong>{player.kills}</strong></td></tr>
-                ))}</tbody>
-              </table>
-            </div>
           )}
         </section>
       ))}
@@ -98,7 +80,7 @@ export default function IndexResults({ slug, name, children, compact = false, li
         <EventTables key={manual.tables.map(table => table.name).join("|")} event={manual} expanded />
       </div>}
     </section>
-    {manual && <KillTable key={manualPlayerResults.map(table => table.name).join("|")} event={manual.name} tables={manualPlayerResults} />}
+    {!compact && killTables.length > 0 && <KillTable key={killTables.map(table => table.name).join("|")} event={title} tables={killTables} />}
     </>
   );
 }

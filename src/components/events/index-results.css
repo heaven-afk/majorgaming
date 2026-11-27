@@ -3,11 +3,6 @@
 .index-results__group h3 small { font-size: 13px; font-weight: 400; color: rgb(244 242 238 / 0.5); }
 .index-results__time { margin-bottom: 1rem; padding: 0 8px; font-size: 13px; color: rgb(244 242 238 / 0.5); }
 .index-results__empty { padding: 0 8px; color: rgb(244 242 238 / 0.6); }
-.index-results__scroll { overflow-x: auto; margin: 1.5rem 0 1rem; }
-.index-results table { width: 100%; min-width: 36rem; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.index-results caption { text-align: left; padding: .65rem 0; font-weight: 600; }
-.index-results th, .index-results td { padding: .65rem .55rem; border-bottom: 1px solid currentColor; border-color: color-mix(in srgb, currentColor 16%, transparent); text-align: right; }
-.index-results th:nth-child(2) { text-align: left; }
 
 /* Live standings: the shared ladder, with the feed's extra columns where they fit */
 .ladder.ladder--feed .ladder__more { display: none; }

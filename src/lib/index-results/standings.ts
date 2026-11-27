@@ -6,10 +6,11 @@ export type LiveTable = ResultTable & { waiting: IndexTeam[] };
 /**
  * The tables to show for a tournament. Before any results, one table of the teams entered. Once
  * results come in, teams still to play follow the ranked ones, but only in an overall table:
- * with groups, nothing says which group a team is in until it plays.
+ * with groups, nothing says which group a team is in until it plays. Player kills from Heaven
+ * Index are never shown: kill tables come only from the spreadsheets uploaded in the admin.
  */
-export function liveTables(snapshot: IndexSnapshot, players = true): LiveTable[] {
-  const tables = snapshot.tables.filter(table => table.teams.length || (players && table.players.length));
+export function liveTables(snapshot: IndexSnapshot): LiveTable[] {
+  const tables = snapshot.tables.filter(table => table.teams.length).map(table => ({ ...table, players: [] }));
   const entered = snapshot.completed ? [] : snapshot.registeredTeams ?? [];
   if (!tables.length) return [{ id: null, name: "Overall", teams: [], players: [], waiting: entered }];
   const overall = tables.length === 1 && snapshot.tables.length === 1 && tables[0].id === null;

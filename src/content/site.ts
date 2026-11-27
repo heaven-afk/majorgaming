@@ -330,7 +330,6 @@ export const eventsPage = {
     none: "None yet",
     small: (placement: number, kills: number) => `${placement} place · ${kills} ${kills === 1 ? "kill" : "kills"}`,
     columns: { team: "Team", matches: "Matches", events: "Events", kills: "Kills", placement: "Placement pts", total: "Total" },
-    players: "Player kills",
   },
   archive: {
     label: "Archive",
