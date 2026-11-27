@@ -218,3 +218,8 @@
 .ev-upcoming .ev-archive__head {
   padding-top: 40px;
 }
+
+.ev-archive__highlight a {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}

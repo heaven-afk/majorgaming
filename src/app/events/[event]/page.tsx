@@ -28,10 +28,16 @@ export async function generateMetadata({ params }: PageProps<"/events/[event]">)
   const { eventBySlug } = await getLeague();
   const event = eventBySlug((await params).event);
   if (!event) return {};
+  const tiers = event.tables.map((table) => table.name).join(", ");
+  const hasRankings = event.tables.some((table) => table.rows.length > 0);
+  const topic = hasRankings ? "CODM BR Rankings" : "CODM BR Tournament";
+  const description = hasRankings
+    ? `View the ${event.status === "final" ? "final" : "latest"} ${event.name} Call of Duty: Mobile Battle Royale standings for ${tiers} on Major Gaming League.`
+    : `Follow ${event.name} on Major Gaming League for Call of Duty: Mobile Battle Royale tournament details.`;
   return {
-    title: `${event.name} · Events · MGL`,
+    title: `${event.name} ${topic} | MGL`,
     alternates: { canonical: `/events/${event.slug}` },
-    description: event.summary ?? (event.tables.length ? `${event.name} standings: ${event.tables.map((t) => t.name).join(", ")}.` : `${event.name}: dates, format and registration.`),
+    description: event.summary ?? description,
   };
 }
 

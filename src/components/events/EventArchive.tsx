@@ -101,9 +101,12 @@ export async function UpcomingEvents() {
 
 /** Every finished event, newest first. */
 export default async function EventArchive() {
-  const { events } = await getLeague();
+  const { events, storyBySlug } = await getLeague();
   const finished = events.filter((e) => e.status === "final");
   const copy = eventsPage.archive;
+  const highlight = copy.yearHighlight;
+  const rankedEvent = finished.find((event) => event.slug === highlight.eventSlug && event.tables.some((table) => table.tier === 1 && table.rows.length > 0));
+  const resultsYear = storyBySlug(highlight.recapSlug)?.date.slice(0, 4);
 
   return (
     <Scene className="ev-archive" id="archive" aria-labelledby="archive-title">
@@ -116,6 +119,11 @@ export default async function EventArchive() {
           {copy.title.before} <em>{copy.title.accent}</em>
         </h2>
         <p className="sec-lede">{copy.lede}</p>
+        {rankedEvent && resultsYear && (
+          <p className="sec-lede ev-archive__highlight">
+            <Link href={`/events/${rankedEvent.slug}#standings`}>{highlight.link(resultsYear, rankedEvent.name)}</Link>. {highlight.detail}
+          </p>
+        )}
       </header>
       <ul className="ev-archive__grid">
         {finished.map((e, i) => (

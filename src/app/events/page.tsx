@@ -6,13 +6,14 @@ import EventsIntro from "@/components/events/EventsIntro";
 import Footer from "@/components/footer/Footer";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import Nav from "@/components/Nav";
+import { eventsPage } from "@/content/site";
 import "./events.css";
 import { getLeague } from "@/lib/league";
 
 export const metadata: Metadata = {
-  title: "Events · MGL",
+  title: "African CODM BR Rankings & Tournaments | Major Gaming League",
   alternates: { canonical: "/events" },
-  description: "Live standings while an event runs, and every final table from MGL's seasons, mixed events and partner events.",
+  description: eventsPage.description,
 };
 
 export default async function EventsPage() {

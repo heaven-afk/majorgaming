@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { site } from "@/content/site";
 import { MGL_ORIGIN } from "@/lib/site-url.mjs";
 import localFont from "next/font/local";
 import "lenis/dist/lenis.css";
@@ -11,10 +12,10 @@ const serif = localFont({ src: "./fonts/InstrumentSerif-Italic.woff2", variable:
 
 export const metadata: Metadata = {
   metadataBase: new URL(MGL_ORIGIN),
-  title: "MGL · Major Gaming League",
-  description: "The ranked league for Call of Duty: Mobile Battle Royale.",
-  applicationName: "MGL",
-  openGraph: { siteName: "Major Gaming League", locale: "en_GB", type: "website" },
+  title: site.name,
+  description: site.description,
+  applicationName: site.short,
+  openGraph: { siteName: site.name, locale: "en_GB", type: "website" },
   icons: {
     icon: [{ url: "/brand/favicon-96.png", type: "image/png", sizes: "96x96" }],
     shortcut: "/favicon.ico",
