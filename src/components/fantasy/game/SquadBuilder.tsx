@@ -56,7 +56,6 @@ type Pending = { out: string; in: string; useFree: boolean; key: string; updated
 export default function SquadBuilder({
   players,
   squad,
-  previous,
   open,
   transferReason,
   notice,
@@ -65,7 +64,6 @@ export default function SquadBuilder({
 }: {
   players: Player[];
   squad: Lineup | null;
-  previous: Lineup | null;
   open: boolean;
   transferReason: string | null;
   notice: Notice | null;
@@ -253,7 +251,8 @@ export default function SquadBuilder({
   }, [active, activePlayer]);
   const closeAlert = useCallback(() => setAlert(null), []);
   const banner = expired ? (notice?.tone === "locked" ? notice : copy.expired) : notice;
-  const shows = !readOnly && (squad || !previous);
+  const shows = !readOnly;
+  const showMarket = shows && (!editing || !transferReason);
   const captainName = draft.captain ? byId.get(draft.captain)?.name : undefined;
   const hint = readOnly ? (squad ? copy.closed : "") : editing ? copy.hintEdit : copy.hintNew;
   const saveButton = (className = "") => (
@@ -263,7 +262,7 @@ export default function SquadBuilder({
   );
 
   return (
-    <div className="fx-builder" data-readonly={readOnly ? "" : undefined}>
+    <div className="fx-builder" data-readonly={readOnly ? "" : undefined} data-market-hidden={!showMarket ? "" : undefined}>
       {banner && (
         <section className="fx-notice" data-tone={banner.tone} role="status" aria-live="polite">
           <span className="fx-notice__icon" aria-hidden>
@@ -275,7 +274,7 @@ export default function SquadBuilder({
           </div>
         </section>
       )}
-      {shows && (
+      {(shows || editing) && (
         <section className="fx-summary" aria-label={copy.summary}>
           <div className="fx-summary__stat fx-summary__budget">
             <small>{copy.budget}</small>
@@ -314,18 +313,6 @@ export default function SquadBuilder({
           </div>
           <span className="fx-lineup__rule">{copy.perTeam}</span>
         </header>
-
-        {previous && !squad && open && (
-          <div className="fx-carry">
-            <div>
-              <strong>{fantasyPage.hub.carry.title}</strong>
-              <p>{fantasyPage.hub.carry.body}</p>
-            </div>
-            <button className="fx-btn fx-btn--primary" disabled={busy || readOnly} onClick={() => save({ ...previous, chip: null })}>
-              {busy ? copy.saving : "Carry over"}
-            </button>
-          </div>
-        )}
 
         <ul className="fx-strip">
           {([...ROLES, "Sub"] as Slot[]).map((slot) => (
@@ -415,7 +402,7 @@ export default function SquadBuilder({
         )}
       </section>
 
-      {shows && (
+      {showMarket && (
         <section className="fx-market" ref={marketRef} aria-labelledby="fx-market-title">
           <header className="fx-market__head">
             <div className="fx-market__title">

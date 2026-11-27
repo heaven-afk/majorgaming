@@ -25,7 +25,7 @@ async function Squad() {
   return (
     <AppShell game={game} manager={manager} title={hasSquad ? <>Your <em>squad.</em></> : <>Build your <em>squad.</em></>}>
       {game.market.players.length ? (
-        <SquadBuilder players={game.market.players} squad={mine.squad} previous={mine.previous} open={open} transferReason={transferBlockReason(game.open, day)} notice={squadNotice(game.open, day, hasSquad)} deadline={deadline} chips={mine.chips} />
+        <SquadBuilder key={day.matchdayNumber} players={game.market.players} squad={mine.squad ?? mine.previous} open={open} transferReason={transferBlockReason(game.open, day)} notice={squadNotice(game.open, day, hasSquad)} deadline={deadline} chips={mine.chips} />
       ) : (
         <section className="fx-panel fx-empty-state">
           <h2>{fantasyPage.status.unpublished}</h2>

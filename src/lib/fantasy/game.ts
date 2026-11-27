@@ -27,6 +27,7 @@ import {
   type FantasyMatchday,
   type FantasyRole,
   type FantasyTournament,
+  type MatchdaySquadScore,
 } from "./client";
 import { fantasyIdentity } from "./identity";
 import { preview, previewLeaderboard, previewMarket, previewMatchdays, previewStore, previewTournaments, PREVIEW_SCORING_POINTS, type PreviewSquad } from "./preview";
@@ -195,7 +196,7 @@ export async function getMine(manager: Manager, game: Extract<Game, { state: "re
     const prev = previewStore.squads.get(md - 1);
     return {
       squad: s ? lineupOf(s) : null,
-      previous: !s && prev ? lineupOf(prev) : null,
+      previous: !s && prev ? { ...lineupOf(prev), chip: null, updatedAt: null } : null,
       points: { scoring: PREVIEW_SCORING_POINTS, adjustments: previewStore.adjustments, total: PREVIEW_SCORING_POINTS + previewStore.adjustments },
       chips: { triple_captain: !previewStore.chipsUsed.has("triple_captain"), bench_boost: !previewStore.chipsUsed.has("bench_boost"), free_transfer: previewStore.freeTransfer === "AVAILABLE" },
     };
@@ -214,7 +215,7 @@ export async function getMine(manager: Manager, game: Extract<Game, { state: "re
     if (prev) {
       const valid = parseFantasyResponse("squad", prev, { tournamentId: id }) as CoreSquad & { matchdayNumber: number };
       if (valid.matchdayNumber >= md) throw new FantasyCoreError("Fantasy Core returned an invalid carry-forward squad.", 502);
-      previous = lineupOf(valid);
+      previous = { ...lineupOf(valid), chip: null, updatedAt: null };
     }
   }
   const [points, chips] = await Promise.all([
@@ -227,6 +228,21 @@ export async function getMine(manager: Manager, game: Extract<Game, { state: "re
     points: { scoring: points.scoringPoints, adjustments: points.transferAdjustmentPoints, total: points.totalFantasyPoints },
     chips: { triple_captain: chips.chips.triple_captain.available, bench_boost: chips.chips.bench_boost.available, free_transfer: chips.chips.free_transfer.available },
   };
+}
+
+export async function getOwnMatchdayResult(manager: Manager, tournamentId: string, day: number) {
+  if (preview) return null;
+  try {
+    const result = await getFantasySquad(tokenFor(manager), tournamentId, day, true) as {
+      squad: CoreSquad;
+      matchdayScore?: MatchdaySquadScore | null;
+    };
+    return result.matchdayScore
+      ? { score: result.matchdayScore, benchId: result.squad.substitute?.playerId } : null;
+  } catch (error) {
+    if (error instanceof FantasyCoreError && error.status === 404) return null;
+    throw error;
+  }
 }
 
 /** Saves a lineup: the first squad, a carried-over one, or new roles, captain or chip. */
@@ -278,6 +294,10 @@ export async function makeTransfer(manager: Manager, game: Extract<Game, { state
     const receipt = { penaltyApplied: free ? 0 : 4, usedFreeTransferChip: free, remainingCredits: BUDGET - spent, total: PREVIEW_SCORING_POINTS + previewStore.adjustments };
     previewStore.receipts.set(key, receipt);
     return receipt;
+  }
+  const mine = await getMine(manager, game);
+  if (!mine.squad && mine.previous) {
+    await saveLineup(manager, game, mine.previous);
   }
   await syncName(manager.id, manager.displayName!);
   const r = (await transferFantasyPlayer(tokenFor(manager), key, { tournamentId: game.tournament.id, matchdayNumber: md, ...input })) as {

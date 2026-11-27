@@ -8,6 +8,7 @@ import { fantasyPage } from "@/content/fantasy";
 import { getGame, getStandings } from "@/lib/fantasy/game";
 import { getManager } from "@/lib/fantasy/session";
 import { LiveRefresh } from "@/components/fantasy/game/LiveRefresh";
+import MatchdayPoints, { ScoringHelp } from "@/components/fantasy/game/MatchdayPoints";
 
 export const metadata: Metadata = { title: "Standings · MGL Fantasy", alternates: { canonical: "/fantasy/standings" } };
 const copy = fantasyPage.standings;
@@ -60,6 +61,7 @@ async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cu
           </p>
         )}
       </section>
+      {md ? <MatchdayPoints game={game} manager={manager ?? null} day={md} /> : <ScoringHelp />}
     </AppShell>
   );
 }

@@ -41,33 +41,34 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
   const [mine, standings] = await Promise.all([getMine(manager, game), getStandings(game, { me: manager }).catch(() => undefined)]);
   const players = new Map(game.market.players.map((p) => [p.id, p]));
   const me = standings?.rows.find((r) => r.managerId === manager.id);
-  const ids = mine.squad ? [...mine.squad.starters.map((s) => s.playerId), mine.squad.sub] : [];
+  const lineup = mine.squad ?? mine.previous;
+  const ids = lineup ? [...lineup.starters.map((s) => s.playerId), lineup.sub] : [];
   const left = BUDGET - ids.reduce((n, id) => n + (players.get(id)?.price ?? 0), 0);
   const days = [...game.matchdays].sort((a, b) => a.matchdayNumber - b.matchdayNumber);
   const status = statusOf(game);
-  const hasSquad = Boolean(mine.squad || mine.previous);
+  const hasSquad = Boolean(lineup);
   const canEditSquad = canManageSquad(game.open, game.current, hasSquad);
   const deadline = game.current.splitWindows
     ? hasSquad ? game.current.matchdayStartsAt : game.current.buildSquadDeadline
     : game.current.submissionDeadline;
   const top = standings?.rows.slice(0, 5) ?? [];
   const board = me && me.rank > 5 ? [...top, me] : top;
-  const cta = !canEditSquad ? { label: "View squad", icon: "squad" } : mine.squad ? { label: hub.edit, icon: "arrow" } : { label: mine.previous ? hub.carry.title : "Build your squad", icon: "arrow" };
+  const cta = !canEditSquad ? { label: "View squad", icon: "squad" } : lineup ? { label: hub.edit, icon: "arrow" } : { label: "Build your squad", icon: "arrow" };
 
   const leader = standings?.rows[0];
   const kpis = [
     { icon: "trophy", label: copy.kpis.rank, value: me ? <>#{me.rank.toLocaleString("en-GB")}</> : "—", note: me && standings ? copy.of(standings.totalCount) : copy.unranked },
-    { icon: "fantasy", label: copy.kpis.budget, value: (mine.squad ? left : BUDGET).toFixed(1), note: mine.squad ? "in the bank" : "to spend" },
+    { icon: "fantasy", label: copy.kpis.budget, value: (lineup ? left : BUDGET).toFixed(1), note: lineup ? "in the bank" : "to spend" },
     { icon: "undo", label: copy.kpis.free, value: mine.chips.free_transfer ? "Ready" : "Used", note: mine.chips.free_transfer ? "no −4 on one" : "−4 each", tone: mine.chips.free_transfer ? "amber" : undefined },
   ];
   const SHORT = { Fragger: "FRG", IGL: "IGL", Support: "SUP", Anchor: "ANC" } as const;
-  const strip = mine.squad
+  const strip = lineup
     ? [
         ...(["Fragger", "IGL", "Support", "Anchor"] as const).map((role) => {
-          const id = mine.squad!.starters.find((s) => s.role === role)?.playerId ?? "";
-          return { key: role, role: SHORT[role], p: players.get(id), captain: id === mine.squad!.captain, sub: false };
+          const id = lineup!.starters.find((s) => s.role === role)?.playerId ?? "";
+          return { key: role, role: SHORT[role], p: players.get(id), captain: id === lineup!.captain, sub: false };
         }),
-        { key: "Sub", role: "SUB", p: players.get(mine.squad.sub), captain: false, sub: true },
+        { key: "Sub", role: "SUB", p: players.get(lineup.sub), captain: false, sub: true },
       ]
     : [];
 
@@ -126,20 +127,20 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
           <div className="fx-panel__head">
             <div>
               <h2 id="fx-dash-squad">Your squad</h2>
-              <p>{mine.squad ? `Value ${(BUDGET - left).toFixed(1)} / ${BUDGET} cr` : `Matchday ${game.current.matchdayNumber}`}</p>
+              <p>{lineup ? `Value ${(BUDGET - left).toFixed(1)} / ${BUDGET} cr` : `Matchday ${game.current.matchdayNumber}`}</p>
             </div>
-            {mine.squad && (
+            {lineup && (
               <Link className="fx-btn fx-btn--ghost fx-btn--sm" href="/fantasy/squad">
                 {game.open ? hub.edit : "Open"}
                 <Icon name="arrow" size={14} />
               </Link>
             )}
           </div>
-          {mine.squad ? (
+          {lineup ? (
             <Link className="fx-strip fx-strip--link" href="/fantasy/squad" aria-label="Open your squad">
               {strip.map((s) => (
                 <span key={s.key} className="fx-strip__item" data-sub={s.sub ? "" : undefined}>
-                  <PlayerTile role={s.role} name={s.p?.name ?? "Unknown"} ign={s.p?.ign} team={s.p?.team.name} logo={s.p?.team.logo} photo={s.p?.photo} price={s.p?.price} captain={s.captain ? (mine.squad!.chip === "triple_captain" ? "3×" : "C") : undefined} sub={s.sub} />
+                  <PlayerTile role={s.role} name={s.p?.name ?? "Unknown"} ign={s.p?.ign} team={s.p?.team.name} logo={s.p?.team.logo} photo={s.p?.photo} price={s.p?.price} captain={s.captain ? (lineup!.chip === "triple_captain" ? "3×" : "C") : undefined} sub={s.sub} />
                 </span>
               ))}
             </Link>
@@ -148,8 +149,8 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
               <span className="fx-empty-state__icon">
                 <Icon name="squad" size={22} />
               </span>
-              <h3>{mine.previous ? hub.carry.title : hub.noSquad.title}</h3>
-              <p>{mine.previous ? hub.carry.body : hub.noSquad.body}</p>
+              <h3>{hub.noSquad.title}</h3>
+              <p>{hub.noSquad.body}</p>
               {canEditSquad && (
                 <Link className="fx-btn fx-btn--primary" href="/fantasy/squad">
                   {hub.pick}
@@ -184,7 +185,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
             </div>
             <ul className="fx-chipcards">
               {CHIPS.map((c) => {
-                const on = mine.squad?.chip === c.key;
+                const on = lineup?.chip === c.key;
                 return (
                   <li key={c.key} data-used={mine.chips[c.key] || on ? undefined : ""} data-active={on ? "" : undefined}>
                     <span className="fx-chipcards__icon">
@@ -239,9 +240,9 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
                 </span>
                 <span role="cell">{d.submissionDeadline ? formatDeadline(d.submissionDeadline) : "—"}</span>
                 <span role="cell">
-                  {state === "done" && (
-                    <Link className="fx-icon-link" href={`/fantasy/standings?md=${d.matchdayNumber}`} aria-label={`Matchday ${d.matchdayNumber} table`}>
-                      <Icon name="arrow" size={14} />
+                  {d.fantasyStatus === "PROCESSED" && (
+                    <Link className="fx-link" href={`/fantasy/standings?md=${d.matchdayNumber}#matchday-points`} aria-label={`Matchday ${d.matchdayNumber} points`}>
+                      Points
                     </Link>
                   )}
                 </span>

@@ -41,6 +41,13 @@ const squad = object({
   substitute: nullable(object({ playerId: id })), updatedAt: nullable(timestamp),
 });
 const points = object({ tournamentId: id, scoringPoints: number, transferAdjustmentPoints: number, totalFantasyPoints: number });
+const rolePoints = optional(object({ baseFantasyPoints: nonnegative }));
+const squadScore = object({
+  totalFantasyPoints: nonnegative,
+  starters: array(object({ playerId: id, role, finalFantasyPoints: nonnegative,
+    modifier: literal("none", "captain", "tripleCaptain") })),
+  substituteResult: nullable(object({ playerId: id, substituteContribution: nonnegative })),
+});
 const schemas = {
   tournaments: object({ count: integer, tournaments: array(object({ id, name: string, status: string, createdAt: nullable(timestamp) })) }),
   matchdays: object({ tournamentId: id, count: integer, matchdays: array(matchday) }),
@@ -52,7 +59,12 @@ const schemas = {
     })),
   }),
   squad,
-  ownSquad: object({ squad }),
+  ownSquad: object({ squad, matchdayScore: optional(nullable(squadScore)) }),
+  matchdayScores: object({ tournamentId: id, matchdayNumber: positive, status: literal("FINALIZED"),
+    playerScores: array(object({ playerId: id, displayMeta: optional(object({ playerName: nullable(string) })),
+      roleScores: optional(object({ Fragger: rolePoints, IGL: rolePoints, Support: rolePoints, Anchor: rolePoints })),
+    })),
+  }),
   savedSquad: object({ success: literal(true), squad }),
   chips: object({ tournamentId: id, matchdayNumber: positive, chips: object({
     triple_captain: object({ available: boolean }), bench_boost: object({ available: boolean }), free_transfer: object({ available: boolean }),

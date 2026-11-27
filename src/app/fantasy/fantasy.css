@@ -27,6 +27,30 @@
 
 /* ---------- Basics ---------- */
 
+.fx-points,
+.fx-scoring-help {
+  margin-block-start: 16px;
+  padding: clamp(16px, 3vw, 24px);
+  min-width: 0;
+}
+.fx-points h2,
+.fx-points h3 { margin: 0 0 8px; }
+.fx-points p,
+.fx-scoring-help p { margin: 8px 0; color: var(--fx-soft); }
+.fx-points__lineup { margin-block: 16px 24px; }
+.fx-points__lineup h3,
+.fx-points__lineup li { display: flex; justify-content: space-between; gap: 12px; }
+.fx-points__lineup ul { margin: 0; padding: 0; list-style: none; }
+.fx-points__lineup li { padding: 10px 0; border-bottom: 1px solid var(--fx-line); }
+.fx-points__lineup small { display: block; color: var(--fx-soft); }
+.fx-points__scroll { max-width: 100%; max-height: 32rem; overflow: auto; }
+.fx-points table { width: 100%; min-width: 420px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.fx-points th,
+.fx-points td { padding: 9px 6px; border-bottom: 1px solid var(--fx-line); text-align: right; }
+.fx-points th:first-child { text-align: left; }
+.fx-points thead th { position: sticky; inset-block-start: 0; background: var(--fx-panel); }
+.fx-scoring-help summary { cursor: pointer; font-weight: 700; }
+
 .fx-btn {
   display: inline-flex;
   align-items: center;
@@ -2264,9 +2288,9 @@ ol:first-of-type > .fx-sheet-row:first-child {
   .fx-market {
     grid-area: market;
   }
-  .fx-builder[data-readonly] {
+  .fx-builder[data-market-hidden] {
     grid-template-columns: minmax(0, 760px);
-    grid-template-areas: "notice" "lineup";
+    grid-template-areas: "notice" "summary" "lineup";
   }
 }
 
