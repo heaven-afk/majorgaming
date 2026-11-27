@@ -25,6 +25,8 @@ async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cu
   return (
     <AppShell game={game} manager={manager} title={<>{copy.title.before} <em>{copy.title.accent}</em></>}>
       <LiveRefresh />
+      <ScoringHelp />
+      {md && manager && <MatchdayPoints game={game} manager={manager} day={md} />}
       <section className="fx-panel fx-board">
         <nav className="fx-seg" aria-label="Table">
           <Link href={href({})} aria-current={!md ? "page" : undefined}>
@@ -61,7 +63,6 @@ async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cu
           </p>
         )}
       </section>
-      {md ? <MatchdayPoints game={game} manager={manager ?? null} day={md} /> : <ScoringHelp />}
     </AppShell>
   );
 }

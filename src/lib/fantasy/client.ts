@@ -91,22 +91,11 @@ export async function validateFantasySquad(tournamentId: string, day: number, sq
   }), { tournamentId, matchdayNumber: day });
 }
 
-export type MatchdayPlayerScore = {
-  playerId: string;
-  displayMeta?: { playerName: string | null };
-  roleScores?: Partial<Record<FantasyRole, { baseFantasyPoints: number }>>;
-};
-
 export type MatchdaySquadScore = {
   totalFantasyPoints: number;
   starters: { playerId: string; role: FantasyRole; finalFantasyPoints: number; modifier: "none" | "captain" | "tripleCaptain" }[];
   substituteResult: { playerId: string; substituteContribution: number } | null;
 };
-
-export async function getFantasyScores(tournamentId: string, day: number): Promise<{ playerScores: MatchdayPlayerScore[] }> {
-  const data = await request()("/api/v1/scoring/matchday", { query: { tournamentId: id(tournamentId), matchday: matchday(day) } });
-  return parseFantasyResponse("matchdayScores", data, { tournamentId, matchdayNumber: day });
-}
 
 export async function getFantasyLeaderboard(tournamentId: string, day: number, cursor?: string): Promise<unknown> {
   return parseFantasyResponse("standings", await request()(`/api/v1/leaderboards/${id(tournamentId)}`, { query: { matchday: matchday(day), limit: 50, cursor } }), { tournamentId, matchdayNumber: day });

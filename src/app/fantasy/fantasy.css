@@ -43,13 +43,16 @@
 .fx-points__lineup ul { margin: 0; padding: 0; list-style: none; }
 .fx-points__lineup li { padding: 10px 0; border-bottom: 1px solid var(--fx-line); }
 .fx-points__lineup small { display: block; color: var(--fx-soft); }
-.fx-points__scroll { max-width: 100%; max-height: 32rem; overflow: auto; }
-.fx-points table { width: 100%; min-width: 420px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.fx-points th,
-.fx-points td { padding: 9px 6px; border-bottom: 1px solid var(--fx-line); text-align: right; }
-.fx-points th:first-child { text-align: left; }
-.fx-points thead th { position: sticky; inset-block-start: 0; background: var(--fx-panel); }
-.fx-scoring-help summary { cursor: pointer; font-weight: 700; }
+.fx-scoring-help { margin-block-end: 16px; }
+.fx-scoring-help h2,
+.fx-scoring-help h3,
+.fx-scoring-help dl,
+.fx-scoring-help dd { margin: 0; }
+.fx-scoring-help dl { display: grid; gap: 12px; }
+.fx-scoring-help dt { font-weight: 700; }
+.fx-scoring-help dd,
+.fx-scoring-help li { color: var(--fx-soft); }
+.fx-scoring-help ul { display: grid; gap: 6px; margin: 0; padding-inline-start: 20px; list-style: disc; }
 
 .fx-btn {
   display: inline-flex;
