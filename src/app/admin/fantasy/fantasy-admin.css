@@ -1,22 +1,526 @@
-.ad-fx { display: grid; gap: 18px; max-width: 900px; }
-.ad-fx-mode { color: var(--color-amber); font-size: 13px; }
-.ad-fx .ad-section__body { display: grid; gap: 14px; }
-.ad-fx h3 { font-size: 24px; font-weight: 500; letter-spacing: -0.03em; overflow-wrap: anywhere; }
-.ad-fx p { font-size: 14px; line-height: 1.5; color: rgb(244 242 238 / 0.7); }
-.ad-fx-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; padding: 16px 0; border-block: 1px solid rgb(255 255 255 / 0.08); }
-.ad-fx-facts dt, .ad-fx-days small { font-size: 12px; color: rgb(244 242 238 / 0.55); }
-.ad-fx-facts dd { margin-top: 5px; font-size: 15px; overflow-wrap: anywhere; }
-.ad-fx-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.ad-fx-actions [aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--color-amber); color: var(--color-amber); }
-.ad-fx-controls { display: grid; justify-items: start; gap: 14px; }
-.ad-fx-confirm { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.5; }
-.ad-fx-confirm input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--color-amber); flex: none; }
-.ad-fx-config > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; padding: 10px 0; border-bottom: 1px solid rgb(255 255 255 / 0.06); font-size: 13px; }
-.ad-fx-config dd { color: #ff9a77; }
-.ad-fx-config dd[data-ready] { color: var(--color-amber); }
-.ad-fx-days { display: grid; gap: 12px; }
-.ad-fx-days > div { display: grid; gap: 5px; padding-bottom: 12px; border-bottom: 1px solid rgb(255 255 255 / 0.07); }
-.ad-fx-days strong { font-size: 14px; font-weight: 500; }
-.ad-fx-days span { font-size: 13px; color: rgb(244 242 238 / 0.75); }
-.ad-fx-flow { display: grid; gap: 12px; padding-left: 18px; list-style: decimal; font-size: 14px; line-height: 1.5; color: rgb(244 242 238 / 0.7); }
-@media (min-width: 760px) { .ad-fx-days > div { grid-template-columns: 100px 1fr 1fr; align-items: baseline; gap: 16px; } }
+/* Admin → Fantasy. Mobile first, min-width queries only. */
+
+.ad-fx {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 40px;
+}
+.ad-fx h2,
+.ad-fx h3 {
+  overflow-wrap: anywhere;
+}
+.ad-fx-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ad-fx-actions .ad-btn {
+  gap: 7px;
+}
+.ad-fx-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ad-muted);
+}
+.ad-fx-small {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ad-muted);
+}
+.ad-fx-empty {
+  padding: 18px 16px;
+  border-radius: 14px;
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ad-muted);
+}
+
+/* Status pills */
+.ad-fx-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: rgb(244 242 238 / 0.78);
+}
+.ad-fx-pill i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.ad-fx-pill[data-tone="ok"] {
+  background: rgb(127 212 155 / 0.12);
+  color: var(--ad-ok);
+}
+.ad-fx-pill[data-tone="amber"] {
+  background: rgb(249 169 64 / 0.13);
+  color: var(--color-amber);
+}
+.ad-fx-pill[data-tone="live"] {
+  background: rgb(239 90 40 / 0.14);
+  color: #ff9a77;
+}
+.ad-fx-pill[data-tone="live"] i {
+  animation: ad-fx-pulse 1.6s ease-in-out infinite;
+}
+.ad-fx-pill[data-tone="error"] {
+  background: rgb(255 138 107 / 0.13);
+  color: var(--ad-error);
+}
+@keyframes ad-fx-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.ad-fx-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgb(249 169 64 / 0.09);
+  box-shadow: inset 0 0 0 1px rgb(249 169 64 / 0.25);
+  font-size: 13.5px;
+  color: var(--color-amber);
+}
+.ad-fx-banner svg {
+  flex: none;
+}
+
+/* Tournament + launch checklist */
+.ad-fx-hero {
+  display: grid;
+  gap: 16px;
+  padding: 20px 16px;
+  border-radius: var(--radius);
+  background: radial-gradient(120% 90% at 0% 0%, rgb(249 169 64 / 0.1), transparent 60%), #161616;
+  box-shadow: inset 0 0 0 1px rgb(249 169 64 / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+.ad-fx-hero__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.ad-fx-hero h2 {
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+.ad-fx-hero__lede {
+  max-width: 36rem;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ad-muted);
+}
+.ad-fx-steps {
+  display: grid;
+  gap: 8px;
+}
+.ad-fx-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.25);
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+  font-size: 13.5px;
+  color: var(--ad-muted);
+}
+.ad-fx-steps__dot {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.07);
+  font-size: 12px;
+  font-weight: 700;
+}
+.ad-fx-steps li[data-done] {
+  color: var(--color-text);
+}
+.ad-fx-steps li[data-done] .ad-fx-steps__dot {
+  background: var(--ad-ok);
+  color: #0f1a13;
+}
+.ad-fx-steps li[data-next] {
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px rgb(249 169 64 / 0.45);
+}
+.ad-fx-steps li[data-next] .ad-fx-steps__dot {
+  background: var(--color-amber);
+  color: #121212;
+}
+.ad-fx-hero__launch {
+  padding-top: 16px;
+  border-top: 1px solid var(--ad-line);
+}
+.ad-fx-launch {
+  display: grid;
+  gap: 12px;
+}
+.ad-fx-launch strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.ad-fx-launch p {
+  margin-top: 4px;
+  max-width: 34rem;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ad-muted);
+}
+.ad-fx-launch .ad-btn--primary {
+  justify-self: start;
+}
+.ad-fx-launch .ad-alert {
+  grid-column: 1 / -1;
+}
+
+/* Cards */
+.ad-fx-card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+  padding: 18px 16px;
+  border-radius: var(--radius);
+  background: #161616;
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-fx-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.ad-fx-card__head > div {
+  display: grid;
+  gap: 4px;
+}
+.ad-fx-card__head h2 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Matchday facts */
+.ad-fx-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ad-fx-tiles > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-fx-tiles dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ad-muted);
+}
+.ad-fx-tiles dt svg {
+  flex: none;
+  color: var(--color-amber);
+}
+.ad-fx-tiles dd {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.ad-fx-tiles dd[data-tone="amber"] {
+  color: var(--color-amber);
+}
+.ad-fx-tiles small {
+  font-size: 12px;
+  color: var(--ad-muted);
+}
+.ad-fx-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.04);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgb(244 242 238 / 0.75);
+}
+.ad-fx-note svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ad-muted);
+}
+.ad-fx-note[data-tone="amber"] {
+  background: rgb(249 169 64 / 0.08);
+  color: var(--color-amber);
+}
+.ad-fx-note[data-tone="amber"] svg {
+  color: inherit;
+}
+
+/* Transfer windows */
+.ad-fx-windows {
+  display: grid;
+  gap: 10px;
+}
+.ad-fx-window {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-fx-window header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ad-fx-window h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.ad-fx-window__fields {
+  display: grid;
+  gap: 12px;
+}
+.ad-fx-window input {
+  background: #0b0b0b !important;
+}
+
+/* Matchdays + connection */
+.ad-fx-pair {
+  display: grid;
+  gap: 14px;
+  align-items: start;
+}
+.ad-fx-days {
+  display: grid;
+}
+.ad-fx-days li {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-top: 1px solid var(--ad-line);
+}
+.ad-fx-days li:first-child {
+  border-top: 0;
+}
+.ad-fx-days li[data-current] {
+  border-radius: 12px;
+  background: rgb(249 169 64 / 0.07);
+  box-shadow: inset 2px 0 0 var(--color-amber);
+}
+.ad-fx-days li[data-current] + li {
+  border-top-color: transparent;
+}
+.ad-fx-days b {
+  font-size: 14px;
+  font-weight: 600;
+}
+.ad-fx-days span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  min-width: 0;
+}
+.ad-fx-days small {
+  font-size: 12.5px;
+  color: var(--ad-muted);
+}
+.ad-fx-checks {
+  display: grid;
+}
+.ad-fx-checks li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--ad-line);
+  font-size: 13.5px;
+}
+.ad-fx-checks li:first-child {
+  border-top: 0;
+}
+.ad-fx-checks li > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgb(255 138 107 / 0.15);
+  color: var(--ad-error);
+}
+.ad-fx-checks li[data-ready] > span {
+  background: rgb(127 212 155 / 0.14);
+  color: var(--ad-ok);
+}
+.ad-fx-checks small {
+  font-size: 12px;
+  color: var(--ad-error);
+}
+.ad-fx-checks li[data-ready] small {
+  color: var(--ad-muted);
+}
+
+/* How a matchday runs, folded */
+.ad-fx-flow {
+  border-radius: var(--radius);
+  background: #161616;
+  box-shadow: inset 0 0 0 1px var(--ad-line);
+}
+.ad-fx-flow summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.ad-fx-flow summary::-webkit-details-marker {
+  display: none;
+}
+.ad-fx-flow summary svg {
+  color: var(--ad-muted);
+  transform: rotate(90deg);
+  transition: transform 0.2s;
+}
+.ad-fx-flow[open] summary svg {
+  transform: rotate(-90deg);
+}
+.ad-fx-flow ol {
+  display: grid;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.ad-fx-flow li {
+  display: flex;
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgb(244 242 238 / 0.75);
+}
+.ad-fx-flow li b {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+/* Kept for the matchday controls form */
+.ad-fx-controls {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+}
+.ad-fx-confirm {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ad-fx-confirm input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-amber);
+  flex: none;
+}
+.ad-fx-actions [aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px var(--color-amber);
+  color: var(--color-amber);
+}
+
+@media (min-width: 600px) {
+  .ad-fx-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ad-fx-window__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ad-fx-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 760px) {
+  .ad-fx {
+    gap: 16px;
+  }
+  .ad-fx-hero {
+    padding: 26px 26px 24px;
+  }
+  .ad-fx-card {
+    padding: 22px;
+  }
+  .ad-fx-launch {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  .ad-fx-launch .ad-btn--primary {
+    justify-self: end;
+  }
+}
+@media (min-width: 900px) {
+  .ad-fx-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .ad-fx-steps li {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+  .ad-fx-pair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ad-fx-pill[data-tone="live"] i {
+    animation: none;
+  }
+}

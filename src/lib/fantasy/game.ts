@@ -30,7 +30,7 @@ import {
   type MatchdaySquadScore,
 } from "./client";
 import { fantasyIdentity } from "./identity";
-import { preview, previewLeaderboard, previewMarket, previewMatchdays, previewStore, previewTournaments, PREVIEW_SCORING_POINTS, type PreviewSquad } from "./preview";
+import { preview, previewLeaderboard, previewMarket, previewMatchdayScore, previewMatchdays, previewStore, previewTournaments, PREVIEW_SCORING_POINTS, type PreviewSquad } from "./preview";
 import type { Manager } from "./session";
 import { getFantasyLiveAt } from "./launch";
 import { currentTournament, currentMatchday, marketIsOpen } from "./lifecycle.mjs";
@@ -230,8 +230,8 @@ export async function getMine(manager: Manager, game: Extract<Game, { state: "re
   };
 }
 
-export async function getOwnMatchdayResult(manager: Manager, tournamentId: string, day: number) {
-  if (preview) return null;
+export async function getOwnMatchdayResult(manager: Manager, tournamentId: string, day: number, previewIds: string[] = []) {
+  if (preview) return previewMatchdayScore(previewIds, day);
   try {
     const result = await getFantasySquad(tokenFor(manager), tournamentId, day, true) as {
       squad: CoreSquad;

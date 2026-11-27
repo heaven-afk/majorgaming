@@ -44,6 +44,18 @@ export const previewStore: { squads: Map<number, PreviewSquad>; adjustments: num
 
 export const PREVIEW_SCORING_POINTS = 142;
 
+/** SAMPLE: a scored matchday for the preview manager, from the first five eligible players. */
+export function previewMatchdayScore(ids: string[], day: number) {
+  if (ids.length < 5) return null;
+  const roles: FantasyRole[] = ["Fragger", "IGL", "Support", "Anchor"];
+  const base = [21.5, 14.25, 9.75, 6.5].map((p) => p + (day % 2) * 3);
+  const starters = roles.map((role, i) => ({ playerId: ids[i], role, finalFantasyPoints: i === 0 ? base[i] * 2 : base[i], modifier: (i === 0 ? "captain" : "none") as "captain" | "none" }));
+  return {
+    score: { totalFantasyPoints: starters.reduce((n, s) => n + s.finalFantasyPoints, 0), starters, substituteResult: null },
+    benchId: ids[4],
+  };
+}
+
 const NAMES = ["Kairo", "Baba Fragz", "Lagos Lion", "Accra Ace", "Nairobi Ninja", "Zed Hunter", "Tobi FC", "The Drop", "Hot Zone", "Last Circle", "Ama Snipes", "Kofi Kills", "Chidi IGL", "Moremi", "Zaria Zone", "Dune Rider", "Cape Crew", "Ibadan Eagle", "Sahel Smoke", "Kano Kings", "Ruby Rush", "Delta Drop", "Abuja Aim", "Volta Vibes"];
 
 /** SAMPLE managers, with the preview manager placed among them. */

@@ -21,8 +21,8 @@ const CHIPS = [
 ] as const;
 
 /**
- * A manager's home, laid out like a dashboard: the matchday and its deadline up top, four
- * numbers, the squad as a team sheet beside the table and chips, then every matchday.
+ * A manager's home: one scoreboard (you, the matchday, the leader), the squad beside the top of
+ * the table and the chips, then every matchday.
  */
 export default async function Dashboard({ manager, game }: { manager: Manager; game: Ready }) {
   if (!manager.displayName)
@@ -56,11 +56,6 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
   const cta = !canEditSquad ? { label: "View squad", icon: "squad" } : lineup ? { label: hub.edit, icon: "arrow" } : { label: "Build your squad", icon: "arrow" };
 
   const leader = standings?.rows[0];
-  const kpis = [
-    { icon: "trophy", label: copy.kpis.rank, value: me ? <>#{me.rank.toLocaleString("en-GB")}</> : "—", note: me && standings ? copy.of(standings.totalCount) : copy.unranked },
-    { icon: "fantasy", label: copy.kpis.budget, value: (lineup ? left : BUDGET).toFixed(1), note: lineup ? "in the bank" : "to spend" },
-    { icon: "undo", label: copy.kpis.free, value: mine.chips.free_transfer ? "Ready" : "Used", note: mine.chips.free_transfer ? "no −4 on one" : "−4 each", tone: mine.chips.free_transfer ? "amber" : undefined },
-  ];
   const SHORT = { Fragger: "FRG", IGL: "IGL", Support: "SUP", Anchor: "ANC" } as const;
   const strip = lineup
     ? [
@@ -89,7 +84,7 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
             <b>
               <Ticker value={mine.points.total} />
             </b>
-            <span>{me ? `#${me.rank.toLocaleString("en-GB")}` : "Unranked"}</span>
+            <span>{me && standings ? `#${me.rank.toLocaleString("en-GB")} of ${standings.totalCount.toLocaleString("en-GB")}` : "Unranked"}</span>
           </div>
           <div className="fx-score__mid">
             <h2 id="fx-score-title">MD{game.current.matchdayNumber}</h2>
@@ -107,27 +102,13 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
         </Link>
       </section>
 
-      <section className="fx-kpis" aria-label="Your numbers">
-        {kpis.map((k) => (
-          <div key={k.label} className="fx-kpi" data-tone={k.tone}>
-            <span className="fx-kpi__label">
-              <span className="fx-kpi__icon">
-                <Icon name={k.icon} size={14} />
-              </span>
-              {k.label}
-            </span>
-            <b>{k.value}</b>
-            <small>{k.note}</small>
-          </div>
-        ))}
-      </section>
-
       <div className="fx-dash__main">
+        <div className="fx-dash__col">
         <section className="fx-panel fx-dash__squad" aria-labelledby="fx-dash-squad">
           <div className="fx-panel__head">
             <div>
               <h2 id="fx-dash-squad">Your squad</h2>
-              <p>{lineup ? `Value ${(BUDGET - left).toFixed(1)} / ${BUDGET} cr` : `Matchday ${game.current.matchdayNumber}`}</p>
+              <p>{lineup ? `${left.toFixed(1)} credits left` : `Matchday ${game.current.matchdayNumber}`}</p>
             </div>
             {lineup && (
               <Link className="fx-btn fx-btn--ghost fx-btn--sm" href="/fantasy/squad">
@@ -160,6 +141,54 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
             </div>
           )}
         </section>
+        <section className="fx-panel fx-dash__days" aria-labelledby="fx-dash-days">
+          <div className="fx-panel__head">
+            <div>
+              <h2 id="fx-dash-days">{copy.timeline}</h2>
+              <p>{game.tournament.name}</p>
+            </div>
+          </div>
+          <div className="fx-days" role="table" aria-labelledby="fx-dash-days">
+            <div className="fx-days__row fx-days__row--head" role="row">
+              <span role="columnheader">Matchday</span>
+              <span role="columnheader">Status</span>
+              <span role="columnheader">Matches</span>
+              <span role="columnheader">Deadline</span>
+              <span role="columnheader">
+                <span className="sr-only">Table</span>
+              </span>
+            </div>
+            {days.map((d) => {
+              const current = d.matchdayNumber === game.current.matchdayNumber;
+              const state = current ? ({ open: "open", live: "live", done: "done", soon: "next" } as const)[status.tone as "open" | "live" | "done" | "soon"] : d.fantasyStatus === "PROCESSED" ? "done" : "next";
+              const label = current ? status.label : { done: "Scored", open: "Transfers open", live: "In play", next: "Coming up" }[state];
+              return (
+                <div key={d.matchdayNumber} className="fx-days__row" role="row" data-state={state}>
+                  <span role="cell">
+                    <b>MD{d.matchdayNumber}</b>
+                  </span>
+                  <span role="cell">
+                    <span className="fx-pill" data-state={state}>
+                      {label}
+                    </span>
+                  </span>
+                  <span role="cell">
+                    {d.matchesPlayed}/{d.expectedMatches}
+                  </span>
+                  <span role="cell">{d.submissionDeadline ? formatDeadline(d.submissionDeadline) : "—"}</span>
+                  <span role="cell">
+                    {d.fantasyStatus === "PROCESSED" && (
+                      <Link className="fx-link" href={`/fantasy/standings?md=${d.matchdayNumber}#matchday-points`} aria-label={`Matchday ${d.matchdayNumber} points`}>
+                        Your points
+                      </Link>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+        </div>
 
         <div className="fx-dash__side">
           <section className="fx-panel" aria-labelledby="fx-dash-table">
@@ -204,53 +233,6 @@ export default async function Dashboard({ manager, game }: { manager: Manager; g
         </div>
       </div>
 
-      <section className="fx-panel fx-dash__days" aria-labelledby="fx-dash-days">
-        <div className="fx-panel__head">
-          <div>
-            <h2 id="fx-dash-days">{copy.timeline}</h2>
-            <p>{game.tournament.name}</p>
-          </div>
-        </div>
-        <div className="fx-days" role="table" aria-labelledby="fx-dash-days">
-          <div className="fx-days__row fx-days__row--head" role="row">
-            <span role="columnheader">Matchday</span>
-            <span role="columnheader">Status</span>
-            <span role="columnheader">Matches</span>
-            <span role="columnheader">Deadline</span>
-            <span role="columnheader">
-              <span className="sr-only">Table</span>
-            </span>
-          </div>
-          {days.map((d) => {
-            const current = d.matchdayNumber === game.current.matchdayNumber;
-            const state = current ? ({ open: "open", live: "live", done: "done", soon: "next" } as const)[status.tone as "open" | "live" | "done" | "soon"] : d.fantasyStatus === "PROCESSED" ? "done" : "next";
-            const label = current ? status.label : { done: "Scored", open: "Transfers open", live: "In play", next: "Coming up" }[state];
-            return (
-              <div key={d.matchdayNumber} className="fx-days__row" role="row" data-state={state}>
-                <span role="cell">
-                  <b>MD{d.matchdayNumber}</b>
-                </span>
-                <span role="cell">
-                  <span className="fx-pill" data-state={state}>
-                    {label}
-                  </span>
-                </span>
-                <span role="cell">
-                  {d.matchesPlayed}/{d.expectedMatches}
-                </span>
-                <span role="cell">{d.submissionDeadline ? formatDeadline(d.submissionDeadline) : "—"}</span>
-                <span role="cell">
-                  {d.fantasyStatus === "PROCESSED" && (
-                    <Link className="fx-link" href={`/fantasy/standings?md=${d.matchdayNumber}#matchday-points`} aria-label={`Matchday ${d.matchdayNumber} points`}>
-                      Points
-                    </Link>
-                  )}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
     </div>
   );
 }

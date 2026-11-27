@@ -8,7 +8,7 @@ import { fantasyPage } from "@/content/fantasy";
 import { getGame, getStandings } from "@/lib/fantasy/game";
 import { getManager } from "@/lib/fantasy/session";
 import { LiveRefresh } from "@/components/fantasy/game/LiveRefresh";
-import MatchdayPoints, { ScoringHelp } from "@/components/fantasy/game/MatchdayPoints";
+import MatchdayPoints, { ScoringGuide } from "@/components/fantasy/game/MatchdayPoints";
 
 export const metadata: Metadata = { title: "Standings · MGL Fantasy", alternates: { canonical: "/fantasy/standings" } };
 const copy = fantasyPage.standings;
@@ -20,15 +20,14 @@ async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cu
   const md = scored.includes(Number(params.md)) ? Number(params.md) : undefined;
   const cursor = params.cursor && /^[\w.:=-]{1,200}$/.test(params.cursor) ? params.cursor : undefined;
   const board = await getStandings(game, { matchday: md, cursor, me: manager }).catch(() => undefined);
+  const mine = board?.rows.find((r) => r.managerId === manager?.id);
   const href = (p: { md?: number; cursor?: string }) => `/fantasy/standings${p.md || p.cursor ? "?" : ""}${new URLSearchParams(Object.entries(p).filter(([, v]) => v).map(([k, v]) => [k, String(v)])).toString()}`;
 
   return (
     <AppShell game={game} manager={manager} title={<>{copy.title.before} <em>{copy.title.accent}</em></>}>
       <LiveRefresh />
-      <ScoringHelp />
-      {md && manager && <MatchdayPoints game={game} manager={manager} day={md} />}
-      <section className="fx-panel fx-board">
-        <nav className="fx-seg" aria-label="Table">
+      <div className="fx-standings" data-split={md && manager ? "" : undefined}>
+        <nav className="fx-seg fx-standings__tabs" aria-label="Table">
           <Link href={href({})} aria-current={!md ? "page" : undefined}>
             {copy.season}
           </Link>
@@ -38,10 +37,16 @@ async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cu
             </Link>
           ))}
         </nav>
+        <ScoringGuide />
+        {md && manager && <MatchdayPoints game={game} manager={manager} day={md} rank={mine ? { rank: mine.rank, of: board!.totalCount } : undefined} deduction={mine?.adjustments ?? 0} />}
+      <section className="fx-panel fx-board" aria-labelledby="fx-board-title">
         {board ? (
           <>
-            <p className="fx-board__count">{board.totalCount.toLocaleString("en-GB")} managers</p>
-            <StandingsTable rows={board.rows} me={manager?.id} />
+            <header className="fx-board__head">
+              <h2 id="fx-board-title">{md ? `Matchday ${md} table` : "Season table"}</h2>
+              <p>{board.totalCount.toLocaleString("en-GB")} managers</p>
+            </header>
+            <StandingsTable rows={board.rows} me={manager?.id} podium={!cursor} />
             {(board.nextCursor || cursor) && (
               <div className="fx-cta-row">
                 {cursor && (
@@ -63,6 +68,7 @@ async function Board({ searchParams }: { searchParams: Promise<{ md?: string; cu
           </p>
         )}
       </section>
+      </div>
     </AppShell>
   );
 }
