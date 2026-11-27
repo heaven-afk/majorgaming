@@ -22,6 +22,7 @@ const { tiers: TIERS, squadsPerTier: SQUADS_PER_TIER } = league;
 export const site = {
   name: "Major Gaming League",
   short: "MGL",
+  description: "Major Gaming League (MGL) runs Call of Duty: Mobile Battle Royale tournaments across Africa. Explore CODM BR rankings, Tier 1 standings and MGL Fantasy.",
 };
 
 /** Pages not built yet point nowhere for now. */
@@ -55,7 +56,7 @@ export const hero = {
   },
   /** First line ends with the MGL mark and the italic accent; the remaining lines follow. */
   title: { first: "Africa’s", accent: "top", rest: ["CODM BR org."] },
-  lede: "MGL is the ranking organization behind the highest-level ranked events in Call of Duty: Mobile Battle Royale across Africa. Registered squads compete through each season, and every match moves the rankings.",
+  lede: "Major Gaming League (MGL) runs ranked Call of Duty: Mobile Battle Royale tournaments across Africa (AF). Registered squads compete in seasons, earning points for placements and kills in the CODM BR rankings.",
   /** What MGL covers. Placeholder row, shown as small icons along the bottom of the panel. */
   features: [
     { icon: "parachute", label: "Battle royale" },
@@ -268,7 +269,7 @@ export const footer = {
       title: "Compete",
       links: [
         { label: "How MGL works", href: "/#about" },
-        { label: "Standings", href: "/events#standings" },
+        { label: "CODM BR rankings", href: "/events#standings" },
         { label: "Fantasy", href: "/fantasy" },
         { label: "FAQ", href: "/#faq" },
       ],
@@ -286,8 +287,9 @@ export const footer = {
  */
 export const eventsPage = {
   label: "Events",
-  title: { before: "Seasons and", accent: "special events." },
-  lede: `MGL runs ranked Battle Royale seasons in ${TIERS} tiers of ${SQUADS_PER_TIER} squads, plus special events like the Mixed Event and partner events with Carry1st. Every event's final tables and top fraggers are kept here, event by event.`,
+  title: { before: "CODM BR rankings", accent: "and tournaments." },
+  description: "Explore Major Gaming League’s African CODM Battle Royale rankings, live standings, Tier 1 results and tournament archive.",
+  lede: `Follow Major Gaming League’s Call of Duty: Mobile Battle Royale tournaments across Africa. Each ranked season has ${TIERS} tiers of up to ${SQUADS_PER_TIER} squads. Find live standings, final results by tier and each event’s top fraggers here.`,
   /** The "Now" card. Which state shows follows the data: a live event, open registration, or the break. */
   now: {
     label: "Now",
@@ -338,6 +340,12 @@ export const eventsPage = {
     champions: (table: string) => `${table} champions`,
     open: "View tables",
     details: "View details",
+    yearHighlight: {
+      eventSlug: "season-10",
+      recapSlug: "season-10-final-kyzon-esport",
+      link: (year: string, event: string) => `${year} CODM BR rankings for ${event}`,
+      detail: "See the final Tier 1 standings, including the top squads and their placement and kill points.",
+    },
   },
   upcoming: {
     label: "Coming up",

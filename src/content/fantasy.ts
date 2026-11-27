@@ -12,10 +12,10 @@ export const fantasyPage = {
    * ranking can run its tournament's fantasy through MGL, so the words speak to every one.
    */
   landing: {
-    label: "MGL Fantasy",
+    label: "MGL · CODM BR Fantasy",
     hero: {
       title: { before: "Your squad.", accent: "Your call." },
-      lede: "The players you watch every matchday, on a team you built. Back your captain, beat the deadline and prove you read the lobby better than everyone else.",
+      lede: "MGL Fantasy is a Call of Duty: Mobile Battle Royale fantasy game. Build a squad of real CODM players, pick your captain and score points from their matchday performances.",
       join: "Start playing",
       signIn: "Sign in",
       offStatus: "Opens with the next tournament",
@@ -68,8 +68,8 @@ export const fantasyPage = {
     chips: "Chips",
   },
   meta: {
-    title: "Fantasy · MGL",
-    description: "Fantasy for CODM BR on MGL: pick four players and a sub inside 100 credits, back a captain and score from their real kills and placements, for MGL's seasons and the rankings it hosts.",
+    title: "CODM BR Fantasy | Major Gaming League",
+    description: "Play CODM Fantasy on Major Gaming League. Build a Battle Royale fantasy squad from real tournament players, pick your captain and score from matchday results.",
   },
 
   off: {

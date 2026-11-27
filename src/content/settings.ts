@@ -24,8 +24,8 @@ export type Settings = {
 };
 
 export const defaultSettings: Settings = {
-  discord: "https://discord.gg/your-invite",
-  socials: { x: "", instagram: "", youtube: "", tiktok: "" },
+  discord: "https://discord.gg/saUgewXAfn",
+  socials: { x: "", instagram: "", youtube: "https://youtube.com/@majorgamingleague", tiktok: "https://www.tiktok.com/@majorgamingleague" },
   community: ["2,000+ ranked players", "across the AF region."],
   stats: {
     squads: { value: 480, suffix: "+" },
